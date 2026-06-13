@@ -18,13 +18,12 @@
             <span class="text-2xl font-bold font-display tracking-tight">Kondani</span>
           </div>
 
-          <div class="hidden md:flex items-center gap-8">
-            <a @click.prevent="scrollToSection('features')" href="#features" class="text-sm font-medium text-white/70 hover:text-gold-300 transition-colors cursor-pointer">Features</a>
-            <a @click.prevent="scrollToSection('safety')" href="#safety" class="text-sm font-medium text-white/70 hover:text-gold-300 transition-colors cursor-pointer">Safety</a>
+          <div class="flex items-center gap-5 sm:gap-7">
+            <a @click.prevent="scrollToSection('features')" href="#features" class="hidden md:inline text-sm font-medium text-white/70 hover:text-gold-300 transition-colors cursor-pointer">Features</a>
+            <a @click.prevent="scrollToSection('safety')" href="#safety" class="hidden md:inline text-sm font-medium text-white/70 hover:text-gold-300 transition-colors cursor-pointer">Safety</a>
             <router-link to="/login" class="text-sm font-semibold text-white hover:text-gold-300 transition-colors">Sign in</router-link>
             <router-link to="/login" class="btn-gold">Get Started</router-link>
           </div>
-          <router-link to="/login" class="btn-gold md:hidden text-sm">Get Started</router-link>
         </div>
       </div>
     </nav>
