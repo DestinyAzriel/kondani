@@ -15,21 +15,24 @@ const moderationRoutes = require('./src/routes/moderationRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 // const oauthRoutes = require('./src/routes/oauthRoutes'); // Temporarily disabled
 
+// Allowed CORS origins: localhost (dev) + CLIENT_ORIGIN env (comma-separated)
+// + any Render/Vercel/Netlify host.
+const envOrigins = (process.env.CLIENT_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (envOrigins.includes(origin)) return true;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  if (/\.(onrender\.com|vercel\.app|netlify\.app)$/.test(origin)) return true;
+  return false;
+}
+
 const app = express();
 const server = http.createServer(app);
 
 // Middleware
 app.use(cors({
-  // Allow frontend dev server on default 5173 and alternate 5174, plus any localhost host
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true)
-    const allowed = [
-      'http://localhost:5173', 'http://127.0.0.1:5173',
-      'http://localhost:5174', 'http://127.0.0.1:5174'
-    ]
-    if (allowed.includes(origin)) return callback(null, true)
-    // allow other localhost origins (different ports)
-    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return callback(null, true)
+    if (isAllowedOrigin(origin)) return callback(null, true)
     return callback(new Error('CORS policy: origin not allowed'), false)
   },
   credentials: true
@@ -113,15 +116,8 @@ app.get('/api/health', (req, res) => {
 // Socket.IO Setup
 const io = new Server(server, {
   cors: {
-    // Mirror the express cors policy for socket connections
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true)
-      const allowed = [
-        'http://localhost:5173', 'http://127.0.0.1:5173',
-        'http://localhost:5174', 'http://127.0.0.1:5174'
-      ]
-      if (allowed.includes(origin)) return callback(null, true)
-      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return callback(null, true)
+      if (isAllowedOrigin(origin)) return callback(null, true)
       return callback(new Error('CORS policy: origin not allowed'), false)
     },
     methods: ["GET", "POST"],
