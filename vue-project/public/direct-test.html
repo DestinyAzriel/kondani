@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Test</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>Direct Vue Test</h1>
+        <p>If you can see this, Vue is working without the router.</p>
+        <button @click="testApi">Test API Connection</button>
+        <div v-if="apiResult">
+            <h2>API Result:</h2>
+            <pre>{{ apiResult }}</pre>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+        
+        createApp({
+            data() {
+                return {
+                    apiResult: null
+                }
+            },
+            methods: {
+                async testApi() {
+                    try {
+                        const response = await fetch('http://localhost:3000/api/health')
+                        const data = await response.json()
+                        this.apiResult = JSON.stringify(data, null, 2)
+                    } catch (error) {
+                        this.apiResult = `Error: ${error.message}`
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

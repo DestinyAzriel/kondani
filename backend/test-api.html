@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Kondani API Test</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .test {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #333;
+            color: white;
+        }
+
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 Kondani Backend API Test</h1>
+
+    <div class="test">
+        <h3>Test 1: Send OTP</h3>
+        <input id="phone1" type="text" placeholder="+265991234567" value="+265991234567">
+        <button onclick="testSendOTP()">Send OTP</button>
+        <pre id="result1">Click button to test...</pre>
+    </div>
+
+    <div class="test">
+        <h3>Test 2: Verify OTP</h3>
+        <p>Note: Check server console for the generated OTP</p>
+        <input id="phone2" type="text" placeholder="+265991234567" value="+265991234567">
+        <input id="otp" type="text" placeholder="Check console for OTP">
+        <button onclick="testVerifyOTP()">Verify OTP</button>
+        <pre id="result2">Click button to test...</pre>
+    </div>
+
+    <div class="test">
+        <h3>Test 3: Get User (requires token from Test 2)</h3>
+        <button onclick="testGetMe()">Get My Profile</button>
+        <pre id="result3">Click button to test...</pre>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let token = null;
+
+        async function testSendOTP() {
+            const phone = document.getElementById('phone1').value;
+            try {
+                const response = await fetch(`${API_URL}/auth/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber: phone })
+                });
+                const data = await response.json();
+                document.getElementById('result1').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result1').textContent = 'ERROR: ' + error.message;
+            }
+        }
+
+        async function testVerifyOTP() {
+            const phone = document.getElementById('phone2').value;
+            const otp = document.getElementById('otp').value;
+            try {
+                const response = await fetch(`${API_URL}/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber: phone, otp: otp })
+                });
+                const data = await response.json();
+                if (data.token) {
+                    token = data.token;
+                    localStorage.setItem('test_token', token);
+                }
+                document.getElementById('result2').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result2').textContent = 'ERROR: ' + error.message;
+            }
+        }
+
+        async function testGetMe() {
+            token = token || localStorage.getItem('test_token');
+            if (!token) {
+                document.getElementById('result3').textContent = 'ERROR: No token. Run Test 2 first!';
+                return;
+            }
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                document.getElementById('result3').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result3').textContent = 'ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+
+</html>
