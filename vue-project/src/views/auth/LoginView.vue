@@ -9,13 +9,11 @@
 
     <div class="mx-auto w-full max-w-md relative z-10">
       <router-link to="/" class="flex justify-center items-center gap-3 mb-8 group">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-gold-500/25 bg-gradient-to-br from-gold-300 to-gold-500 group-hover:scale-105 transition-transform">
-          <span class="text-2xl text-night-950">✦</span>
-        </div>
+        <KondaniMark :size="36" />
         <span class="text-3xl font-bold font-display tracking-tight">Kondani</span>
       </router-link>
 
-      <h2 class="text-center text-2xl font-bold font-display tracking-tight mb-2">
+      <h2 class="serif text-center text-3xl tracking-tight mb-2">
         {{ step === 1 ? 'Welcome back' : 'Enter your code' }}
       </h2>
       <p class="text-center text-sm text-white/55 mb-8">
@@ -113,6 +111,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import KondaniMark from '@/components/ui/KondaniMark.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -160,12 +159,13 @@ const verifyOTP = async () => {
     radial-gradient(1px 1px at 50% 16%, rgba(255,255,255,.45), transparent),
     radial-gradient(1px 1px at 73% 30%, rgba(255,215,130,.5), transparent);
 }
+.serif { font-family: 'Fraunces', serif; font-weight: 600; }
 .btn-gold {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 0.875rem 1rem; border-radius: 9999px; font-weight: 700;
-  color: #08161d; border: none; cursor: pointer;
-  background: linear-gradient(90deg, #f59e0b, #ffd27d);
-  box-shadow: 0 8px 20px rgba(244,183,64,.3);
+  color: #1a1205; border: none; cursor: pointer;
+  background: linear-gradient(95deg, #d99a1f, #f4b740 50%, #ffd98a);
+  box-shadow: 0 10px 26px rgba(244,183,64,.4);
   transition: transform .15s ease, opacity .15s ease;
 }
 .btn-gold:hover:not(:disabled) { transform: scale(1.02); }

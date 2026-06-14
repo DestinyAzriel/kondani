@@ -12,9 +12,7 @@
     <!-- Header -->
     <div class="relative z-10 flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 max-w-[800px] mx-auto w-full">
       <div class="flex items-center gap-2">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-gold-500/20 bg-gradient-to-br from-gold-300 to-gold-500">
-          <span class="text-lg text-night-950">✦</span>
-        </div>
+        <KondaniMark :size="30" />
         <h1 class="text-xl sm:text-2xl font-bold font-display tracking-tight">Kondani</h1>
       </div>
 
@@ -110,6 +108,7 @@ import MatchCelebration from '@/components/feature/MatchCelebration.vue'
 import FilterModal from '@/components/feature/modal/FilterModal.vue'
 import { Sliders as SlidersIcon, X as XIcon, Heart as HeartIcon, Star as StarIcon, RotateCcw as RotateCcwIcon, Zap as ZapIcon } from 'lucide-vue-next'
 import { intentService } from '@/services/intentService'
+import KondaniMark from '@/components/ui/KondaniMark.vue'
 import { analyticsService } from '@/services/analyticsService'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'

@@ -18,8 +18,8 @@ export default {
         },
         // Lake of Stars — primary Kondani palette
         night: {
-          950: '#08161d', // lake night (base background)
-          900: '#0b1e27',
+          950: '#050d12', // deep lake night (base background)
+          900: '#0a1820',
           800: '#0f2a33',
         },
         lagoon: {

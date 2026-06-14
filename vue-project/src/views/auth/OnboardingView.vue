@@ -8,9 +8,7 @@
 
     <header class="relative z-10 p-6 flex justify-between items-center">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-gold-300 to-gold-500">
-          <span class="text-sm text-night-950">✦</span>
-        </div>
+        <KondaniMark :size="28" />
         <span class="text-xl font-bold font-display tracking-tight">Kondani</span>
       </div>
       <div class="text-sm font-medium text-gold-400">Step {{ step }} of 4</div>
@@ -146,6 +144,7 @@ import { ref, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Plus as PlusIcon, X as XIcon, MapPin as MapPinIcon } from 'lucide-vue-next'
+import KondaniMark from '@/components/ui/KondaniMark.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

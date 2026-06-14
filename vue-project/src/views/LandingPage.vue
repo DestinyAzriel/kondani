@@ -132,15 +132,15 @@ const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior:
 .btn:hover{transform:translateY(-2px);}
 .btn-gold{background:linear-gradient(95deg,#d99a1f,#f4b740 50%,#ffd98a);color:#1a1205;border-radius:99px;padding:15px 32px;font-size:16px;box-shadow:0 12px 30px rgba(244,183,64,.4);}
 .btn-ghost{background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:99px;padding:15px 30px;font-size:16px;font-weight:600;}
-.logo-row{display:flex;align-items:center;gap:10px;}
+.logo-row{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .logo-row b{font-family:'Outfit',sans-serif;font-size:23px;font-weight:800;letter-spacing:-.02em;color:#fff;}
 
 .nav{position:absolute;top:0;left:0;right:0;z-index:20;}
 .nav-in{max-width:1180px;margin:0 auto;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;}
 .nav-r{display:flex;align-items:center;gap:18px;}
-.nav-r a.link{color:#fff;text-decoration:none;font-weight:600;font-size:15px;opacity:.92;}
+.nav-r a.link{color:#fff;text-decoration:none;font-weight:600;font-size:15px;opacity:.92;white-space:nowrap;}
 .nav-r a.link:hover{color:#ffd98a;}
-.nav-cta{background:#fff;color:#050d12;border-radius:99px;padding:11px 24px;font-weight:700;text-decoration:none;font-size:15px;}
+.nav-cta{background:#fff;color:#050d12;border-radius:99px;padding:11px 24px;font-weight:700;text-decoration:none;font-size:15px;white-space:nowrap;}
 
 .hero{position:relative;height:100vh;min-height:680px;max-height:940px;display:flex;align-items:flex-end;}
 .hero .bg{position:absolute;inset:0;z-index:0;}
@@ -212,11 +212,39 @@ const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior:
 .foot-links a:hover{color:#ffd98a;}
 
 @media(max-width:880px){
-  .hero-h{font-size:44px;} .hero .sub{font-size:17px;}
-  .mission-grid,.how-grid,.story{grid-template-columns:1fr;gap:30px;}
+  .hero{min-height:600px;}
+  .hero-h{font-size:46px;} .hero .sub{font-size:17px;}
+  .mission,.how,.stories{padding:72px 0;} .closing{padding:100px 0;}
+  .mission-grid,.how-grid,.story{grid-template-columns:1fr;gap:32px;}
   .story.rev .ph{order:0;}
-  .nav-r .link:not(.signin){display:none;}
+  .nav-r .link:not(.signin):not(.nav-cta){display:none;}
   .closing h2{font-size:38px;} .stats-grid{gap:36px;}
-  .mission h2,.stories .head h2{font-size:36px;}
+  .mission h2,.stories .head h2{font-size:34px;} .how .head h2{font-size:30px;}
+  .mission .photo{aspect-ratio:4/3;}
+}
+@media(max-width:560px){
+  .wrap{padding:0 20px;}
+  .nav-in{padding:14px 20px;}
+  .logo-row b{font-size:19px;}
+  .nav-r{gap:12px;}
+  .nav-r a.link.signin{display:none;} /* declutter: Create account covers sign-in (same screen) */
+  .nav-cta{padding:10px 18px;font-size:14px;}
+  .hero{min-height:560px;height:auto;padding-top:120px;}
+  .hero-content{padding-bottom:52px;}
+  .pill{font-size:12px;padding:7px 13px;margin-bottom:18px;}
+  .hero-h{font-size:34px;line-height:1.06;margin-bottom:16px;}
+  .hero .sub{font-size:15.5px;margin-bottom:24px;}
+  .ctas{gap:10px;}
+  .ctas .btn{flex:1 1 100%;padding:14px;font-size:15px;}
+  .mission,.how,.stories{padding:56px 0;} .closing{padding:80px 0;}
+  .k{margin-bottom:12px;}
+  .mission h2,.stories .head h2,.closing h2{font-size:28px;}
+  .how .head h2{font-size:26px;}
+  .mission p{font-size:15.5px;}
+  .story{gap:22px;margin-bottom:48px;}
+  .story blockquote{font-size:21px;}
+  .story .ph,.mission .photo{aspect-ratio:4/3;}
+  .how-card .step-img{aspect-ratio:16/10;}
+  .stat .v{font-size:34px;} .stats-grid{gap:26px;} .stats{padding:48px 0;}
 }
 </style>
