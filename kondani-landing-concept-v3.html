@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kondani — Landing Concept v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --night:#050d12; --night2:#0a1820; --panel:#0c1c25;
+    --lagoon:#2dd4bf; --gold:#f4b740; --gold-l:#ffd98a; --gold-d:#d99a1f;
+    --txt:#f1f8f6; --mut:rgba(241,248,246,.6); --mut2:rgba(241,248,246,.4);
+    --line:rgba(255,255,255,.09);
+    --disp:'Outfit',sans-serif; --serif:'Fraunces',serif; --body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--body);background:var(--night);color:var(--txt);overflow-x:hidden;}
+  img{display:block;}
+  .note{padding:13px 28px;font-size:12.5px;color:var(--mut2);border-bottom:1px dashed var(--line);background:#03080b;}
+  .note b{color:var(--gold-l);}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border:none;cursor:pointer;text-decoration:none;transition:transform .15s,box-shadow .2s;font-family:var(--body);}
+  .btn:hover{transform:translateY(-2px);}
+  .btn-gold{background:linear-gradient(95deg,var(--gold-d),var(--gold) 50%,var(--gold-l));color:#1a1205;border-radius:99px;padding:15px 32px;font-size:16px;box-shadow:0 12px 30px rgba(244,183,64,.4);}
+  .btn-ghost{background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:99px;padding:15px 30px;font-size:16px;font-weight:600;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px;}
+
+  /* logo marks */
+  .logo-row{display:flex;align-items:center;gap:10px;}
+  .logo-row b{font-family:var(--disp);font-size:23px;font-weight:800;letter-spacing:-.02em;color:#fff;}
+
+  /* ===== LOGO OPTIONS STRIP ===== */
+  .logos{background:#03080b;border-bottom:1px solid var(--line);padding:34px 28px;}
+  .logos h3{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+  .logos .sm{color:var(--mut2);font-size:13px;margin-bottom:24px;}
+  .logo-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1180px;margin:0 auto;}
+  .opt{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;}
+  .opt .lockup{display:flex;align-items:center;gap:12px;}
+  .opt .lockup b{font-family:var(--disp);font-size:26px;font-weight:800;letter-spacing:-.02em;}
+  .opt .tag{font-size:13px;font-weight:700;color:#fff;}
+  .opt .desc{font-size:12px;color:var(--mut);line-height:1.5;}
+  .opt .rec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#1a1205;background:linear-gradient(90deg,var(--gold),var(--gold-l));padding:3px 9px;border-radius:99px;}
+
+  /* nav */
+  nav{position:absolute;top:0;left:0;right:0;z-index:20;}
+  .nav-in{max-width:1180px;margin:0 auto;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;}
+  .nav-r{display:flex;align-items:center;gap:18px;}
+  .nav-r a.link{color:#fff;text-decoration:none;font-weight:600;font-size:15px;opacity:.9;}
+  .nav-cta{background:#fff;color:var(--night);border-radius:99px;padding:11px 24px;font-weight:700;text-decoration:none;font-size:15px;}
+
+  /* HERO */
+  .hero{position:relative;height:100vh;min-height:700px;max-height:940px;display:flex;align-items:flex-end;}
+  .hero .bg{position:absolute;inset:0;z-index:0;}
+  .hero .bg img{width:100%;height:100%;object-fit:cover;object-position:center 25%;}
+  .hero .scrim{position:absolute;inset:0;z-index:1;background:
+    linear-gradient(180deg, rgba(5,13,18,.75) 0%, rgba(5,13,18,.25) 30%, rgba(5,13,18,.65) 68%, rgba(5,13,18,.99) 100%);}
+  .hero .scrim2{position:absolute;inset:0;z-index:1;background:radial-gradient(75% 70% at 18% 88%, rgba(5,13,18,.85), transparent 72%);}
+  .hero-content{position:relative;z-index:5;padding-bottom:84px;width:100%;}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(244,183,64,.16);backdrop-filter:blur(8px);border:1px solid rgba(244,183,64,.4);color:var(--gold-l);font-size:13px;font-weight:600;padding:8px 16px;border-radius:99px;margin-bottom:24px;}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);}
+  h1.hero-h{font-family:var(--serif);font-weight:600;font-size:78px;line-height:1;letter-spacing:-.025em;color:#fff;max-width:900px;margin-bottom:24px;text-shadow:0 2px 30px rgba(0,0,0,.4);}
+  h1.hero-h em{font-style:italic;color:var(--gold-l);}
+  .hero p.sub{font-size:21px;color:rgba(255,255,255,.88);max-width:540px;line-height:1.5;margin-bottom:32px;}
+  .hero .ctas{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .hero .disclaimer{margin-top:26px;font-size:12px;color:rgba(255,255,255,.5);}
+
+  /* MISSION */
+  .mission{padding:120px 0;background:linear-gradient(180deg,var(--night),var(--night2));}
+  .mission-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+  .k{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);margin-bottom:18px;}
+  .mission h2{font-family:var(--serif);font-weight:600;font-size:50px;line-height:1.05;letter-spacing:-.02em;margin-bottom:22px;}
+  .mission h2 em{font-style:italic;color:var(--gold-l);}
+  .mission p{color:var(--mut);font-size:17px;line-height:1.75;margin-bottom:16px;}
+  .mission .photo{border-radius:26px;overflow:hidden;aspect-ratio:4/5;box-shadow:0 50px 90px -30px rgba(0,0,0,.85);border:1px solid var(--line);}
+  .mission .photo img{width:100%;height:100%;object-fit:cover;}
+
+  /* HOW */
+  .how{padding:100px 0;background:var(--night2);}
+  .how .head{text-align:center;max-width:620px;margin:0 auto 58px;}
+  .how .head h2{font-family:var(--disp);font-weight:800;font-size:42px;letter-spacing:-.02em;margin-bottom:12px;}
+  .how .head p{color:var(--mut);font-size:16px;}
+  .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
+  .how-card .step-img{border-radius:22px;overflow:hidden;aspect-ratio:5/4;margin-bottom:20px;position:relative;border:1px solid var(--line);}
+  .how-card .step-img img{width:100%;height:100%;object-fit:cover;}
+  .how-card .step-img .scr{position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(5,13,18,.5));}
+  .how-card .step-img .n{position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--gold-l),var(--gold));color:#1a1205;font-family:var(--disp);font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .how-card h3{font-family:var(--disp);font-weight:700;font-size:21px;margin-bottom:8px;}
+  .how-card p{color:var(--mut);font-size:14.5px;line-height:1.6;}
+
+  /* STORIES */
+  .stories{padding:120px 0;background:linear-gradient(180deg,var(--night2),var(--night));}
+  .stories .head{text-align:center;max-width:620px;margin:0 auto 66px;}
+  .stories .head h2{font-family:var(--serif);font-weight:600;font-size:50px;letter-spacing:-.02em;}
+  .story{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-bottom:84px;}
+  .story:last-child{margin-bottom:0;}
+  .story.rev .ph{order:2;}
+  .story .ph{border-radius:26px;overflow:hidden;aspect-ratio:4/3;box-shadow:0 50px 90px -30px rgba(0,0,0,.85);border:1px solid var(--line);}
+  .story .ph img{width:100%;height:100%;object-fit:cover;}
+  .story .stars{color:var(--gold);letter-spacing:4px;margin-bottom:18px;font-size:16px;}
+  .story blockquote{font-family:var(--serif);font-weight:500;font-size:28px;line-height:1.38;color:#fff;margin-bottom:22px;}
+  .story .by{display:flex;align-items:center;gap:12px;}
+  .story .by img{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);}
+  .story .by .nm{font-weight:700;font-size:15px;}
+  .story .by .ct{color:var(--mut2);font-size:13px;}
+
+  /* STATS */
+  .stats{padding:72px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#03080b;}
+  .stats-grid{display:flex;justify-content:center;gap:72px;flex-wrap:wrap;text-align:center;}
+  .stat .v{font-family:var(--disp);font-weight:800;font-size:48px;background:linear-gradient(120deg,var(--gold-l),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .stat .l{color:var(--mut);font-size:14px;margin-top:4px;}
+
+  /* CLOSING */
+  .closing{position:relative;padding:150px 0;text-align:center;overflow:hidden;}
+  .closing .bg{position:absolute;inset:0;z-index:0;}
+  .closing .bg img{width:100%;height:100%;object-fit:cover;object-position:center 30%;}
+  .closing .scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(5,13,18,.82),rgba(5,13,18,.95));}
+  .closing .inner{position:relative;z-index:5;}
+  .closing h2{font-family:var(--serif);font-weight:600;font-size:58px;line-height:1.04;letter-spacing:-.02em;margin-bottom:18px;}
+  .closing h2 em{font-style:italic;color:var(--gold-l);}
+  .closing p{color:rgba(255,255,255,.82);font-size:19px;margin-bottom:34px;}
+
+  footer{background:#03080b;border-top:1px solid var(--line);}
+  .foot{max-width:1180px;margin:0 auto;padding:46px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+  .foot a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:26px;}
+  .foot a:hover{color:var(--gold-l);}
+
+  @media(max-width:880px){
+    h1.hero-h{font-size:44px;} .hero p.sub{font-size:17px;}
+    .mission-grid,.how-grid,.story{grid-template-columns:1fr;gap:30px;}
+    .story.rev .ph{order:0;} .logo-opts{grid-template-columns:1fr;}
+    .nav-r .link{display:none;} .closing h2{font-size:38px;} .stats-grid{gap:36px;}
+    .mission h2,.stories .head h2{font-size:36px;}
+  }
+</style>
+</head>
+<body>
+<div class="note">📐 <b>Landing concept v3</b> — African imagery, darker &amp; richer, "Kondani means Love," + 3 logo directions to choose from. Photos are real Unsplash placeholders (Black couples); at launch we swap in real Malawian members. Approve a logo + the page and I'll build it.</div>
+
+<!-- ===== LOGO OPTIONS ===== -->
+<div class="logos">
+  <div style="max-width:1180px;margin:0 auto;">
+    <h3>Pick a logo direction</h3>
+    <div class="sm">Each works as an app icon and shrinks cleanly to a favicon. My pick: the Heart-Pin — meaningful (love + meet near you) and crisp at any size.</div>
+    <div class="logo-opts">
+      <!-- Option A: Heart-Pin -->
+      <div class="opt">
+        <div class="lockup">
+          <svg width="48" height="48" viewBox="0 0 100 120" aria-label="Heart pin">
+            <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs>
+            <path d="M50 112 C50 112 14 74 14 44 A18 18 0 0 1 50 34 A18 18 0 0 1 86 44 C86 74 50 112 50 112 Z" fill="url(#g1)"/>
+            <circle cx="50" cy="46" r="10" fill="#0a1820"/>
+          </svg>
+          <b>Kondani</b>
+        </div>
+        <div><span class="rec">Recommended</span></div>
+        <div class="tag">A · Heart-Pin</div>
+        <div class="desc">A heart shaped into a map pin — "love, near you." Bold, modern, unmistakable at favicon size.</div>
+      </div>
+
+      <!-- Option B: Malawi + heart -->
+      <div class="opt">
+        <div class="lockup">
+          <svg width="40" height="56" viewBox="0 0 70 150" aria-label="Malawi heart">
+            <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs>
+            <!-- stylised Malawi silhouette (to be refined to the exact map) -->
+            <path d="M30 6 C36 16 33 28 40 38 C48 50 43 60 50 72 C44 80 47 92 41 100 C47 112 55 120 50 134 C46 146 38 150 33 150 C28 142 26 130 24 118 C20 104 16 90 19 76 C16 62 21 48 22 34 C24 22 25 12 30 6 Z" fill="url(#g2)" opacity="0.92"/>
+            <path d="M34 70 c-4-5-12-2-12 4 c0 6 12 12 12 12 c0 0 12-6 12-12 c0-6-8-9-12-4 Z" fill="#0a1820"/>
+          </svg>
+          <b>Kondani</b>
+        </div>
+        <div class="tag">B · Malawi + Heart</div>
+        <div class="desc">Malawi's silhouette in gold with a heart at its centre. Proudly local. (Outline shown stylised — we'd refine to the exact map.)</div>
+      </div>
+
+      <!-- Option C: Wordmark -->
+      <div class="opt">
+        <div class="lockup">
+          <span style="font-family:var(--disp);font-weight:800;font-size:30px;letter-spacing:-.02em;color:#fff;">kondan</span>
+          <svg width="26" height="34" viewBox="0 0 40 52" style="margin-left:-4px;" aria-label="i heart">
+            <defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs>
+            <rect x="13" y="20" width="14" height="32" rx="7" fill="#fff"/>
+            <path d="M20 4 c-3-4-10-2-10 3 c0 5 10 10 10 10 c0 0 10-5 10-10 c0-5-7-7-10-3 Z" fill="url(#g3)"/>
+          </svg>
+        </div>
+        <div class="tag">C · Wordmark</div>
+        <div class="desc">Lowercase "kondani" with the dot on the "i" as a gold heart. Friendly, type-led, very legible.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV (uses recommended Heart-Pin) -->
+<nav>
+  <div class="nav-in">
+    <div class="logo-row">
+      <svg width="34" height="40" viewBox="0 0 100 120"><defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs><path d="M50 112 C50 112 14 74 14 44 A18 18 0 0 1 50 34 A18 18 0 0 1 86 44 C86 74 50 112 50 112 Z" fill="url(#gn)"/><circle cx="50" cy="46" r="10" fill="#050d12"/></svg>
+      <b>Kondani</b>
+    </div>
+    <div class="nav-r">
+      <a class="link" href="#how">How it works</a>
+      <a class="link" href="#stories">Stories</a>
+      <a class="link" href="#" style="opacity:1">Sign in</a>
+      <a class="nav-cta" href="#">Create account</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="bg"><img src="https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=1600&q=80&fit=crop" alt="" /></div>
+  <div class="scrim"></div><div class="scrim2"></div>
+  <div class="hero-content">
+    <div class="wrap">
+      <div class="pill"><span class="dot"></span>🇲🇼 Malawi's home for real connection</div>
+      <h1 class="hero-h">Find <em>love</em> in the<br>warm heart of Africa.</h1>
+      <p class="sub">Kondani means <strong>love</strong>. Verified Malawians, real plans, real meetups — not endless swiping.</p>
+      <div class="ctas">
+        <a href="#" class="btn btn-gold">Create account</a>
+        <a href="#how" class="btn btn-ghost">How it works</a>
+      </div>
+      <p class="disclaimer">Photos are illustrative. Every member is selfie-verified.</p>
+    </div>
+  </div>
+</header>
+
+<!-- MISSION -->
+<section class="mission">
+  <div class="wrap mission-grid">
+    <div>
+      <div class="k">Our approach</div>
+      <h2>Kondani means <em>love</em>.</h2>
+      <p>We built Kondani for how Malawians actually meet — coffee in City Centre, a hike up Mulanje, Afrobeats on a Friday night. Not to keep you scrolling, but to get you onto a real date.</p>
+      <p>Every profile is verified with a live selfie, so the person you meet is the person you matched with. No catfish, no bots — just real people, near you.</p>
+    </div>
+    <div class="photo"><img src="https://images.unsplash.com/photo-1633653330687-9955a3796b8c?w=900&q=80&fit=crop" alt="" /></div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="head"><h2>From hello to a real date</h2><p>Set up in under two minutes, then meet someone this week.</p></div>
+    <div class="how-grid">
+      <div class="how-card"><div class="step-img"><img src="https://images.unsplash.com/photo-1692457799626-4477193123c6?w=700&q=80&fit=crop" /><div class="scr"></div><div class="n">1</div></div><h3>Create your profile</h3><p>Sign up with your phone, add real photos and what you love. Quick and painless.</p></div>
+      <div class="how-card"><div class="step-img"><img src="https://images.unsplash.com/photo-1585962673804-d92fd4eac3c8?w=700&q=80&fit=crop" /><div class="scr"></div><div class="n">2</div></div><h3>Get your gold badge</h3><p>One live selfie verifies you're real. Verified members get 4× more matches.</p></div>
+      <div class="how-card"><div class="step-img"><img src="https://images.unsplash.com/photo-1626775920385-3f5348cc22f8?w=700&q=80&fit=crop" /><div class="scr"></div><div class="n">3</div></div><h3>Match &amp; meet</h3><p>Swipe, post a plan, or get daily picks — then chat, call, and meet for real.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- STORIES -->
+<section class="stories" id="stories">
+  <div class="wrap">
+    <div class="head"><div class="k" style="text-align:center">Kondani stories</div><h2>Real matches, real meetups</h2></div>
+
+    <div class="story">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1633653331665-6397dceec7ae?w=1000&q=80&fit=crop" /></div>
+      <div>
+        <div class="stars">★★★★★</div>
+        <blockquote>“I posted a coffee plan at Mamma Mia and Grace joined. Six months later, we still meet for coffee every weekend.”</blockquote>
+        <div class="by"><img src="https://images.unsplash.com/photo-1575467678950-0c09aad418af?w=120&q=70&fit=crop" /><div><div class="nm">Daniel &amp; Grace</div><div class="ct">Lilongwe</div></div></div>
+      </div>
+    </div>
+
+    <div class="story rev">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1619010539735-92149716db70?w=1000&q=80&fit=crop" /></div>
+      <div>
+        <div class="stars">★★★★★</div>
+        <blockquote>“Everyone's verified, so it actually felt safe. We matched, video-called that night, and hiked Mulanje that weekend.”</blockquote>
+        <div class="by"><img src="https://images.unsplash.com/photo-1592599457638-3ae7ccfbe065?w=120&q=70&fit=crop" /><div><div class="nm">Thoko &amp; Kondwani</div><div class="ct">Blantyre</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stats-grid">
+    <div class="stat"><div class="v">12,000+</div><div class="l">Verified members</div></div>
+    <div class="stat"><div class="v">4 cities</div><div class="l">Lilongwe · Blantyre · Mzuzu · Zomba</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">Bots, ever</div></div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section class="closing">
+  <div class="bg"><img src="https://images.unsplash.com/photo-1633653330768-3e869a81eff8?w=1600&q=80&fit=crop" /></div>
+  <div class="scrim"></div>
+  <div class="inner wrap">
+    <h2>Your person is out there.</h2>
+    <p>Join thousands of verified Malawians finding real <em>love</em>. Free to start.</p>
+    <a href="#" class="btn btn-gold">Create account</a>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <div class="logo-row">
+      <svg width="30" height="36" viewBox="0 0 100 120"><defs><linearGradient id="gf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs><path d="M50 112 C50 112 14 74 14 44 A18 18 0 0 1 50 34 A18 18 0 0 1 86 44 C86 74 50 112 50 112 Z" fill="url(#gf)"/><circle cx="50" cy="46" r="10" fill="#03080b"/></svg>
+      <b style="color:#fff">Kondani</b>
+    </div>
+    <div><a href="#">Privacy</a><a href="#">Safety</a><a href="#">Support</a><a href="#">Terms</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

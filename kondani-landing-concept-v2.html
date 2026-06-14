@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kondani — Landing Concept v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --night:#08161d; --night2:#0b1e27;
+    --lagoon:#2dd4bf; --gold:#f4b740; --gold-l:#ffd27d;
+    --txt:#eaf6f4; --mut:rgba(234,246,244,.62); --mut2:rgba(234,246,244,.42);
+    --line:rgba(255,255,255,.1);
+    --disp:'Outfit',sans-serif; --serif:'Fraunces',serif; --body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--body);background:var(--night);color:var(--txt);overflow-x:hidden;}
+  .note{padding:13px 28px;font-size:12.5px;color:var(--mut2);border-bottom:1px dashed var(--line);background:#06121a;}
+  .note b{color:var(--gold-l);}
+  img{display:block;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border:none;cursor:pointer;text-decoration:none;transition:transform .15s, box-shadow .2s;font-family:var(--body);}
+  .btn:hover{transform:translateY(-2px);}
+  .btn-gold{background:linear-gradient(90deg,var(--gold),var(--gold-l));color:var(--night);border-radius:99px;padding:14px 30px;font-size:16px;box-shadow:0 10px 26px rgba(244,183,64,.35);}
+  .btn-ghost{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:99px;padding:14px 30px;font-size:16px;font-weight:600;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px;}
+
+  /* NAV (transparent over hero) */
+  nav{position:absolute;top:0;left:0;right:0;z-index:20;}
+  .nav-in{max-width:1180px;margin:0 auto;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{display:flex;align-items:center;gap:11px;}
+  .logo .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--gold-l),var(--gold));display:flex;align-items:center;justify-content:center;color:var(--night);font-size:18px;box-shadow:0 6px 18px rgba(244,183,64,.3);}
+  .logo b{font-family:var(--disp);font-size:23px;font-weight:800;letter-spacing:-.02em;color:#fff;}
+  .nav-r{display:flex;align-items:center;gap:18px;}
+  .nav-r a.link{color:#fff;text-decoration:none;font-weight:600;font-size:15px;opacity:.9;}
+  .nav-cta{background:#fff;color:var(--night);border-radius:99px;padding:10px 22px;font-weight:700;text-decoration:none;font-size:15px;}
+
+  /* HERO — full-bleed photo */
+  .hero{position:relative;height:100vh;min-height:680px;max-height:920px;display:flex;align-items:flex-end;}
+  .hero .bg{position:absolute;inset:0;z-index:0;}
+  .hero .bg img{width:100%;height:100%;object-fit:cover;object-position:center 30%;}
+  .hero .scrim{position:absolute;inset:0;z-index:1;background:
+    linear-gradient(180deg, rgba(8,22,29,.55) 0%, rgba(8,22,29,.15) 35%, rgba(8,22,29,.55) 75%, rgba(8,22,29,.95) 100%);}
+  .hero .scrim2{position:absolute;inset:0;z-index:1;background:radial-gradient(70% 60% at 20% 80%, rgba(8,22,29,.7), transparent 70%);}
+  .hero-content{position:relative;z-index:5;padding-bottom:80px;width:100%;}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:13px;font-weight:600;padding:8px 15px;border-radius:99px;margin-bottom:22px;}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);}
+  h1.hero-h{font-family:var(--serif);font-weight:600;font-size:72px;line-height:1.02;letter-spacing:-.02em;color:#fff;max-width:880px;margin-bottom:22px;}
+  .hero p.sub{font-size:20px;color:rgba(255,255,255,.85);max-width:520px;line-height:1.5;margin-bottom:30px;}
+  .hero .ctas{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .hero .disclaimer{margin-top:26px;font-size:12px;color:rgba(255,255,255,.55);}
+
+  /* MISSION band */
+  .mission{padding:110px 0;}
+  .mission-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+  .mission .k{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:18px;}
+  .mission h2{font-family:var(--serif);font-weight:600;font-size:46px;line-height:1.08;letter-spacing:-.02em;margin-bottom:20px;}
+  .mission p{color:var(--mut);font-size:17px;line-height:1.7;margin-bottom:16px;}
+  .mission .photo{border-radius:24px;overflow:hidden;aspect-ratio:4/5;box-shadow:0 40px 80px -30px rgba(0,0,0,.7);}
+  .mission .photo img{width:100%;height:100%;object-fit:cover;}
+
+  /* HOW */
+  .how{padding:90px 0;background:var(--night2);}
+  .how .head{text-align:center;max-width:600px;margin:0 auto 56px;}
+  .how .head h2{font-family:var(--disp);font-weight:800;font-size:40px;letter-spacing:-.02em;margin-bottom:12px;}
+  .how .head p{color:var(--mut);font-size:16px;}
+  .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
+  .how-card{text-align:left;}
+  .how-card .step-img{border-radius:20px;overflow:hidden;aspect-ratio:5/4;margin-bottom:20px;position:relative;}
+  .how-card .step-img img{width:100%;height:100%;object-fit:cover;}
+  .how-card .step-img .n{position:absolute;top:14px;left:14px;width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold-l),var(--gold));color:var(--night);font-family:var(--disp);font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .how-card h3{font-family:var(--disp);font-weight:700;font-size:21px;margin-bottom:8px;}
+  .how-card p{color:var(--mut);font-size:14.5px;line-height:1.6;}
+
+  /* STORIES */
+  .stories{padding:110px 0;}
+  .stories .head{text-align:center;max-width:600px;margin:0 auto 64px;}
+  .stories .k{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:14px;}
+  .stories .head h2{font-family:var(--serif);font-weight:600;font-size:46px;letter-spacing:-.02em;}
+  .story{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;margin-bottom:80px;}
+  .story:last-child{margin-bottom:0;}
+  .story.rev .ph{order:2;}
+  .story .ph{border-radius:24px;overflow:hidden;aspect-ratio:4/3;box-shadow:0 40px 80px -30px rgba(0,0,0,.7);}
+  .story .ph img{width:100%;height:100%;object-fit:cover;}
+  .story .stars{color:var(--gold);letter-spacing:3px;margin-bottom:16px;font-size:15px;}
+  .story blockquote{font-family:var(--serif);font-weight:500;font-size:26px;line-height:1.4;color:#fff;margin-bottom:20px;}
+  .story .by{display:flex;align-items:center;gap:12px;}
+  .story .by img{width:46px;height:46px;border-radius:50%;object-fit:cover;}
+  .story .by .nm{font-weight:700;font-size:15px;}
+  .story .by .ct{color:var(--mut2);font-size:13px;}
+
+  /* STATS */
+  .stats{padding:70px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--night2);}
+  .stats-grid{display:flex;justify-content:center;gap:70px;flex-wrap:wrap;text-align:center;}
+  .stat .v{font-family:var(--disp);font-weight:800;font-size:46px;background:linear-gradient(120deg,var(--gold-l),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .stat .l{color:var(--mut);font-size:14px;margin-top:4px;}
+
+  /* CLOSING CTA over photo */
+  .closing{position:relative;padding:140px 0;text-align:center;overflow:hidden;}
+  .closing .bg{position:absolute;inset:0;z-index:0;}
+  .closing .bg img{width:100%;height:100%;object-fit:cover;}
+  .closing .scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(8,22,29,.8),rgba(8,22,29,.92));}
+  .closing .inner{position:relative;z-index:5;}
+  .closing h2{font-family:var(--serif);font-weight:600;font-size:54px;line-height:1.05;letter-spacing:-.02em;margin-bottom:18px;}
+  .closing p{color:rgba(255,255,255,.8);font-size:19px;margin-bottom:32px;}
+
+  footer{background:#06121a;border-top:1px solid var(--line);}
+  .foot{max-width:1180px;margin:0 auto;padding:44px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+  .foot a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:26px;}
+  .foot a:hover{color:var(--gold-l);}
+
+  @media(max-width:880px){
+    h1.hero-h{font-size:42px;} .hero p.sub{font-size:17px;}
+    .mission-grid,.how-grid,.story{grid-template-columns:1fr;gap:30px;}
+    .story.rev .ph{order:0;} .mission .photo{aspect-ratio:16/12;}
+    .nav-r .link{display:none;} .closing h2{font-size:36px;}
+    .stats-grid{gap:36px;}
+  }
+</style>
+</head>
+<body>
+<div class="note">📐 <b>Landing concept v2</b> — photo-led &amp; story-driven, modeled on how Hinge &amp; Tinder actually convert (full-bleed imagery, one bold CTA, real success stories). Placeholder photos; we'd swap in real Malawian member/couple photos. Approve and I'll build it.</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-in">
+    <div class="logo"><div class="mark">✦</div><b>Kondani</b></div>
+    <div class="nav-r">
+      <a class="link" href="#how">How it works</a>
+      <a class="link" href="#stories">Stories</a>
+      <a class="link" href="#" style="opacity:1">Sign in</a>
+      <a class="nav-cta" href="#">Create account</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="bg"><img src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=1600&q=80" alt="" /></div>
+  <div class="scrim"></div><div class="scrim2"></div>
+  <div class="hero-content">
+    <div class="wrap">
+      <div class="pill"><span class="dot"></span>🇲🇼 Malawi's home for real connection</div>
+      <h1 class="hero-h">Go on your<br>last first date.</h1>
+      <p class="sub">Verified Malawians, real plans, real meetups — in the warm heart of Africa. Not endless swiping. Actual dates.</p>
+      <div class="ctas">
+        <a href="#" class="btn btn-gold">Create account</a>
+        <a href="#how" class="btn btn-ghost">How it works</a>
+      </div>
+      <p class="disclaimer">Photos are illustrative. Every member is selfie-verified.</p>
+    </div>
+  </div>
+</header>
+
+<!-- MISSION -->
+<section class="mission">
+  <div class="wrap mission-grid">
+    <div>
+      <div class="k">Our approach</div>
+      <h2>Kondani means<br>“love one another.”</h2>
+      <p>We built Kondani for how Malawians actually meet — over coffee in City Centre, a hike up Mulanje, Afrobeats on a Friday. Not to keep you scrolling, but to get you off the app and onto a real date.</p>
+      <p>Every profile is verified with a live selfie, so the person you meet is the person you matched with. No catfish. No bots. Just real people, near you.</p>
+    </div>
+    <div class="photo"><img src="https://images.unsplash.com/photo-1522098543979-ffc7f79a56c4?w=900&q=80" onerror="this.src='https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=900&q=80'" alt="" /></div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="head">
+      <h2>From hello to a real date</h2>
+      <p>Set up in under two minutes, then meet someone this week.</p>
+    </div>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="step-img"><img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=700&q=80" onerror="this.src='https://images.unsplash.com/photo-1548142813-c348350df52b?w=700&q=80'" /><div class="n">1</div></div>
+        <h3>Create your profile</h3><p>Sign up with your phone, add real photos and what you love. Quick and painless.</p>
+      </div>
+      <div class="how-card">
+        <div class="step-img"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=700&q=80" /><div class="n">2</div></div>
+        <h3>Get your gold badge</h3><p>One live selfie verifies you're real. Verified members get 4× more matches.</p>
+      </div>
+      <div class="how-card">
+        <div class="step-img"><img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=700&q=80" onerror="this.src='https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=700&q=80'" /><div class="n">3</div></div>
+        <h3>Match &amp; meet</h3><p>Swipe, post a plan, or get daily picks — then chat, call, and meet for real.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STORIES -->
+<section class="stories" id="stories">
+  <div class="wrap">
+    <div class="head"><div class="k">Kondani stories</div><h2>Real matches, real meetups</h2></div>
+
+    <div class="story">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1542596594-649edbc13630?w=1000&q=80" onerror="this.src='https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=1000&q=80'" /></div>
+      <div>
+        <div class="stars">★★★★★</div>
+        <blockquote>“I posted a coffee plan at Mamma Mia and Grace joined. Six months later we're still meeting for coffee — every weekend.”</blockquote>
+        <div class="by"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&q=70" /><div><div class="nm">Daniel &amp; Grace</div><div class="ct">Lilongwe</div></div></div>
+      </div>
+    </div>
+
+    <div class="story rev">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1000&q=80" onerror="this.src='https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=1000&q=80'" /></div>
+      <div>
+        <div class="stars">★★★★★</div>
+        <blockquote>“Everyone's verified, so it actually felt safe. We matched, video-called the same night, and hiked Mulanje that weekend.”</blockquote>
+        <div class="by"><img src="https://images.unsplash.com/photo-1548142813-c348350df52b?w=120&q=70" /><div><div class="nm">Thoko &amp; Kondwani</div><div class="ct">Blantyre</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stats-grid">
+    <div class="stat"><div class="v">12,000+</div><div class="l">Verified members</div></div>
+    <div class="stat"><div class="v">4 cities</div><div class="l">Lilongwe · Blantyre · Mzuzu · Zomba</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">Bots, ever</div></div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section class="closing">
+  <div class="bg"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1600&q=80" /></div>
+  <div class="scrim"></div>
+  <div class="inner wrap">
+    <h2>Your person is out there.</h2>
+    <p>Join thousands of verified Malawians finding real connection. Free to start.</p>
+    <a href="#" class="btn btn-gold">Create account</a>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <div class="logo"><div class="mark">✦</div><b style="color:#fff">Kondani</b></div>
+    <div><a href="#">Privacy</a><a href="#">Safety</a><a href="#">Support</a><a href="#">Terms</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

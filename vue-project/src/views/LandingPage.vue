@@ -1,117 +1,117 @@
 <template>
-  <div class="min-h-screen bg-night-950 text-white selection:bg-gold-500 selection:text-night-950 overflow-x-hidden relative">
-    <!-- Lake of Stars ambiance -->
-    <div class="stars fixed inset-0 pointer-events-none"></div>
-    <div class="fixed inset-0 pointer-events-none">
-      <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[55%] rounded-full blur-[120px]" style="background: radial-gradient(circle, rgba(45,212,191,.18), transparent 70%)"></div>
-      <div class="absolute bottom-[-20%] right-[-10%] w-[60%] h-[55%] rounded-full blur-[120px]" style="background: radial-gradient(circle, rgba(244,183,64,.14), transparent 70%)"></div>
-    </div>
-
-    <!-- Navbar -->
-    <nav class="fixed w-full z-50 bg-night-950/80 backdrop-blur-xl border-b border-white/5">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
-          <div class="flex items-center gap-3 cursor-pointer">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-gold-300 to-gold-500 shadow-lg shadow-gold-500/25">
-              <span class="text-xl text-night-950">✦</span>
-            </div>
-            <span class="text-2xl font-bold font-display tracking-tight">Kondani</span>
-          </div>
-
-          <div class="flex items-center gap-5 sm:gap-7">
-            <a @click.prevent="scrollToSection('features')" href="#features" class="hidden md:inline text-sm font-medium text-white/70 hover:text-gold-300 transition-colors cursor-pointer">Features</a>
-            <a @click.prevent="scrollToSection('safety')" href="#safety" class="hidden md:inline text-sm font-medium text-white/70 hover:text-gold-300 transition-colors cursor-pointer">Safety</a>
-            <router-link to="/login" class="text-sm font-semibold text-white hover:text-gold-300 transition-colors">Sign in</router-link>
-            <router-link to="/login" class="btn-gold">Get Started</router-link>
-          </div>
+  <div class="lp">
+    <!-- NAV -->
+    <nav class="nav">
+      <div class="nav-in">
+        <div class="logo-row">
+          <KondaniMark :size="36" />
+          <b>Kondani</b>
+        </div>
+        <div class="nav-r">
+          <a class="link" href="#how" @click.prevent="scrollTo('how')">How it works</a>
+          <a class="link" href="#stories" @click.prevent="scrollTo('stories')">Stories</a>
+          <router-link class="link signin" to="/login">Sign in</router-link>
+          <router-link class="nav-cta" to="/login">Create account</router-link>
         </div>
       </div>
     </nav>
 
-    <!-- Hero -->
-    <section class="relative pt-36 pb-20 lg:pt-48 lg:pb-32">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 text-center relative z-10">
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-400/30 mb-8 backdrop-blur-md">
-          <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
-          <span class="text-sm font-medium text-gold-300">🇲🇼 #1 Trusted Dating App in Malawi</span>
+    <!-- HERO -->
+    <header class="hero">
+      <div class="bg"><img :src="img('photo-1719179542047-a4d84fd35c1f', 1600)" alt="" /></div>
+      <div class="scrim"></div><div class="scrim2"></div>
+      <div class="hero-content">
+        <div class="wrap">
+          <div class="pill"><span class="dot"></span>🇲🇼 Malawi's home for real connection</div>
+          <h1 class="hero-h">Find <em>love</em> in the<br />warm heart of Africa.</h1>
+          <p class="sub">Kondani means <strong>love</strong>. Verified Malawians, real plans, real meetups — not endless swiping.</p>
+          <div class="ctas">
+            <router-link to="/login" class="btn btn-gold">Create account</router-link>
+            <a href="#how" @click.prevent="scrollTo('how')" class="btn btn-ghost">How it works</a>
+          </div>
+          <p class="disclaimer">Every member is selfie-verified.</p>
         </div>
+      </div>
+    </header>
 
-        <h1 class="text-5xl md:text-7xl font-bold font-display tracking-tight mb-8 leading-[1.1]">
-          Find your person<br />
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-gold-300 via-gold-400 to-gold-500">under the same stars</span>
-        </h1>
-
-        <p class="text-xl text-white/60 max-w-2xl mx-auto mb-12 leading-relaxed">
-          Verified Malawians, real plans, real meetups. The warm heart of Africa — one match at a time.
-        </p>
-
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <router-link to="/login" class="btn-gold text-lg px-8 py-4 w-full sm:w-auto min-w-[200px]">Join free</router-link>
-          <a href="#features" @click.prevent="scrollToSection('features')" class="px-8 py-4 rounded-full bg-white/5 text-white font-semibold border border-white/10 hover:bg-white/10 transition-all w-full sm:w-auto min-w-[200px] backdrop-blur-md text-center">How it works</a>
+    <!-- MISSION -->
+    <section class="mission">
+      <div class="wrap mission-grid">
+        <div>
+          <div class="k">Our approach</div>
+          <h2>Kondani means <em>love</em>.</h2>
+          <p>We built Kondani for how Malawians actually meet — coffee in City Centre, a hike up Mulanje, Afrobeats on a Friday night. Not to keep you scrolling, but to get you onto a real date.</p>
+          <p>Every profile is verified with a live selfie, so the person you meet is the person you matched with. No catfish, no bots — just real people, near you.</p>
         </div>
+        <div class="photo"><img :src="img('photo-1633653330687-9955a3796b8c', 900)" alt="" /></div>
+      </div>
+    </section>
 
-        <div class="flex items-center justify-center gap-8 mt-16">
-          <div class="text-center"><div class="text-gold-400 font-display font-extrabold text-2xl">12k+</div><div class="text-white/50 text-xs">Verified</div></div>
-          <div class="w-px h-8 bg-white/10"></div>
-          <div class="text-center"><div class="text-gold-400 font-display font-extrabold text-2xl">4 cities</div><div class="text-white/50 text-xs">Live now</div></div>
-          <div class="w-px h-8 bg-white/10"></div>
-          <div class="text-center"><div class="text-gold-400 font-display font-extrabold text-2xl">0</div><div class="text-white/50 text-xs">Bots</div></div>
+    <!-- HOW -->
+    <section class="how" id="how">
+      <div class="wrap">
+        <div class="head"><h2>From hello to a real date</h2><p>Set up in under two minutes, then meet someone this week.</p></div>
+        <div class="how-grid">
+          <div class="how-card"><div class="step-img"><img :src="img('photo-1692457799626-4477193123c6', 700)" /><div class="iscr"></div><div class="n">1</div></div><h3>Create your profile</h3><p>Sign up with your phone, add real photos and what you love. Quick and painless.</p></div>
+          <div class="how-card"><div class="step-img"><img :src="img('photo-1585962673804-d92fd4eac3c8', 700)" /><div class="iscr"></div><div class="n">2</div></div><h3>Get your gold badge</h3><p>One live selfie verifies you're real. Verified members get 4× more matches.</p></div>
+          <div class="how-card"><div class="step-img"><img :src="img('photo-1626775920385-3f5348cc22f8', 700)" /><div class="iscr"></div><div class="n">3</div></div><h3>Match &amp; meet</h3><p>Swipe, post a plan, or get daily picks — then chat, call, and meet for real.</p></div>
         </div>
       </div>
     </section>
 
-    <!-- Features -->
-    <section id="features" class="py-24 relative z-10">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold font-display mb-4">Why Kondani?</h2>
-          <p class="text-white/60 max-w-2xl mx-auto">Built for Malawi — addressing local needs, safety, and trust.</p>
+    <!-- STORIES -->
+    <section class="stories" id="stories">
+      <div class="wrap">
+        <div class="head"><div class="k center">Kondani stories</div><h2>Real matches, real meetups</h2></div>
+
+        <div class="story">
+          <div class="ph"><img :src="img('photo-1633653331665-6397dceec7ae', 1000)" /></div>
+          <div>
+            <div class="stars">★★★★★</div>
+            <blockquote>“I posted a coffee plan at Mamma Mia and Grace joined. Six months later, we still meet for coffee every weekend.”</blockquote>
+            <div class="by"><img :src="img('photo-1575467678950-0c09aad418af', 120)" /><div><div class="nm">Daniel &amp; Grace</div><div class="ct">Lilongwe</div></div></div>
+          </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-6">
-          <div class="glass-card p-8 hover:-translate-y-2 transition-transform duration-300 rounded-2xl border border-white/10 bg-white/5">
-            <div class="w-14 h-14 bg-gold-500/10 rounded-2xl flex items-center justify-center text-3xl mb-6">🛡️</div>
-            <h3 class="text-xl font-bold mb-3">Verified profiles</h3>
-            <p class="text-white/60 leading-relaxed">Every member verifies with a live selfie matched to their photos. No catfish, no bots.</p>
-          </div>
-          <div class="glass-card p-8 hover:-translate-y-2 transition-transform duration-300 rounded-2xl border border-white/10 bg-white/5">
-            <div class="w-14 h-14 bg-lagoon-400/10 rounded-2xl flex items-center justify-center text-3xl mb-6">🇲🇼</div>
-            <h3 class="text-xl font-bold mb-3">Made for Malawi</h3>
-            <p class="text-white/60 leading-relaxed">Local payments with Airtel Money and TNM Mpamba, and real distance from Lilongwe to Chitipa.</p>
-          </div>
-          <div class="glass-card p-8 hover:-translate-y-2 transition-transform duration-300 rounded-2xl border border-white/10 bg-white/5">
-            <div class="w-14 h-14 bg-gold-500/10 rounded-2xl flex items-center justify-center text-3xl mb-6">✦</div>
-            <h3 class="text-xl font-bold mb-3">Real plans</h3>
-            <p class="text-white/60 leading-relaxed">Post what you're up to — coffee, a hike, a night out — and meet people for real, not just chat.</p>
+        <div class="story rev">
+          <div class="ph"><img :src="img('photo-1619010539735-92149716db70', 1000)" /></div>
+          <div>
+            <div class="stars">★★★★★</div>
+            <blockquote>“Everyone's verified, so it actually felt safe. We matched, video-called that night, and hiked Mulanje that weekend.”</blockquote>
+            <div class="by"><img :src="img('photo-1592599457638-3ae7ccfbe065', 120)" /><div><div class="nm">Thoko &amp; Kondwani</div><div class="ct">Blantyre</div></div></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Safety strip -->
-    <section id="safety" class="py-16 relative z-10">
-      <div class="max-w-3xl mx-auto px-4 text-center">
-        <div class="glass-card rounded-2xl border border-lagoon-400/25 bg-lagoon-400/5 p-8">
-          <div class="text-3xl mb-3">🔒</div>
-          <h3 class="text-2xl font-bold font-display mb-2">Your safety comes first</h3>
-          <p class="text-white/60">We never share your number or exact location. Report or block anyone, anytime.</p>
-        </div>
+    <!-- STATS -->
+    <section class="stats">
+      <div class="stats-grid">
+        <div class="stat"><div class="v">Verified</div><div class="l">Every single member</div></div>
+        <div class="stat"><div class="v">4 cities</div><div class="l">Lilongwe · Blantyre · Mzuzu · Zomba</div></div>
+        <div class="stat"><div class="v">0</div><div class="l">Bots, ever</div></div>
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="relative z-10 border-t border-white/10 py-12 bg-night-950/50 backdrop-blur-xl">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-8">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-gold-300 to-gold-500">
-            <span class="text-xl text-night-950">✦</span>
-          </div>
-          <span class="text-2xl font-bold font-display tracking-tight">Kondani</span>
-        </div>
-        <div class="flex items-center gap-6">
-          <router-link to="/privacy" class="text-white/60 hover:text-gold-300 transition-colors text-sm">Privacy</router-link>
-          <router-link to="/safety-center" class="text-white/60 hover:text-gold-300 transition-colors text-sm">Safety</router-link>
-          <router-link to="/support" class="text-white/60 hover:text-gold-300 transition-colors text-sm">Support</router-link>
+    <!-- CLOSING -->
+    <section class="closing">
+      <div class="bg"><img :src="img('photo-1633653330768-3e869a81eff8', 1600)" /></div>
+      <div class="scrim"></div>
+      <div class="inner wrap">
+        <h2>Your person is out there.</h2>
+        <p>Join verified Malawians finding real <em>love</em>. Free to start.</p>
+        <router-link to="/login" class="btn btn-gold">Create account</router-link>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="foot">
+        <div class="logo-row"><KondaniMark :size="30" /><b>Kondani</b></div>
+        <div class="foot-links">
+          <router-link to="/privacy">Privacy</router-link>
+          <router-link to="/safety-center">Safety</router-link>
+          <router-link to="/support">Support</router-link>
         </div>
       </div>
     </footer>
@@ -119,20 +119,104 @@
 </template>
 
 <script setup>
-const scrollToSection = (sectionId) => {
-  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
+import KondaniMark from '@/components/ui/KondaniMark.vue'
+
+const img = (id, w) => `https://images.unsplash.com/${id}?w=${w}&q=80&fit=crop`
+const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 </script>
 
 <style scoped>
-.btn-gold { display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:.7rem 1.5rem;border-radius:9999px;font-weight:700;color:#08161d;border:none;cursor:pointer;background:linear-gradient(90deg,#f59e0b,#ffd27d);box-shadow:0 8px 20px rgba(244,183,64,.3);transition:transform .15s; }
-.btn-gold:hover { transform: scale(1.03); }
-.stars{background:
-  radial-gradient(1.5px 1.5px at 18% 14%, rgba(255,215,130,.9), transparent),
-  radial-gradient(1.5px 1.5px at 62% 9%, rgba(255,255,255,.7), transparent),
-  radial-gradient(1px 1px at 82% 20%, rgba(255,215,130,.8), transparent),
-  radial-gradient(1px 1px at 38% 6%, rgba(255,255,255,.55), transparent),
-  radial-gradient(1.5px 1.5px at 90% 7%, rgba(255,255,255,.5), transparent),
-  radial-gradient(1px 1px at 10% 26%, rgba(255,215,130,.6), transparent),
-  radial-gradient(1px 1px at 50% 16%, rgba(255,255,255,.45), transparent);}
+.lp{background:#050d12;color:#f1f8f6;overflow-x:hidden;font-family:'Inter',sans-serif;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border:none;cursor:pointer;text-decoration:none;transition:transform .15s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-gold{background:linear-gradient(95deg,#d99a1f,#f4b740 50%,#ffd98a);color:#1a1205;border-radius:99px;padding:15px 32px;font-size:16px;box-shadow:0 12px 30px rgba(244,183,64,.4);}
+.btn-ghost{background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:99px;padding:15px 30px;font-size:16px;font-weight:600;}
+.logo-row{display:flex;align-items:center;gap:10px;}
+.logo-row b{font-family:'Outfit',sans-serif;font-size:23px;font-weight:800;letter-spacing:-.02em;color:#fff;}
+
+.nav{position:absolute;top:0;left:0;right:0;z-index:20;}
+.nav-in{max-width:1180px;margin:0 auto;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;}
+.nav-r{display:flex;align-items:center;gap:18px;}
+.nav-r a.link{color:#fff;text-decoration:none;font-weight:600;font-size:15px;opacity:.92;}
+.nav-r a.link:hover{color:#ffd98a;}
+.nav-cta{background:#fff;color:#050d12;border-radius:99px;padding:11px 24px;font-weight:700;text-decoration:none;font-size:15px;}
+
+.hero{position:relative;height:100vh;min-height:680px;max-height:940px;display:flex;align-items:flex-end;}
+.hero .bg{position:absolute;inset:0;z-index:0;}
+.hero .bg img{width:100%;height:100%;object-fit:cover;object-position:center 25%;}
+.scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(5,13,18,.75) 0%,rgba(5,13,18,.25) 30%,rgba(5,13,18,.65) 68%,rgba(5,13,18,.99) 100%);}
+.scrim2{position:absolute;inset:0;z-index:1;background:radial-gradient(75% 70% at 18% 88%,rgba(5,13,18,.85),transparent 72%);}
+.hero-content{position:relative;z-index:5;padding-bottom:84px;width:100%;}
+.pill{display:inline-flex;align-items:center;gap:8px;background:rgba(244,183,64,.16);backdrop-filter:blur(8px);border:1px solid rgba(244,183,64,.4);color:#ffd98a;font-size:13px;font-weight:600;padding:8px 16px;border-radius:99px;margin-bottom:24px;}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:#f4b740;}
+.hero-h{font-family:'Fraunces',serif;font-weight:600;font-size:78px;line-height:1;letter-spacing:-.025em;color:#fff;max-width:900px;margin-bottom:24px;text-shadow:0 2px 30px rgba(0,0,0,.4);}
+.hero-h em{font-style:italic;color:#ffd98a;}
+.hero .sub{font-size:21px;color:rgba(255,255,255,.88);max-width:540px;line-height:1.5;margin-bottom:32px;}
+.hero .ctas{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+.disclaimer{margin-top:26px;font-size:12px;color:rgba(255,255,255,.5);}
+
+.mission{padding:120px 0;background:linear-gradient(180deg,#050d12,#0a1820);}
+.mission-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+.k{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#f4b740;margin-bottom:18px;}
+.k.center{text-align:center;}
+.mission h2{font-family:'Fraunces',serif;font-weight:600;font-size:50px;line-height:1.05;letter-spacing:-.02em;margin-bottom:22px;}
+.mission h2 em,.closing h2 em{font-style:italic;color:#ffd98a;}
+.mission p{color:rgba(241,248,246,.6);font-size:17px;line-height:1.75;margin-bottom:16px;}
+.mission .photo{border-radius:26px;overflow:hidden;aspect-ratio:4/5;box-shadow:0 50px 90px -30px rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.09);}
+.mission .photo img{width:100%;height:100%;object-fit:cover;}
+
+.how{padding:100px 0;background:#0a1820;}
+.how .head{text-align:center;max-width:620px;margin:0 auto 58px;}
+.how .head h2{font-family:'Outfit',sans-serif;font-weight:800;font-size:42px;letter-spacing:-.02em;margin-bottom:12px;}
+.how .head p{color:rgba(241,248,246,.6);font-size:16px;}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
+.how-card .step-img{border-radius:22px;overflow:hidden;aspect-ratio:5/4;margin-bottom:20px;position:relative;border:1px solid rgba(255,255,255,.09);}
+.how-card .step-img img{width:100%;height:100%;object-fit:cover;}
+.how-card .step-img .iscr{position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(5,13,18,.5));}
+.how-card .step-img .n{position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#ffd98a,#f4b740);color:#1a1205;font-family:'Outfit',sans-serif;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.how-card h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:21px;margin-bottom:8px;}
+.how-card p{color:rgba(241,248,246,.6);font-size:14.5px;line-height:1.6;}
+
+.stories{padding:120px 0;background:linear-gradient(180deg,#0a1820,#050d12);}
+.stories .head{text-align:center;max-width:620px;margin:0 auto 66px;}
+.stories .head h2{font-family:'Fraunces',serif;font-weight:600;font-size:50px;letter-spacing:-.02em;}
+.story{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-bottom:84px;}
+.story:last-child{margin-bottom:0;}
+.story.rev .ph{order:2;}
+.story .ph{border-radius:26px;overflow:hidden;aspect-ratio:4/3;box-shadow:0 50px 90px -30px rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.09);}
+.story .ph img{width:100%;height:100%;object-fit:cover;}
+.story .stars{color:#f4b740;letter-spacing:4px;margin-bottom:18px;font-size:16px;}
+.story blockquote{font-family:'Fraunces',serif;font-weight:500;font-size:28px;line-height:1.38;color:#fff;margin-bottom:22px;}
+.story .by{display:flex;align-items:center;gap:12px;}
+.story .by img{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #f4b740;}
+.story .by .nm{font-weight:700;font-size:15px;}
+.story .by .ct{color:rgba(241,248,246,.4);font-size:13px;}
+
+.stats{padding:72px 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09);background:#03080b;}
+.stats-grid{display:flex;justify-content:center;gap:72px;flex-wrap:wrap;text-align:center;}
+.stat .v{font-family:'Outfit',sans-serif;font-weight:800;font-size:44px;background:linear-gradient(120deg,#ffd98a,#f4b740);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.stat .l{color:rgba(241,248,246,.6);font-size:14px;margin-top:4px;}
+
+.closing{position:relative;padding:150px 0;text-align:center;overflow:hidden;}
+.closing .bg{position:absolute;inset:0;z-index:0;}
+.closing .bg img{width:100%;height:100%;object-fit:cover;object-position:center 30%;}
+.closing .scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(5,13,18,.82),rgba(5,13,18,.95));}
+.closing .inner{position:relative;z-index:5;}
+.closing h2{font-family:'Fraunces',serif;font-weight:600;font-size:58px;line-height:1.04;letter-spacing:-.02em;margin-bottom:18px;}
+.closing p{color:rgba(255,255,255,.82);font-size:19px;margin-bottom:34px;}
+
+.footer{background:#03080b;border-top:1px solid rgba(255,255,255,.09);}
+.foot{max-width:1180px;margin:0 auto;padding:46px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+.foot-links a{color:rgba(241,248,246,.6);text-decoration:none;font-size:14px;margin-left:26px;}
+.foot-links a:hover{color:#ffd98a;}
+
+@media(max-width:880px){
+  .hero-h{font-size:44px;} .hero .sub{font-size:17px;}
+  .mission-grid,.how-grid,.story{grid-template-columns:1fr;gap:30px;}
+  .story.rev .ph{order:0;}
+  .nav-r .link:not(.signin){display:none;}
+  .closing h2{font-size:38px;} .stats-grid{gap:36px;}
+  .mission h2,.stories .head h2{font-size:36px;}
+}
 </style>
