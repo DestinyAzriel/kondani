@@ -1,127 +1,84 @@
 <template>
-  <div class="min-h-screen bg-night-950 text-white flex flex-col justify-center py-12 px-4 sm:px-6 relative overflow-hidden">
-    <!-- Lake of Stars ambiance -->
-    <div class="stars absolute inset-0 pointer-events-none"></div>
-    <div class="absolute top-[-15%] left-[-15%] w-[60%] h-[45%] rounded-full blur-[110px] pointer-events-none"
-         style="background: radial-gradient(circle, rgba(45,212,191,.20), transparent 70%)"></div>
-    <div class="absolute bottom-[-10%] right-[-15%] w-[55%] h-[40%] rounded-full blur-[110px] pointer-events-none"
-         style="background: radial-gradient(circle, rgba(244,183,64,.15), transparent 70%)"></div>
-
-    <div class="mx-auto w-full max-w-md relative z-10">
-      <router-link to="/" class="flex justify-center items-center gap-3 mb-8 group">
-        <KondaniMark :size="36" />
-        <span class="text-3xl font-bold font-display tracking-tight">Kondani</span>
-      </router-link>
-
-      <h2 class="serif text-center text-3xl tracking-tight mb-2">
-        {{ step === 1 ? 'Welcome back' : 'Enter your code' }}
-      </h2>
-      <p class="text-center text-sm text-white/55 mb-8">
-        {{ step === 1
-          ? "Enter your number — we'll send you a verification code."
-          : `We sent a 6-digit code to +265 ${phone}` }}
-      </p>
-
-      <div class="glass-card py-8 px-5 sm:px-8">
-        <!-- Step 1: phone -->
-        <form v-if="step === 1" class="space-y-5" @submit.prevent="sendOTP">
-          <div>
-            <label class="block text-xs font-semibold text-white/60 mb-2">Phone number</label>
-            <div class="flex rounded-xl overflow-hidden border border-white/10 focus-within:border-lagoon-400 focus-within:ring-1 focus-within:ring-lagoon-400 transition-all bg-white/5">
-              <span class="inline-flex items-center px-4 text-white/70 font-medium border-r border-white/10">🇲🇼 +265</span>
-              <input
-                v-model="phone"
-                type="tel"
-                inputmode="numeric"
-                class="flex-1 min-w-0 px-4 py-3 bg-transparent text-white placeholder-white/25 outline-none tracking-wide"
-                placeholder="991 23 45 67"
-              />
-            </div>
-          </div>
-
-          <p v-if="authStore.error" class="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-200">
-            {{ authStore.error }}
-          </p>
-
-          <button
-            type="submit"
-            :disabled="!isValidPhone || authStore.loading"
-            class="btn-gold w-full"
-          >
-            <span v-if="authStore.loading" class="spinner"></span>
-            <span>{{ authStore.loading ? 'Sending…' : 'Send code' }}</span>
-          </button>
-
-          <div class="flex items-start gap-3 rounded-xl border border-lagoon-400/25 bg-lagoon-400/5 px-3 py-3">
-            <span class="text-lg">🔒</span>
-            <p class="text-xs leading-relaxed text-white/55">
-              <span class="text-lagoon-300 font-semibold">Quick &amp; secure.</span>
-              We send a one-time code to confirm your number — it keeps Kondani real and bot-free.
-            </p>
-          </div>
-        </form>
-
-        <!-- Step 2: OTP -->
-        <form v-else class="space-y-5" @submit.prevent="verifyOTP">
-          <div>
-            <label class="block text-xs font-semibold text-white/60 mb-2">Verification code</label>
-            <input
-              v-model="otp"
-              type="text"
-              inputmode="numeric"
-              maxlength="6"
-              class="block w-full px-4 py-4 text-center text-2xl font-display font-bold tracking-[0.4em] rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-lagoon-400 focus:ring-1 focus:ring-lagoon-400 outline-none transition-all"
-              placeholder="••••••"
-            />
-          </div>
-
-          <p v-if="authStore.error" class="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-200">
-            {{ authStore.error }}
-          </p>
-
-          <button
-            type="submit"
-            :disabled="otp.length !== 6 || authStore.loading"
-            class="btn-gold w-full"
-          >
-            <span v-if="authStore.loading" class="spinner"></span>
-            <span>{{ authStore.loading ? 'Verifying…' : 'Verify & continue' }}</span>
-          </button>
-
-          <div class="flex items-center justify-between text-xs">
-            <button type="button" @click="step = 1" class="text-white/45 hover:text-lagoon-300 transition-colors">
-              ← Change number
-            </button>
-            <button type="button" :disabled="authStore.loading" @click="sendOTP" class="text-white/45 hover:text-lagoon-300 transition-colors">
-              Resend code
-            </button>
-          </div>
-        </form>
+  <div class="login min-h-screen flex">
+    <!-- Left: photo panel (desktop) -->
+    <div class="photo-side">
+      <img :src="heroImg" alt="" />
+      <div class="photo-scrim"></div>
+      <div class="photo-copy">
+        <div class="brand"><KondaniMark :size="40" /><b>Kondani</b></div>
+        <h2 class="serif">Find <em>love</em> in the warm heart of Africa.</h2>
+        <p>Kondani means love. Verified Malawians, real meetups.</p>
       </div>
+    </div>
 
-      <p class="mt-6 text-center text-xs text-white/30">
-        By continuing you agree to our
-        <router-link to="/privacy" class="text-white/50 hover:text-lagoon-300">Terms &amp; Privacy</router-link>
-      </p>
+    <!-- Right: form -->
+    <div class="form-side">
+      <div class="stars"></div>
+      <div class="form-inner">
+        <router-link to="/" class="brand mob-brand"><KondaniMark :size="36" /><b>Kondani</b></router-link>
+
+        <h1 class="serif heading">{{ step === 1 ? (isSignup ? 'Create your account' : 'Welcome back') : 'Enter your code' }}</h1>
+        <p class="sub">{{ step === 1
+          ? "Enter your number — we'll send you a verification code."
+          : `We sent a 6-digit code to +265 ${cleanedPhone}` }}</p>
+
+        <!-- Step 1 -->
+        <form v-if="step === 1" @submit.prevent="sendOTP" class="space">
+          <label class="lbl">Phone number</label>
+          <div class="phone-field">
+            <span class="cc">🇲🇼 +265</span>
+            <input v-model="phone" type="tel" inputmode="numeric" placeholder="991 23 45 67" />
+          </div>
+          <p v-if="authStore.error" class="err">{{ authStore.error }}</p>
+          <button type="submit" class="btn-gold" :disabled="!isValidPhone || authStore.loading">
+            <span v-if="authStore.loading" class="spin"></span>{{ authStore.loading ? 'Sending…' : 'Send code' }}
+          </button>
+          <div class="note">
+            <span class="lock">🔒</span>
+            <p><span class="hl">Quick &amp; secure.</span> We send a one-time code to confirm your number — it keeps Kondani real and bot-free.</p>
+          </div>
+        </form>
+
+        <!-- Step 2 -->
+        <form v-else @submit.prevent="verifyOTP" class="space">
+          <label class="lbl">Verification code</label>
+          <input v-model="otp" type="text" inputmode="numeric" maxlength="6" placeholder="••••••" class="otp-input" />
+          <p v-if="authStore.error" class="err">{{ authStore.error }}</p>
+          <button type="submit" class="btn-gold" :disabled="otp.length !== 6 || authStore.loading">
+            <span v-if="authStore.loading" class="spin"></span>{{ authStore.loading ? 'Verifying…' : 'Verify & continue' }}
+          </button>
+          <div class="row-between">
+            <button type="button" class="textlink" @click="step = 1">← Change number</button>
+            <button type="button" class="textlink" :disabled="authStore.loading" @click="sendOTP">Resend code</button>
+          </div>
+        </form>
+
+        <p class="terms">By continuing you agree to our
+          <router-link to="/privacy">Terms &amp; Privacy</router-link>
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
+
+const isSignup = computed(() => route.query.signup === '1')
+const heroImg = 'https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=1100&q=80&fit=crop'
 
 const phone = ref('')
 const otp = ref('')
 const step = ref(1)
 
 const cleanedPhone = computed(() => phone.value.replace(/\D/g, ''))
-// Malawi mobile numbers: 9 digits starting with 8 or 9 (Airtel 99/88, TNM 31/88 etc.)
 const isValidPhone = computed(() => cleanedPhone.value.length === 9 && /^[89]/.test(cleanedPhone.value))
 
 const sendOTP = async () => {
@@ -129,52 +86,68 @@ const sendOTP = async () => {
   try {
     await authStore.register(`+265${cleanedPhone.value}`)
     step.value = 2
-  } catch {
-    /* error shown via authStore.error */
-  }
+  } catch { /* error shown via authStore.error */ }
 }
 
 const verifyOTP = async () => {
   if (otp.value.length !== 6) return
   try {
     await authStore.login(`+265${cleanedPhone.value}`, otp.value)
-    // New users (incomplete profile) go to onboarding; everyone else to the app.
     const done = authStore.user?.isProfileComplete
     router.push(done ? '/encounters' : '/onboarding')
-  } catch {
-    /* error shown via authStore.error */
-  }
+  } catch { /* error shown via authStore.error */ }
 }
 </script>
 
 <style scoped>
-.stars {
-  background:
-    radial-gradient(1.5px 1.5px at 18% 14%, rgba(255,215,130,.9), transparent),
-    radial-gradient(1.5px 1.5px at 62% 9%, rgba(255,255,255,.7), transparent),
-    radial-gradient(1px 1px at 82% 20%, rgba(255,215,130,.8), transparent),
-    radial-gradient(1px 1px at 38% 6%, rgba(255,255,255,.55), transparent),
-    radial-gradient(1.5px 1.5px at 90% 7%, rgba(255,255,255,.5), transparent),
-    radial-gradient(1px 1px at 10% 26%, rgba(255,215,130,.6), transparent),
-    radial-gradient(1px 1px at 50% 16%, rgba(255,255,255,.45), transparent),
-    radial-gradient(1px 1px at 73% 30%, rgba(255,215,130,.5), transparent);
-}
+.login { background: #050d12; color: #f1f8f6; font-family: 'Inter', sans-serif; }
+
+/* photo side */
+.photo-side { display: none; position: relative; width: 44%; overflow: hidden; }
+.photo-side img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.photo-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,13,18,.5), rgba(5,13,18,.25) 40%, rgba(5,13,18,.92)); }
+.photo-copy { position: absolute; left: 0; right: 0; bottom: 0; padding: 48px; }
+.photo-copy .brand b { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; }
+.photo-copy h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 38px; line-height: 1.1; margin: 22px 0 12px; }
+.photo-copy h2 em, .heading em { font-style: italic; color: #ffd98a; }
+.photo-copy p { color: rgba(255,255,255,.75); font-size: 16px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+
+/* form side */
+.form-side { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
+.stars { position: absolute; inset: 0; pointer-events: none; background:
+  radial-gradient(1.5px 1.5px at 20% 18%, rgba(255,215,130,.5), transparent),
+  radial-gradient(1px 1px at 70% 10%, rgba(255,255,255,.4), transparent),
+  radial-gradient(1px 1px at 85% 30%, rgba(255,215,130,.4), transparent); }
+.form-inner { position: relative; width: 100%; max-width: 400px; }
+.mob-brand { display: flex; justify-content: center; gap: 12px; text-decoration: none; color: #fff; margin-bottom: 26px; }
+.mob-brand b { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; }
 .serif { font-family: 'Fraunces', serif; font-weight: 600; }
-.btn-gold {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 0.875rem 1rem; border-radius: 9999px; font-weight: 700;
-  color: #1a1205; border: none; cursor: pointer;
-  background: linear-gradient(95deg, #d99a1f, #f4b740 50%, #ffd98a);
-  box-shadow: 0 10px 26px rgba(244,183,64,.4);
-  transition: transform .15s ease, opacity .15s ease;
-}
-.btn-gold:hover:not(:disabled) { transform: scale(1.02); }
-.btn-gold:active:not(:disabled) { transform: scale(.98); }
+.heading { font-size: 34px; text-align: center; letter-spacing: -.01em; margin-bottom: 8px; }
+.sub { text-align: center; color: rgba(241,248,246,.55); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+.space > * + * { margin-top: 18px; }
+.lbl { display: block; font-size: 12px; font-weight: 600; color: rgba(241,248,246,.6); margin-bottom: 8px; }
+.phone-field { display: flex; align-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; background: rgba(255,255,255,.05); overflow: hidden; }
+.phone-field:focus-within { border-color: #2dd4bf; box-shadow: 0 0 0 1px #2dd4bf; }
+.phone-field .cc { padding: 0 14px; font-weight: 600; border-right: 1px solid rgba(255,255,255,.1); white-space: nowrap; }
+.phone-field input { flex: 1; min-width: 0; padding: 14px; background: transparent; border: none; outline: none; color: #fff; letter-spacing: 1px; }
+.otp-input { width: 100%; padding: 16px; text-align: center; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 24px; letter-spacing: .4em; border-radius: 12px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: #fff; outline: none; }
+.otp-input:focus { border-color: #2dd4bf; box-shadow: 0 0 0 1px #2dd4bf; }
+.btn-gold { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; font-weight: 700; color: #1a1205; border: none; cursor: pointer; background: linear-gradient(95deg, #f4b740, #ffd98a); box-shadow: 0 10px 26px rgba(244,183,64,.4); transition: transform .15s; }
+.btn-gold:hover:not(:disabled) { transform: translateY(-2px); }
 .btn-gold:disabled { opacity: .5; cursor: not-allowed; }
-.spinner {
-  width: 16px; height: 16px; border-radius: 50%;
-  border: 2px solid rgba(8,22,29,.35); border-top-color: #08161d;
-  animation: spin .7s linear infinite;
+.err { color: #ff9d8f; font-size: 13px; background: rgba(255,94,94,.1); border: 1px solid rgba(255,94,94,.25); padding: 10px 12px; border-radius: 10px; }
+.note { display: flex; gap: 11px; align-items: flex-start; border: 1px solid rgba(45,212,191,.25); background: rgba(45,212,191,.06); border-radius: 12px; padding: 13px; }
+.note .hl { color: #5eead4; font-weight: 600; }
+.note p { font-size: 12.5px; color: rgba(241,248,246,.6); line-height: 1.5; }
+.row-between { display: flex; justify-content: space-between; }
+.textlink { background: none; border: none; color: rgba(241,248,246,.5); font-size: 13px; cursor: pointer; }
+.textlink:hover { color: #5eead4; }
+.terms { text-align: center; font-size: 11px; color: rgba(241,248,246,.35); margin-top: 26px; }
+.terms a { color: rgba(241,248,246,.55); }
+
+@media (min-width: 1024px) {
+  .photo-side { display: block; }
+  .mob-brand { display: none; }
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 </style>

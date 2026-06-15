@@ -11,7 +11,7 @@
           <a class="link" href="#how" @click.prevent="scrollTo('how')">How it works</a>
           <a class="link" href="#stories" @click.prevent="scrollTo('stories')">Stories</a>
           <router-link class="link signin" to="/login">Sign in</router-link>
-          <router-link class="nav-cta" to="/login">Create account</router-link>
+          <router-link class="nav-cta" to="/login?signup=1">Create account</router-link>
         </div>
       </div>
     </nav>
@@ -26,7 +26,7 @@
           <h1 class="hero-h">Find <em>love</em> in the<br />warm heart of Africa.</h1>
           <p class="sub">Kondani means <strong>love</strong>. Verified Malawians, real plans, real meetups — not endless swiping.</p>
           <div class="ctas">
-            <router-link to="/login" class="btn btn-gold">Create account</router-link>
+            <router-link to="/login?signup=1" class="btn btn-gold">Create account</router-link>
             <a href="#how" @click.prevent="scrollTo('how')" class="btn btn-ghost">How it works</a>
           </div>
           <p class="disclaimer">Every member is selfie-verified.</p>
@@ -52,9 +52,9 @@
       <div class="wrap">
         <div class="head"><h2>From hello to a real date</h2><p>Set up in under two minutes, then meet someone this week.</p></div>
         <div class="how-grid">
-          <div class="how-card"><div class="step-img"><img :src="img('photo-1692457799626-4477193123c6', 700)" /><div class="iscr"></div><div class="n">1</div></div><h3>Create your profile</h3><p>Sign up with your phone, add real photos and what you love. Quick and painless.</p></div>
-          <div class="how-card"><div class="step-img"><img :src="img('photo-1585962673804-d92fd4eac3c8', 700)" /><div class="iscr"></div><div class="n">2</div></div><h3>Get your gold badge</h3><p>One live selfie verifies you're real. Verified members get 4× more matches.</p></div>
-          <div class="how-card"><div class="step-img"><img :src="img('photo-1626775920385-3f5348cc22f8', 700)" /><div class="iscr"></div><div class="n">3</div></div><h3>Match &amp; meet</h3><p>Swipe, post a plan, or get daily picks — then chat, call, and meet for real.</p></div>
+          <div class="how-card"><div class="step-img"><img :src="img('photo-1633653331665-6397dceec7ae', 700)" /><div class="iscr"></div><div class="n">1</div></div><h3>Create your profile</h3><p>Sign up with your phone, add real photos and what you love. Quick and painless.</p></div>
+          <div class="how-card"><div class="step-img"><img :src="img('photo-1633653332950-1557cf45c1fa', 700)" /><div class="iscr"></div><div class="n">2</div></div><h3>Get your gold badge</h3><p>One live selfie verifies you're real. Verified members get 4× more matches.</p></div>
+          <div class="how-card"><div class="step-img"><img :src="img('photo-1633653330768-3e869a81eff8', 700)" /><div class="iscr"></div><div class="n">3</div></div><h3>Match &amp; meet</h3><p>Swipe, post a plan, or get daily picks — then chat, call, and meet for real.</p></div>
         </div>
       </div>
     </section>
@@ -69,16 +69,16 @@
           <div>
             <div class="stars">★★★★★</div>
             <blockquote>“I posted a coffee plan at Mamma Mia and Grace joined. Six months later, we still meet for coffee every weekend.”</blockquote>
-            <div class="by"><img :src="img('photo-1575467678950-0c09aad418af', 120)" /><div><div class="nm">Daniel &amp; Grace</div><div class="ct">Lilongwe</div></div></div>
+            <div class="by"><img :src="img('photo-1633653330687-9955a3796b8c', 120)" /><div><div class="nm">Daniel &amp; Grace</div><div class="ct">Lilongwe</div></div></div>
           </div>
         </div>
 
         <div class="story rev">
-          <div class="ph"><img :src="img('photo-1619010539735-92149716db70', 1000)" /></div>
+          <div class="ph"><img :src="img('photo-1719179542047-a4d84fd35c1f', 1000)" /></div>
           <div>
             <div class="stars">★★★★★</div>
             <blockquote>“Everyone's verified, so it actually felt safe. We matched, video-called that night, and hiked Mulanje that weekend.”</blockquote>
-            <div class="by"><img :src="img('photo-1592599457638-3ae7ccfbe065', 120)" /><div><div class="nm">Thoko &amp; Kondwani</div><div class="ct">Blantyre</div></div></div>
+            <div class="by"><img :src="img('photo-1633653332950-1557cf45c1fa', 120)" /><div><div class="nm">Thoko &amp; Kondwani</div><div class="ct">Blantyre</div></div></div>
           </div>
         </div>
       </div>
@@ -100,7 +100,7 @@
       <div class="inner wrap">
         <h2>Your person is out there.</h2>
         <p>Join verified Malawians finding real <em>love</em>. Free to start.</p>
-        <router-link to="/login" class="btn btn-gold">Create account</router-link>
+        <router-link to="/login?signup=1" class="btn btn-gold">Create account</router-link>
       </div>
     </section>
 
@@ -227,7 +227,7 @@ const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior:
   .nav-in{padding:14px 20px;}
   .logo-row b{font-size:19px;}
   .nav-r{gap:12px;}
-  .nav-r a.link.signin{display:none;} /* declutter: Create account covers sign-in (same screen) */
+  .nav-r a.link.signin{font-size:13px;}
   .nav-cta{padding:10px 18px;font-size:14px;}
   .hero{min-height:560px;height:auto;padding-top:120px;}
   .hero-content{padding-bottom:52px;}
