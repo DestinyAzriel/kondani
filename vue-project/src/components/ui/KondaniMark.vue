@@ -8,25 +8,36 @@
     </defs>
     <!-- gold app-icon tile -->
     <rect x="0" y="0" width="100" height="100" :rx="rounded" :fill="`url(#${gid})`" />
-    <!-- Malawi silhouette (dark) + heart (gold) centred in the tile -->
-    <g transform="translate(33,16) scale(0.47)">
-      <path
-        d="M30 6 C36 16 33 28 40 38 C48 50 43 60 50 72 C44 80 47 92 41 100 C47 112 55 120 50 134 C46 146 38 150 33 150 C28 142 26 130 24 118 C20 104 16 90 19 76 C16 62 21 48 22 34 C24 22 25 12 30 6 Z"
-        :fill="ink"
-      />
-      <path
-        d="M34 72 c-4 -5 -12 -2 -12 4 c0 6 12 12 12 12 c0 0 12 -6 12 -12 c0 -6 -8 -9 -12 -4 Z"
-        :fill="`url(#${gid})`"
-      />
-    </g>
+    <!-- exact Malawi silhouette from the SimpleMaps SVG, recoloured + merged -->
+    <svg x="20" y="11" width="60" height="78" viewBox="300 55 405 915"
+         preserveAspectRatio="xMidYMid meet" :fill="ink" stroke="none" v-html="mapInner"></svg>
+    <!-- heart -->
+    <path
+      d="M50 52 c-5 -7 -15 -2 -15 5 c0 8 15 16 15 16 c0 0 15 -8 15 -16 c0 -7 -10 -12 -15 -5 Z"
+      :fill="`url(#${gid})`"
+    />
   </svg>
 </template>
 
 <script setup>
-const props = defineProps({
+import rawSvg from '@/assets/Malawi map.svg?raw'
+
+defineProps({
   size: { type: Number, default: 40 },
   rounded: { type: Number, default: 26 },
   ink: { type: String, default: '#08111a' }
 })
+
 const gid = 'kg-' + Math.random().toString(36).slice(2, 8)
+
+// Pull the district paths out of the file, drop the XML/comment/outer <svg>,
+// and remove the small Likoma island so the mark is one clean landmass.
+const mapInner = rawSvg
+  .replace(/<\?xml[\s\S]*?\?>/, '')
+  .replace(/<!--[\s\S]*?-->/g, '')
+  .replace(/<svg[^>]*>/, '')
+  .replace(/<\/svg>\s*$/, '')
+  .replace(/<path[^>]*id="MWLK"[\s\S]*?<\/path>/, '')
+  .replace(/\sid="[^"]*"/g, '')
+  .replace(/\sname="[^"]*"/g, '')
 </script>

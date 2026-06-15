@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Kondani logo preview</title>
+<style>
+  body{margin:0;background:#050d12;color:#eaf6f4;font-family:system-ui,sans-serif;padding:32px;}
+  h2{font-weight:600;font-size:18px;color:#ffd98a;margin:0 0 6px;}
+  p{color:rgba(234,246,244,.55);font-size:13px;margin:0 0 22px;}
+  .row{display:flex;align-items:flex-end;gap:36px;flex-wrap:wrap;margin-bottom:44px;}
+  .cell{text-align:center;}
+  .cap{font-size:12px;color:rgba(234,246,244,.5);margin-top:10px;}
+  .lockup{display:flex;align-items:center;gap:12px;}
+  .lockup b{font-family:'Outfit',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.02em;}
+  .divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0 36px;}
+</style></head>
+<body>
+
+  <h2>1 · The Malawi shape on its own</h2>
+  <p>Re-traced from your reference. Gold silhouette + heart, large.</p>
+  <div class="row">
+    <div class="cell">
+      <svg width="160" height="290" viewBox="0 0 170 310">
+        <defs><linearGradient id="ga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs>
+        <path d="M70 8 C80 6 88 12 90 24 L86 34 C92 40 98 46 100 58 L106 92 C108 110 100 122 102 138 C112 150 130 158 140 178 L150 210 C152 228 140 240 132 258 L120 300 C116 285 112 272 106 258 C98 240 90 228 80 214 C70 206 58 204 46 196 L14 182 C28 170 44 166 52 152 C48 132 50 112 52 96 C50 76 52 56 56 40 C60 26 64 16 70 8 Z" fill="url(#ga)"/>
+      </svg>
+      <div class="cap">outline only</div>
+    </div>
+    <div class="cell">
+      <svg width="160" height="290" viewBox="0 0 170 310">
+        <defs><linearGradient id="gb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs>
+        <path d="M70 8 C80 6 88 12 90 24 L86 34 C92 40 98 46 100 58 L106 92 C108 110 100 122 102 138 C112 150 130 158 140 178 L150 210 C152 228 140 240 132 258 L120 300 C116 285 112 272 106 258 C98 240 90 228 80 214 C70 206 58 204 46 196 L14 182 C28 170 44 166 52 152 C48 132 50 112 52 96 C50 76 52 56 56 40 C60 26 64 16 70 8 Z" fill="url(#gb)"/>
+        <path d="M90 180 c-9 -11 -27 -4 -27 9 c0 13 27 27 27 27 c0 0 27 -14 27 -27 c0 -13 -18 -20 -27 -9 Z" fill="#08111a"/>
+      </svg>
+      <div class="cap">outline + heart</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <h2>2 · The app-icon tile (nav, login &amp; favicon)</h2>
+  <p>Gold tile, dark Malawi, gold heart — at real sizes.</p>
+  <div class="row">
+    <div class="cell"><div id="t96"></div><div class="cap">96px</div></div>
+    <div class="cell"><div id="t48"></div><div class="cap">48px (nav)</div></div>
+    <div class="cell"><div id="t24"></div><div class="cap">24px (favicon)</div></div>
+    <div class="cell"><div class="lockup"><div id="tlk"></div><b>Kondani</b></div><div class="cap">full lockup</div></div>
+  </div>
+
+  <script>
+    function tile(size){
+      const id='g'+Math.random().toString(36).slice(2,7);
+      return `<svg width="${size}" height="${size}" viewBox="0 0 100 100">
+        <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f4b740"/></linearGradient></defs>
+        <rect width="100" height="100" rx="24" fill="url(#${id})"/>
+        <g transform="translate(30,14) scale(0.246)">
+          <path d="M70 8 C80 6 88 12 90 24 L86 34 C92 40 98 46 100 58 L106 92 C108 110 100 122 102 138 C112 150 130 158 140 178 L150 210 C152 228 140 240 132 258 L120 300 C116 285 112 272 106 258 C98 240 90 228 80 214 C70 206 58 204 46 196 L14 182 C28 170 44 166 52 152 C48 132 50 112 52 96 C50 76 52 56 56 40 C60 26 64 16 70 8 Z" fill="#08111a"/>
+          <path d="M90 180 c-9 -11 -27 -4 -27 9 c0 13 27 27 27 27 c0 0 27 -14 27 -27 c0 -13 -18 -20 -27 -9 Z" fill="url(#${id})"/>
+        </g></svg>`;
+    }
+    t96.innerHTML=tile(96); t48.innerHTML=tile(48); t24.innerHTML=tile(24); tlk.innerHTML=tile(44);
+  </script>
+</body></html>
