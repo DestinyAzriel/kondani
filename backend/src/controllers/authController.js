@@ -154,8 +154,8 @@ exports.login = async (req, res) => {
             user
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('verify-otp/login error:', err);
+        res.status(500).json({ error: err.message || 'Server error' });
     }
 };
 

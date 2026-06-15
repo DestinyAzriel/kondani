@@ -26,7 +26,7 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('kondani_token', token)
         await this.fetchUser()
       } catch (err) {
-        this.error = err.message
+        this.error = err.response?.data?.error || err.response?.data?.message || err.message
         throw err
       } finally {
         this.loading = false
@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         await authService.sendOTP(phone)
       } catch (err) {
-        this.error = err.message
+        this.error = err.response?.data?.error || err.response?.data?.message || err.message
         throw err
       } finally {
         this.loading = false
