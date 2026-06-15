@@ -1,19 +1,21 @@
 <template>
-  <div class="feed-container min-h-screen relative overflow-hidden bg-night-950 text-white pb-24">
+  <div class="feed-container k-page relative overflow-hidden pb-24">
     <!-- Background Elements -->
     <div class="fixed inset-0 pointer-events-none">
-      <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px]" style="background: radial-gradient(circle, rgba(45,212,191,.14), transparent 70%)"></div>
-      <div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[45%] rounded-full blur-[120px]" style="background: radial-gradient(circle, rgba(244,183,64,.12), transparent 70%)"></div>
+      <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px]" style="background: radial-gradient(circle, rgba(244,183,64,.13), transparent 70%)"></div>
+      <div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[45%] rounded-full blur-[120px]" style="background: radial-gradient(circle, rgba(45,212,191,.10), transparent 70%)"></div>
     </div>
 
     <!-- Header -->
     <div class="sticky top-0 z-40 bg-night-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-4 relative">
-      <h1 class="text-2xl font-bold font-display text-white mb-1">Plans Nearby</h1>
-      <p class="text-white/50 text-sm">Real people, verified and ready to meet</p>
+      <div class="max-w-[1040px] mx-auto">
+        <h1 class="k-title">Plans Nearby</h1>
+        <p class="text-white/50 text-sm mt-1">Real people, verified and ready to meet</p>
+      </div>
     </div>
 
     <!-- Content -->
-    <div class="px-4 pt-6 relative z-10">
+    <div class="px-4 pt-6 relative z-10 max-w-[1040px] mx-auto">
 
       <!-- Grid -->
       <div 
@@ -39,7 +41,7 @@
         @action="postIntent"
       >
         <template #icon>
-          <span class="text-5xl">📍</span>
+          <MapPin :size="44" :stroke-width="1.5" style="color:var(--k-gold)" />
         </template>
       </EmptyState>
 
@@ -62,6 +64,7 @@ import { useIntents } from '@/composables/useIntents'
 import IntentCard from '@/components/feature/IntentCard.vue'
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { MapPin } from 'lucide-vue-next'
 import { useToast } from '@/composables/useToast'
 
 const { intents, loading, hasMore, loadMore, refresh, likeIntent, passIntent } = useIntents()

@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-room flex flex-col h-screen bg-night-950 text-white relative overflow-hidden">
+  <div class="chat-room k-page flex flex-col h-screen relative overflow-hidden">
     <div class="fixed inset-0 pointer-events-none">
       <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[45%] rounded-full blur-[100px]"
            style="background: radial-gradient(circle, rgba(45,212,191,.12), transparent 70%)"></div>
@@ -15,10 +15,8 @@
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-1.5">
-            <h1 class="font-bold truncate">{{ chatUser.name || 'Chat' }}</h1>
-            <span v-if="chatUser.isVerified" class="inline-flex items-center bg-gradient-to-r from-gold-300 to-gold-500 rounded-full p-0.5">
-              <CheckIcon size="9" class="text-night-950 stroke-[4]" />
-            </span>
+            <h1 class="k-serif text-base truncate">{{ chatUser.name || 'Chat' }}</h1>
+            <BadgeCheck v-if="chatUser.isVerified" :size="14" style="color:var(--k-gold)" />
           </div>
           <span class="text-xs" :class="chatUser.online ? 'text-lagoon-300' : 'text-white/40'">{{ chatUser.online ? 'Online now' : 'Offline' }}</span>
         </div>
@@ -36,8 +34,9 @@
 
     <!-- Messages -->
     <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3 relative z-10" ref="messagesContainer">
-      <div v-if="messages.length === 0 && !isLoading" class="text-center text-white/40 text-sm pt-10">
-        Say hello 👋 — start the conversation.
+      <div v-if="messages.length === 0 && !isLoading" class="flex flex-col items-center text-center text-white/40 text-sm pt-12 gap-3">
+        <Sparkles :size="30" :stroke-width="1.5" style="color:var(--k-gold)" />
+        <span>Say hello — start the conversation.</span>
       </div>
 
       <div v-for="msg in messages" :key="msg.id" :class="['flex flex-col max-w-[80%]', msg.isMe ? 'ml-auto items-end' : 'mr-auto items-start']">
@@ -111,7 +110,8 @@ import { socketService } from '@/services/socketService'
 import { useAuthStore } from '@/stores/auth'
 import {
   ChevronLeft as ChevronLeftIcon, Check as CheckIcon, CheckCheck as CheckCheckIcon,
-  Video as VideoIcon, Phone as PhoneIcon, Mic as MicIcon, Send as SendIcon, X as XIcon
+  Video as VideoIcon, Phone as PhoneIcon, Mic as MicIcon, Send as SendIcon, X as XIcon,
+  BadgeCheck, Sparkles
 } from 'lucide-vue-next'
 
 const route = useRoute()

@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import './assets/main.css'
 import './styles/animations.css'
+import './assets/premium.css'
 import { activityService } from './services/activityService'
 import { useAuthStore } from './stores/auth'
 

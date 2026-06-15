@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kondani — Profile & Settings (refined)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root{
+    --night:#050d12; --night2:#0a1820; --card:#0e1f29;
+    --lagoon:#2dd4bf; --gold:#f4b740; --gold-l:#ffd98a; --coral:#ff7a6b; --red:#ff5e5e;
+    --txt:#f1f8f6; --mut:rgba(241,248,246,.6); --mut2:rgba(241,248,246,.4); --line:rgba(255,255,255,.08);
+    --disp:'Outfit',sans-serif; --serif:'Fraunces',serif; --body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--body);background:#03080b;color:var(--txt);
+    background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.04) 1px,transparent 0);background-size:30px 30px;padding-bottom:80px;}
+  img{display:block;}
+  .lucide{width:1em;height:1em;vertical-align:-0.15em;stroke-width:1.75;}
+  .head{position:sticky;top:0;z-index:100;background:rgba(3,8,11,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);padding:16px 32px;}
+  .head h1{font-family:var(--disp);font-size:21px;font-weight:800;}
+  .head p{font-size:12.5px;color:var(--mut2);margin-top:3px;}
+  .sec{max-width:1320px;margin:42px auto 0;padding:0 32px;}
+  .label{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .label .n{font-family:var(--disp);font-weight:800;font-size:12px;color:var(--night);background:var(--gold);width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
+  .label h3{font-family:var(--disp);font-size:17px;font-weight:700;}
+  .label .line{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);}
+
+  .win{border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 80px -30px rgba(0,0,0,.85);}
+  .bar{height:40px;background:#0b1820;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:13px;padding:0 16px;}
+  .dots{display:flex;gap:7px;} .dots i{width:11px;height:11px;border-radius:50%;display:block;}
+  .url{flex:1;max-width:420px;margin:0 auto;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;height:24px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--mut);}
+  .url .lucide{font-size:12px;}
+  .app{display:flex;background:var(--night);position:relative;}
+
+  .side{width:262px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#071219;}
+  .side .logo{display:flex;align-items:center;gap:11px;padding:22px 20px 18px;}
+  .side .logo b{font-family:var(--disp);font-size:20px;font-weight:800;}
+  .navi{padding:6px 12px;display:flex;flex-direction:column;gap:2px;}
+  .navi a{display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:11px;font-size:14px;font-weight:500;color:var(--mut);position:relative;}
+  .navi a .ic{font-size:18px;display:flex;width:20px;justify-content:center;}
+  .navi a.on{background:rgba(244,183,64,.1);color:var(--gold-l);font-weight:600;}
+  .navi a.on::before{content:"";position:absolute;left:-12px;top:9px;bottom:9px;width:3px;border-radius:9px;background:var(--gold);}
+  .navi a .bdg{margin-left:auto;background:var(--lagoon);color:var(--night);font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+  .side .grow{flex:1;}
+  .me{display:flex;align-items:center;gap:11px;padding:14px 16px;border-top:1px solid var(--line);}
+  .me img{width:38px;height:38px;border-radius:50%;object-fit:cover;}
+  .me .nm{font-size:13px;font-weight:600;} .me .on{font-size:10.5px;color:var(--lagoon);display:flex;align-items:center;gap:5px;}
+  .me .on .lucide{font-size:8px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;font-family:var(--body);font-weight:600;text-decoration:none;}
+  .b-gold{background:var(--gold);color:var(--night);border-radius:10px;font-weight:700;}
+  .b-ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:#fff;border-radius:10px;}
+
+  .main{flex:1;position:relative;overflow:hidden;}
+  .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut2);}
+  .gcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-size:12.5px;color:var(--txt);background:rgba(255,255,255,.05);border:1px solid var(--line);padding:7px 13px;border-radius:9px;}
+  .ver{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--gold-l);background:rgba(244,183,64,.12);border:1px solid rgba(244,183,64,.3);padding:4px 10px;border-radius:8px;}
+  .ver .lucide{font-size:12px;}
+
+  /* PROFILE */
+  .cover{height:190px;position:relative;overflow:hidden;}
+  .cover img{width:100%;height:100%;object-fit:cover;object-position:center 35%;}
+  .cover .scr{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,13,18,.15),rgba(5,13,18,.55) 60%,var(--night));}
+  .cover .editcover{position:absolute;top:16px;right:16px;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:8px 13px;font-size:12px;font-weight:500;display:flex;gap:7px;align-items:center;}
+  .pbody{padding:0 36px 36px;margin-top:-64px;position:relative;}
+  .ptop{display:flex;align-items:flex-end;gap:20px;}
+  .av{width:128px;height:128px;border-radius:26px;object-fit:cover;border:4px solid var(--night);box-shadow:0 16px 40px rgba(0,0,0,.6);}
+  .avwrap{position:relative;}
+  .avwrap .badge{position:absolute;bottom:-6px;right:-6px;width:30px;height:30px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;border:3px solid var(--night);color:var(--night);font-size:14px;}
+  .pmeta{flex:1;padding-bottom:6px;}
+  .pmeta .nm{font-family:var(--serif);font-weight:600;font-size:33px;display:flex;align-items:center;gap:11px;}
+  .pmeta .nm .age{font-size:23px;color:var(--mut);font-family:var(--body);}
+  .pmeta .sub{display:flex;align-items:center;gap:16px;margin-top:7px;color:var(--mut);font-size:13.5px;}
+  .pmeta .sub span{display:flex;align-items:center;gap:6px;} .pmeta .sub .lucide{font-size:14px;}
+  .pmeta .sub .live{color:var(--lagoon);}
+  .pactions{display:flex;gap:10px;padding-bottom:6px;}
+
+  .pgrid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;margin-top:26px;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .stat .v{font-family:var(--disp);font-weight:800;font-size:22px;}
+  .stat .v.gold{color:var(--gold-l);} .stat .v.lag{color:var(--lagoon);}
+  .stat .l{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;align-items:center;gap:5px;}
+  .stat .l .lucide{font-size:11px;color:var(--gold);}
+
+  .complete{display:flex;gap:20px;align-items:center;}
+  .ring{width:82px;height:82px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--gold) 0% 75%,rgba(255,255,255,.1) 75%);}
+  .ring .in{width:64px;height:64px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring b{font-family:var(--disp);font-weight:800;font-size:18px;color:var(--gold-l);}
+  .checks{flex:1;display:flex;flex-direction:column;gap:9px;}
+  .checks div{display:flex;align-items:center;gap:10px;font-size:13px;}
+  .checks .done{color:var(--mut);} .checks .todo{color:var(--txt);}
+  .checks .cdot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+  .checks .cdot.d{background:var(--lagoon);color:var(--night);} .checks .cdot.t{border:1.5px solid var(--gold);color:var(--gold);}
+  .checks .cta{margin-left:auto;color:var(--gold);font-size:12px;font-weight:500;display:flex;align-items:center;gap:3px;}
+
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .gallery .g{aspect-ratio:3/4;border-radius:12px;overflow:hidden;position:relative;}
+  .gallery .g img{width:100%;height:100%;object-fit:cover;}
+  .gallery .g .main{position:absolute;top:6px;left:6px;font-size:9.5px;font-weight:600;background:var(--gold);color:var(--night);padding:2px 8px;border-radius:6px;}
+  .gallery .add{aspect-ratio:3/4;border-radius:12px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut2);font-size:20px;}
+  .prompt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:11px;}
+  .prompt .q{font-size:11.5px;color:var(--gold-l);font-weight:500;margin-bottom:7px;}
+  .prompt .a{font-family:var(--serif);font-size:17px;line-height:1.4;}
+  .infocard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;gap:14px;align-items:center;}
+  .infocard .lead{width:42px;height:42px;border-radius:11px;background:rgba(244,183,64,.12);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+
+  /* SETTINGS */
+  .stop{padding:24px 36px 14px;}
+  .stop h2{font-family:var(--serif);font-weight:600;font-size:29px;}
+  .swrap{padding:0 36px 40px;max-width:740px;}
+  .group{margin-bottom:24px;}
+  .group > .k{margin-bottom:11px;display:block;}
+  .rowcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .row{display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line);}
+  .row:last-child{border-bottom:none;}
+  .row .ic{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--mut);flex-shrink:0;}
+  .row .lbl{flex:1;}
+  .row .lbl .t{font-size:14px;font-weight:500;}
+  .row .lbl .d{font-size:12px;color:var(--mut);margin-top:2px;}
+  .row .val{color:var(--mut);font-size:13px;display:flex;align-items:center;gap:5px;}
+  .row .val .lucide{font-size:15px;color:var(--mut2);}
+  .row .chev{color:var(--mut2);font-size:18px;display:flex;}
+  .toggle{width:42px;height:24px;border-radius:99px;position:relative;flex-shrink:0;}
+  .toggle.on{background:linear-gradient(90deg,var(--gold),var(--gold-l));box-shadow:0 0 0 1px rgba(244,183,64,.4),0 4px 12px rgba(244,183,64,.3);} .toggle.off{background:rgba(255,255,255,.12);}
+  .toggle .knob{position:absolute;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+  .toggle.on .knob{background:var(--night);}
+  .toggle.on .knob{right:2px;} .toggle.off .knob{left:2px;}
+  .slider{padding:8px 18px 18px;}
+  .slabel{display:flex;justify-content:space-between;font-size:13px;margin-bottom:11px;}
+  .slabel .v{color:var(--gold-l);font-weight:600;}
+  .track{height:5px;border-radius:99px;background:rgba(255,255,255,.1);position:relative;}
+  .track .fill{position:absolute;top:0;bottom:0;border-radius:99px;background:var(--gold);}
+  .track .h{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .gold-banner{background:var(--card);border:1px solid rgba(244,183,64,.3);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;}
+  .gold-banner .lead{width:42px;height:42px;border-radius:11px;background:rgba(244,183,64,.14);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .danger .row .t{color:var(--coral);} .danger .row.del .t{color:var(--red);}
+
+  .phones{display:flex;gap:32px;flex-wrap:wrap;}
+  .frame{width:300px;} .cap{font-family:var(--disp);font-weight:600;font-size:13.5px;margin-bottom:11px;color:var(--mut);}
+  .phone{width:300px;height:640px;border-radius:38px;border:9px solid #14141a;overflow:hidden;position:relative;background:var(--night);box-shadow:0 30px 60px -22px rgba(0,0,0,.75);}
+  .pscr{position:absolute;inset:0;overflow:hidden;}
+  .sb{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:10px;font-weight:600;color:rgba(255,255,255,.8);}
+
+  .note{max-width:1320px;margin:48px auto 0;padding:24px 32px 0;border-top:1px solid var(--line);color:var(--mut);font-size:13px;line-height:1.7;}
+  .note b{color:var(--txt);}
+  @media(max-width:1100px){.app{flex-direction:column;} .side{width:100%;} .pgrid{grid-template-columns:1fr;} .stats{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="head"><h1>Kondani — Profile &amp; Settings (refined)</h1><p>Real line icons (Lucide), restrained styling — no emoji, no AI tells</p></div>
+
+<!-- PROFILE -->
+<div class="sec">
+  <div class="label"><span class="n">1</span><h3>My Profile — desktop</h3><span class="line"></span></div>
+  <div class="win">
+    <div class="bar"><div class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><div class="url"><i data-lucide="lock"></i> kondani-app.onrender.com/profile</div><div style="width:54px"></div></div>
+    <div class="app">
+      <div class="side">
+        <div class="logo"><div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ffd98a,#f4b740);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 100 100"><g transform="translate(30,14) scale(0.246)"><path d="M70 8 C80 6 88 12 90 24 L86 34 C92 40 98 46 100 58 L106 92 C108 110 100 122 102 138 C112 150 130 158 140 178 L150 210 C152 228 140 240 132 258 L120 300 C116 285 112 272 106 258 C98 240 90 228 80 214 C70 206 58 204 46 196 L14 182 C28 170 44 166 52 152 C48 132 50 112 52 96 C50 76 52 56 56 40 C60 26 64 16 70 8 Z" fill="#08111a"/></g></svg></div><b>Kondani</b></div>
+        <div class="navi">
+          <a><span class="ic"><i data-lucide="flame"></i></span>Discover</a>
+          <a><span class="ic"><i data-lucide="sparkles"></i></span>Plans</a>
+          <a><span class="ic"><i data-lucide="star"></i></span>Daily Picks</a>
+          <a><span class="ic"><i data-lucide="heart"></i></span>Likes you<span class="bdg">5</span></a>
+          <a><span class="ic"><i data-lucide="message-circle"></i></span>Chats<span class="bdg">2</span></a>
+          <a class="on"><span class="ic"><i data-lucide="user"></i></span>Profile</a>
+        </div>
+        <div class="grow"></div>
+        <div class="me"><img src="https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=100&q=60&fit=crop&crop=faces" /><div><div class="nm">Destiny, 30</div><div class="on"><i data-lucide="circle" style="fill:var(--lagoon)"></i> Online</div></div></div>
+      </div>
+      <div class="main">
+        <div class="cover"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=70&fit=crop" /><div class="scr"></div><div class="editcover"><i data-lucide="image"></i> Edit cover</div></div>
+        <div class="pbody">
+          <div class="ptop">
+            <div class="avwrap"><img class="av" src="https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=400&q=75&fit=crop&crop=faces" /><div class="badge"><i data-lucide="check"></i></div></div>
+            <div class="pmeta">
+              <div class="nm">Destiny <span class="age">30</span> <span class="ver"><i data-lucide="badge-check"></i> Verified</span></div>
+              <div class="sub"><span><i data-lucide="map-pin"></i> Lilongwe, Central</span><span class="live"><i data-lucide="circle" style="fill:var(--lagoon)"></i> Online now</span></div>
+            </div>
+            <div class="pactions"><a class="btn b-ghost" style="padding:10px 18px;font-size:13px"><i data-lucide="eye"></i> Preview</a><a class="btn b-gold" style="padding:10px 20px;font-size:13px"><i data-lucide="pencil"></i> Edit profile</a></div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><div class="v gold">12</div><div class="l">Likes received</div></div>
+            <div class="stat"><div class="v lag">2</div><div class="l">Matches</div></div>
+            <div class="stat"><div class="v">48</div><div class="l"><i data-lucide="lock"></i> Profile views</div></div>
+            <div class="stat"><div class="v">5</div><div class="l">Plans joined</div></div>
+          </div>
+
+          <div class="pgrid">
+            <div>
+              <div class="gcard" style="margin-bottom:18px"><div class="k" style="margin-bottom:14px;display:block">Complete your profile</div>
+                <div class="complete">
+                  <div class="ring"><div class="in"><b>75%</b><span style="font-size:8px;color:var(--mut)">complete</span></div></div>
+                  <div class="checks">
+                    <div class="done"><span class="cdot d"><i data-lucide="check"></i></span>Added photos</div>
+                    <div class="done"><span class="cdot d"><i data-lucide="check"></i></span>Wrote a bio</div>
+                    <div class="todo"><span class="cdot t"><i data-lucide="camera"></i></span>Verify with a selfie <span class="cta">Verify <i data-lucide="arrow-right"></i></span></div>
+                    <div class="todo"><span class="cdot t"><i data-lucide="plus"></i></span>Add 2 more photos <span class="cta">Add <i data-lucide="arrow-right"></i></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gcard" style="margin-bottom:18px"><div class="k" style="margin-bottom:13px;display:block">Photos</div>
+                <div class="gallery">
+                  <div class="g"><img src="https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=300&q=70&fit=crop&crop=faces" /><span class="main">Main</span></div>
+                  <div class="g"><img src="https://images.unsplash.com/photo-1556300219-2d2fdd6266d3?w=300&q=70&fit=crop&crop=faces" /></div>
+                  <div class="add"><i data-lucide="plus"></i></div>
+                  <div class="add"><i data-lucide="plus"></i></div>
+                  <div class="add"><i data-lucide="plus"></i></div>
+                  <div class="add"><i data-lucide="plus"></i></div>
+                </div>
+              </div>
+
+              <div class="gcard" style="margin-bottom:18px"><div class="k" style="margin-bottom:10px;display:block">About me</div><p style="font-size:14px;line-height:1.6;color:rgba(241,248,246,.85)">Lawyer by day, amateur chef by night. I love Mulanje hikes, live Afrobeats, and a good plate of chambo. Looking for something real — let's grab coffee.</p></div>
+
+              <div class="k" style="margin-bottom:11px;display:block">Prompts</div>
+              <div class="prompt"><div class="q">A perfect Sunday</div><div class="a">"Brunch, a long drive out of town, and Afrobeats till sunset."</div></div>
+              <div class="prompt"><div class="q">I'm looking for</div><div class="a">"Someone kind, ambitious, who can make me laugh."</div></div>
+              <div class="prompt"><div class="q">My simple pleasures</div><div class="a">"Rain on the roof, nsima with friends, a full tank of fuel."</div></div>
+            </div>
+
+            <div>
+              <div class="infocard" style="margin-bottom:18px"><div class="lead"><i data-lucide="shield-check"></i></div><div style="flex:1"><div style="font-weight:600;font-size:14px">Get the gold badge</div><div style="font-size:12px;color:var(--mut);margin-top:2px">A quick selfie — 4× more matches.</div></div><a class="btn b-gold" style="padding:9px 16px;font-size:12.5px">Verify</a></div>
+
+              <div class="gcard" style="margin-bottom:18px"><div class="k" style="margin-bottom:12px;display:block">Interests</div><div class="chips"><span class="chip">Cooking</span><span class="chip">Hiking</span><span class="chip">Live music</span><span class="chip">Travel</span><span class="chip">Law</span><span class="chip">Coffee</span></div></div>
+
+              <div class="gcard" style="margin-bottom:18px"><div class="k" style="margin-bottom:13px;display:block">Looking for</div>
+                <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px">
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--mut)">Show me</span><span>Men</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--mut)">Age range</span><span>28 – 38</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--mut)">Within</span><span>25 km of Lilongwe</span></div>
+                </div>
+              </div>
+
+              <div class="gold-banner"><div class="lead"><i data-lucide="crown"></i></div><div style="flex:1"><div style="font-weight:600;font-size:13.5px;color:var(--gold-l)">Kondani Gold</div><div style="font-size:11.5px;color:var(--mut)">See your 12 likes &amp; 48 viewers.</div></div><a class="btn b-gold" style="padding:8px 14px;font-size:12px">Upgrade</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="sec">
+  <div class="label"><span class="n">2</span><h3>Settings — desktop</h3><span class="line"></span></div>
+  <div class="win">
+    <div class="bar"><div class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><div class="url"><i data-lucide="lock"></i> kondani-app.onrender.com/settings</div><div style="width:54px"></div></div>
+    <div class="app">
+      <div class="side">
+        <div class="logo"><div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ffd98a,#f4b740);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 100 100"><g transform="translate(30,14) scale(0.246)"><path d="M70 8 C80 6 88 12 90 24 L86 34 C92 40 98 46 100 58 L106 92 C108 110 100 122 102 138 C112 150 130 158 140 178 L150 210 C152 228 140 240 132 258 L120 300 C116 285 112 272 106 258 C98 240 90 228 80 214 C70 206 58 204 46 196 L14 182 C28 170 44 166 52 152 C48 132 50 112 52 96 C50 76 52 56 56 40 C60 26 64 16 70 8 Z" fill="#08111a"/></g></svg></div><b>Kondani</b></div>
+        <div class="navi">
+          <a><span class="ic"><i data-lucide="flame"></i></span>Discover</a>
+          <a><span class="ic"><i data-lucide="sparkles"></i></span>Plans</a>
+          <a><span class="ic"><i data-lucide="star"></i></span>Daily Picks</a>
+          <a><span class="ic"><i data-lucide="heart"></i></span>Likes you<span class="bdg">5</span></a>
+          <a><span class="ic"><i data-lucide="message-circle"></i></span>Chats<span class="bdg">2</span></a>
+          <a class="on"><span class="ic"><i data-lucide="settings"></i></span>Settings</a>
+        </div>
+        <div class="grow"></div>
+        <div class="me"><img src="https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=100&q=60&fit=crop&crop=faces" /><div><div class="nm">Destiny, 30</div><div class="on"><i data-lucide="circle" style="fill:var(--lagoon)"></i> Online</div></div></div>
+      </div>
+      <div class="main">
+        <div class="stop"><h2>Settings</h2></div>
+        <div class="swrap">
+
+          <div class="group"><span class="k">Account</span>
+            <div class="rowcard">
+              <div class="row"><div class="ic"><i data-lucide="smartphone"></i></div><div class="lbl"><div class="t">Phone number</div><div class="d">Your login &amp; identity</div></div><div class="val">+265 99 •• •• 80</div></div>
+              <div class="row"><div class="ic"><i data-lucide="mail"></i></div><div class="lbl"><div class="t">Email</div><div class="d">For receipts &amp; recovery</div></div><div class="val">Add <i data-lucide="chevron-right"></i></div></div>
+              <div class="row"><div class="ic"><i data-lucide="user-pen"></i></div><div class="lbl"><div class="t">Edit profile</div><div class="d">Photos, bio, prompts</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+            </div>
+          </div>
+
+          <div class="group"><span class="k">Discovery</span>
+            <div class="rowcard">
+              <div class="row"><div class="ic"><i data-lucide="map-pin"></i></div><div class="lbl"><div class="t">Location</div><div class="d">Current location</div></div><div class="val">Lilongwe <i data-lucide="chevron-right"></i></div></div>
+              <div class="slider"><div class="slabel"><span>Maximum distance</span><span class="v">25 km</span></div><div class="track"><div class="fill" style="width:42%"></div><div class="h" style="left:42%"></div></div></div>
+              <div class="slider"><div class="slabel"><span>Age range</span><span class="v">28 – 38</span></div><div class="track"><div class="fill" style="left:30%;right:25%"></div><div class="h" style="left:30%"></div><div class="h" style="left:75%"></div></div></div>
+              <div class="row"><div class="ic"><i data-lucide="users"></i></div><div class="lbl"><div class="t">Show me</div></div><div class="val">Men <i data-lucide="chevron-right"></i></div></div>
+              <div class="row"><div class="ic"><i data-lucide="map"></i></div><div class="lbl"><div class="t">Region</div><div class="d">Where to look</div></div><div class="val">Whole Malawi <i data-lucide="chevron-right"></i></div></div>
+              <div class="row"><div class="ic"><i data-lucide="badge-check"></i></div><div class="lbl"><div class="t">Verified profiles only</div></div><div class="toggle off"><div class="knob"></div></div></div>
+            </div>
+          </div>
+
+          <div class="group"><span class="k">Notifications</span>
+            <div class="rowcard">
+              <div class="row"><div class="ic"><i data-lucide="sparkles"></i></div><div class="lbl"><div class="t">New matches</div></div><div class="toggle on"><div class="knob"></div></div></div>
+              <div class="row"><div class="ic"><i data-lucide="message-circle"></i></div><div class="lbl"><div class="t">Messages</div></div><div class="toggle on"><div class="knob"></div></div></div>
+              <div class="row"><div class="ic"><i data-lucide="heart"></i></div><div class="lbl"><div class="t">Likes</div></div><div class="toggle on"><div class="knob"></div></div></div>
+              <div class="row"><div class="ic"><i data-lucide="star"></i></div><div class="lbl"><div class="t">Daily picks reminder</div></div><div class="toggle off"><div class="knob"></div></div></div>
+            </div>
+          </div>
+
+          <div class="group"><span class="k">Privacy &amp; safety</span>
+            <div class="rowcard">
+              <div class="row"><div class="ic"><i data-lucide="eye"></i></div><div class="lbl"><div class="t">Profile visibility</div><div class="d">Visible to nearby users</div></div><div class="toggle on"><div class="knob"></div></div></div>
+              <div class="row"><div class="ic"><i data-lucide="circle-dot"></i></div><div class="lbl"><div class="t">Show online status</div></div><div class="toggle on"><div class="knob"></div></div></div>
+              <div class="row"><div class="ic"><i data-lucide="check-check"></i></div><div class="lbl"><div class="t">Read receipts</div></div><div class="toggle off"><div class="knob"></div></div></div>
+              <div class="row"><div class="ic"><i data-lucide="ban"></i></div><div class="lbl"><div class="t">Blocked users</div></div><div class="val">3 <i data-lucide="chevron-right"></i></div></div>
+              <div class="row"><div class="ic"><i data-lucide="shield"></i></div><div class="lbl"><div class="t">Safety center</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+            </div>
+          </div>
+
+          <div class="group"><span class="k">Membership</span>
+            <div class="gold-banner"><div class="lead"><i data-lucide="crown"></i></div><div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--gold-l)">You're on Free</div><div style="font-size:12px;color:var(--mut)">Upgrade to see who likes you, unlimited likes &amp; boost.</div></div><a class="btn b-gold" style="padding:9px 18px;font-size:13px">Upgrade to Gold</a></div>
+          </div>
+
+          <div class="group"><span class="k">Support</span>
+            <div class="rowcard">
+              <div class="row"><div class="ic"><i data-lucide="life-buoy"></i></div><div class="lbl"><div class="t">Help center</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+              <div class="row"><div class="ic"><i data-lucide="scroll-text"></i></div><div class="lbl"><div class="t">Community guidelines</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+              <div class="row"><div class="ic"><i data-lucide="file-text"></i></div><div class="lbl"><div class="t">Terms &amp; Privacy</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+            </div>
+          </div>
+
+          <div class="group danger"><span class="k">Account actions</span>
+            <div class="rowcard">
+              <div class="row"><div class="ic"><i data-lucide="pause"></i></div><div class="lbl"><div class="t">Pause my account</div><div class="d">Hide profile, keep your data</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+              <div class="row"><div class="ic"><i data-lucide="log-out"></i></div><div class="lbl"><div class="t">Sign out</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+              <div class="row del"><div class="ic"><i data-lucide="trash-2"></i></div><div class="lbl"><div class="t">Delete account</div><div class="d">Permanent — this can't be undone</div></div><div class="chev"><i data-lucide="chevron-right"></i></div></div>
+            </div>
+          </div>
+
+          <p style="text-align:center;color:var(--mut2);font-size:11px;margin-top:8px">Kondani v1.0 · Made in Malawi</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE -->
+<div class="sec">
+  <div class="label"><span class="n">3</span><h3>Mobile</h3><span class="line"></span></div>
+  <div class="phones">
+    <div class="frame"><div class="cap">Profile</div>
+      <div class="phone"><div class="pscr">
+        <div class="sb"><span>9:41</span><span>5G</span></div>
+        <div style="height:120px;position:relative;overflow:hidden"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=700&q=70&fit=crop" style="width:100%;height:100%;object-fit:cover" /><div style="position:absolute;inset:0;background:linear-gradient(rgba(5,13,18,.2),var(--night))"></div></div>
+        <div style="padding:0 18px 20px;margin-top:-48px">
+          <img src="https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=300&q=70&fit=crop&crop=faces" style="width:92px;height:92px;border-radius:22px;object-fit:cover;border:4px solid var(--night)" />
+          <div style="font-family:var(--serif);font-weight:600;font-size:24px;margin-top:10px;display:flex;align-items:center;gap:8px">Destiny <span style="font-size:17px;color:var(--mut)">30</span> <span class="ver"><i data-lucide="badge-check"></i></span></div>
+          <div style="color:var(--lagoon);font-size:12.5px;margin-top:4px;display:flex;align-items:center;gap:6px"><i data-lucide="map-pin" style="font-size:13px"></i> Lilongwe</div>
+          <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-top:16px"><div class="stat" style="padding:12px"><div class="v gold" style="font-size:18px">12</div><div class="l">Likes</div></div><div class="stat" style="padding:12px"><div class="v lag" style="font-size:18px">2</div><div class="l">Matches</div></div><div class="stat" style="padding:12px"><div class="v" style="font-size:18px">75%</div><div class="l">Complete</div></div></div>
+          <div class="gcard" style="margin-top:14px;padding:15px"><div class="k" style="margin-bottom:8px;display:block">About</div><p style="font-size:13px;line-height:1.55;color:rgba(241,248,246,.85)">Lawyer by day, chef by night. Mulanje hikes &amp; Afrobeats.</p></div>
+          <div class="infocard" style="margin-top:12px;padding:14px"><div class="lead" style="width:38px;height:38px;font-size:18px"><i data-lucide="shield-check"></i></div><div style="flex:1"><div style="font-weight:600;font-size:13px">Get verified</div><div style="font-size:11px;color:var(--mut)">Selfie — 4× matches</div></div><a class="btn b-gold" style="padding:8px 14px;font-size:12px">Verify</a></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="frame"><div class="cap">Settings</div>
+      <div class="phone"><div class="pscr">
+        <div class="sb"><span>9:41</span><span>5G</span></div>
+        <div style="padding:10px 18px 6px"><h2 style="font-family:var(--serif);font-weight:600;font-size:24px">Settings</h2></div>
+        <div style="padding:8px 16px 20px">
+          <span class="k" style="display:block;margin-bottom:9px">Discovery</span>
+          <div class="rowcard" style="margin-bottom:18px">
+            <div class="row" style="padding:13px 15px"><div class="ic"><i data-lucide="map-pin"></i></div><div class="lbl"><div class="t" style="font-size:13.5px">Location</div></div><div class="val" style="font-size:12px">Lilongwe <i data-lucide="chevron-right"></i></div></div>
+            <div class="slider" style="padding:8px 15px 15px"><div class="slabel" style="font-size:12px"><span>Max distance</span><span class="v">25 km</span></div><div class="track"><div class="fill" style="width:42%"></div><div class="h" style="left:42%"></div></div></div>
+            <div class="row" style="padding:13px 15px"><div class="ic"><i data-lucide="badge-check"></i></div><div class="lbl"><div class="t" style="font-size:13.5px">Verified only</div></div><div class="toggle off"><div class="knob"></div></div></div>
+          </div>
+          <span class="k" style="display:block;margin-bottom:9px">Notifications</span>
+          <div class="rowcard">
+            <div class="row" style="padding:13px 15px"><div class="ic"><i data-lucide="sparkles"></i></div><div class="lbl"><div class="t" style="font-size:13.5px">New matches</div></div><div class="toggle on"><div class="knob"></div></div></div>
+            <div class="row" style="padding:13px 15px"><div class="ic"><i data-lucide="message-circle"></i></div><div class="lbl"><div class="t" style="font-size:13.5px">Messages</div></div><div class="toggle on"><div class="knob"></div></div></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <b>What changed to kill the "AI-coded" look:</b> every icon is now a <b>Lucide line icon</b> with one consistent stroke weight — no emoji anywhere in the UI chrome. Gold is used sparingly (badges, one CTA), surfaces are flat and calm, interest chips are clean text, and the detailing (verified seal, completeness ring, sliders, toggles) is uniform. This is how a real product is built. Approve and I'll implement Profile + Settings (desktop + mobile) with these exact Lucide icons, then wire to the backend.
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

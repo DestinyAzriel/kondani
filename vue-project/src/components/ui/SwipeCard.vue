@@ -19,7 +19,10 @@
           draggable="false"
           alt="Profile photo"
         />
-        <div v-else class="w-full h-full flex items-center justify-center text-white/30 text-6xl">✦</div>
+        <div v-else class="w-full h-full flex flex-col items-center justify-center gap-3 text-white/25" style="background:linear-gradient(160deg,#0e1f29,#081016)">
+          <ImageIcon :size="48" :stroke-width="1.5" />
+          <span class="text-sm">No photo yet</span>
+        </div>
 
         <!-- Gradient overlay -->
         <div class="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-b from-transparent to-night-950/95 pointer-events-none"></div>
@@ -109,7 +112,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { MapPin as MapPinIcon, Check as CheckIcon, MoreVertical as MoreVerticalIcon } from 'lucide-vue-next'
+import { MapPin as MapPinIcon, Check as CheckIcon, MoreVertical as MoreVerticalIcon, Image as ImageIcon } from 'lucide-vue-next'
 import ReportModal from '@/components/feature/modal/ReportModal.vue'
 
 const props = defineProps({

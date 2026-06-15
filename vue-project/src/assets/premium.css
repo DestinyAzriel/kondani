@@ -1,0 +1,84 @@
+/* ============================================================
+   Kondani — premium design system (shared across all screens)
+   Same language as the landing & login.
+   ============================================================ */
+
+:root {
+  --k-night: #050d12;
+  --k-night2: #0a1820;
+  --k-card: #0e1f29;
+  --k-lagoon: #2dd4bf;
+  --k-gold: #f4b740;
+  --k-gold-l: #ffd98a;
+  --k-coral: #ff7a6b;
+  --k-txt: #f1f8f6;
+  --k-mut: rgba(241, 248, 246, .6);
+  --k-mut2: rgba(241, 248, 246, .4);
+  --k-line: rgba(255, 255, 255, .08);
+}
+
+/* page surface */
+.k-page { min-height: 100vh; background: var(--k-night); color: var(--k-txt); }
+
+/* typography */
+.k-serif { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -.01em; }
+.k-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.85rem; line-height: 1.1; letter-spacing: -.01em; }
+.k-sub { font-size: 13px; color: var(--k-mut); }
+.k-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--k-mut2); }
+
+/* surfaces */
+.k-card { background: var(--k-card); border: 1px solid var(--k-line); border-radius: 16px; }
+.k-glass { background: rgba(255,255,255,.04); border: 1px solid var(--k-line); border-radius: 16px; }
+
+/* lucide icons keep a uniform stroke */
+.k-page svg.lucide, .k-row svg, .k-iconbtn svg { stroke-width: 1.75; }
+
+/* rows (settings / lists) */
+.k-row { display: flex; align-items: center; gap: 14px; padding: 15px 18px; border-bottom: 1px solid var(--k-line); }
+.k-row:last-child { border-bottom: none; }
+.k-row-ic { width: 34px; height: 34px; border-radius: 9px; background: rgba(255,255,255,.05); display: flex; align-items: center; justify-content: center; color: var(--k-mut); flex-shrink: 0; }
+.k-row .grow { flex: 1; }
+.k-row .t { font-size: 14px; font-weight: 500; }
+.k-row .d { font-size: 12px; color: var(--k-mut); margin-top: 2px; }
+.k-row .val { color: var(--k-mut); font-size: 13px; display: flex; align-items: center; gap: 5px; }
+
+/* gold toggle */
+.k-toggle { width: 46px; height: 26px; border-radius: 99px; position: relative; flex-shrink: 0; cursor: pointer; background: rgba(255,255,255,.12); transition: background .2s; border: none; padding: 0; }
+.k-toggle.on { background: linear-gradient(90deg, var(--k-gold), var(--k-gold-l)); box-shadow: 0 0 0 1px rgba(244,183,64,.4), 0 4px 12px rgba(244,183,64,.3); }
+.k-toggle .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.k-toggle.on .knob { transform: translateX(20px); background: var(--k-night); }
+
+/* range slider */
+.k-range { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 99px; background: rgba(255,255,255,.12); accent-color: var(--k-gold); outline: none; cursor: pointer; }
+.k-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4); cursor: pointer; }
+.k-range::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4); cursor: pointer; }
+
+/* chips */
+.k-chip { font-size: 12.5px; color: var(--k-txt); background: rgba(255,255,255,.05); border: 1px solid var(--k-line); padding: 7px 13px; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px; }
+
+/* buttons */
+.k-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; font-weight: 700; font-family: inherit; border-radius: 12px; transition: transform .15s, opacity .15s; }
+.k-btn:disabled { opacity: .5; cursor: not-allowed; }
+.k-btn-gold { background: linear-gradient(95deg, var(--k-gold), var(--k-gold-l)); color: var(--k-night); box-shadow: 0 10px 26px rgba(244,183,64,.35); }
+.k-btn-gold:hover:not(:disabled) { transform: translateY(-2px); }
+.k-btn-ghost { background: rgba(255,255,255,.06); border: 1px solid var(--k-line); color: #fff; font-weight: 600; }
+
+.k-iconbtn { width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,.05); border: 1px solid var(--k-line); display: flex; align-items: center; justify-content: center; color: var(--k-mut); cursor: pointer; }
+
+/* verified pill */
+.k-ver { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--k-gold-l); background: rgba(244,183,64,.14); border: 1px solid rgba(244,183,64,.3); padding: 3px 9px; border-radius: 7px; }
+
+/* heavy swipe action buttons */
+.k-act { display: flex; justify-content: center; gap: 18px; }
+.k-act .b { width: 58px; height: 58px; border-radius: 50%; background: #15242e; border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 10px 26px rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.k-act .b svg { stroke-width: 2.4; }
+.k-act .b.pass { border-color: rgba(255,122,107,.45); color: var(--k-coral); }
+.k-act .b.sup { border-color: rgba(244,183,64,.45); color: var(--k-gold-l); }
+.k-act .b.like { width: 68px; height: 68px; background: var(--k-gold); color: var(--k-night); border: none; box-shadow: 0 12px 30px rgba(244,183,64,.5); }
+
+/* starfield + glow helpers */
+.k-stars { position: absolute; inset: 0; pointer-events: none; background:
+  radial-gradient(1.4px 1.4px at 20% 14%, rgba(255,215,130,.5), transparent),
+  radial-gradient(1px 1px at 68% 9%, rgba(255,255,255,.4), transparent),
+  radial-gradient(1px 1px at 85% 22%, rgba(255,215,130,.4), transparent),
+  radial-gradient(1px 1px at 40% 30%, rgba(255,255,255,.35), transparent); }

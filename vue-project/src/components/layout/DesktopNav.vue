@@ -3,7 +3,7 @@
     <!-- Brand -->
     <div class="p-6 flex items-center gap-3 border-b border-white/5">
       <KondaniMark :size="38" />
-      <span class="text-2xl font-bold font-display tracking-tight">Kondani</span>
+      <span class="k-serif text-2xl">Kondani</span>
     </div>
 
     <!-- Profile strip -->
@@ -54,7 +54,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="py-20 text-center"><div class="text-3xl mb-3 opacity-30">✦</div><p class="text-white/40 text-sm italic">Keep swiping to find matches.</p></div>
+          <div v-else class="py-20 text-center flex flex-col items-center gap-3"><Heart :size="28" :stroke-width="1.5" class="text-white/25" /><p class="text-white/40 text-sm">Keep swiping to find matches.</p></div>
         </div>
 
         <!-- Messages -->
@@ -77,7 +77,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="py-20 text-center"><div class="text-3xl mb-3 opacity-30">💬</div><p class="text-white/40 text-sm">No messages yet.</p></div>
+          <div v-else class="py-20 text-center flex flex-col items-center gap-3"><MessageCircle :size="28" :stroke-width="1.5" class="text-white/25" /><p class="text-white/40 text-sm">No messages yet.</p></div>
         </div>
       </div>
     </div>
@@ -96,7 +96,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Flame, Sparkles, Star, User as UserIcon } from 'lucide-vue-next'
+import { Flame, Sparkles, Star, User as UserIcon, Heart, MessageCircle } from 'lucide-vue-next'
 import { useProfile } from '@/composables/useProfile'
 import { intentService } from '@/services/intentService'
 import { useAuthStore } from '@/stores/auth'

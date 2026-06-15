@@ -1,169 +1,178 @@
 <template>
-  <div class="settings-view min-h-screen bg-deep-950 pb-24 relative overflow-hidden">
-    
-    <!-- Background -->
-    <div class="fixed inset-0 pointer-events-none">
-      <div class="absolute top-[10%] right-[-10%] w-[500px] h-[500px] bg-emerald-900/10 rounded-full blur-[100px]"></div>
-      <div class="absolute bottom-[10%] left-[-10%] w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[100px]"></div>
-    </div>
+  <div class="settings k-page pb-28 relative">
+    <div class="k-stars"></div>
 
     <!-- Header -->
-    <div class="relative z-10 bg-deep-950/90 backdrop-blur-md border-b border-white/5 sticky top-0">
-      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
-        <button @click="router.back()" class="p-2 -ml-2 text-white/60 hover:text-white transition-colors">
-          <ArrowLeftIcon size="24" />
-        </button>
-        <h1 class="text-xl font-bold text-white tracking-tight">Settings</h1>
+    <div class="sticky top-0 z-20 bg-night-950/90 backdrop-blur-md border-b border-white/5">
+      <div class="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
+        <button @click="router.back()" class="k-iconbtn"><ArrowLeft :size="20" /></button>
+        <h1 class="k-title" style="font-size:1.7rem">Settings</h1>
       </div>
     </div>
 
-    <!-- Content -->
-    <div class="relative z-10 max-w-2xl mx-auto px-4 py-6 space-y-8">
+    <div class="max-w-3xl mx-auto px-4 py-6 relative z-10 space-y-7">
 
-      <!-- Discovery Settings -->
-      <section class="space-y-4">
-        <h2 class="text-xs font-bold text-white/40 uppercase tracking-widest pl-2">Discovery</h2>
-        
-        <div class="bg-white/5 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm">
-          <!-- Location -->
-          <div class="p-4 border-b border-white/5 flex items-center justify-between">
-             <div class="flex items-center gap-3">
-               <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                 <MapPinIcon size="16" />
-               </div>
-               <div>
-                 <p class="text-sm font-bold text-white">Location</p>
-                 <p class="text-xs text-white/50">My Current Location</p>
-               </div>
-             </div>
-             <span class="text-white/40 text-sm">Lilongwe</span>
+      <!-- Account -->
+      <section>
+        <p class="k-label mb-3">Account</p>
+        <div class="k-card overflow-hidden">
+          <div class="k-row"><div class="k-row-ic"><Smartphone :size="16" /></div><div class="grow"><div class="t">Phone number</div><div class="d">Your login &amp; identity</div></div><div class="val">{{ maskedPhone }}</div></div>
+          <div class="k-row cursor-pointer" @click="router.push('/profile')"><div class="k-row-ic"><UserPen :size="16" /></div><div class="grow"><div class="t">Edit profile</div><div class="d">Photos, bio, prompts</div></div><ChevronRight :size="18" class="text-white/30" /></div>
+        </div>
+      </section>
+
+      <!-- Discovery -->
+      <section>
+        <p class="k-label mb-3">Discovery</p>
+        <div class="k-card overflow-hidden">
+          <div class="k-row"><div class="k-row-ic"><MapPin :size="16" /></div><div class="grow"><div class="t">Location</div><div class="d">{{ district || 'Set your location' }}</div></div></div>
+          <div style="padding:14px 18px;border-bottom:1px solid var(--k-line)">
+            <div class="flex justify-between mb-3"><span class="text-sm font-medium">Maximum distance</span><span class="text-sm font-semibold text-gold-300">{{ prefs.distance }} km</span></div>
+            <input type="range" min="1" max="200" v-model.number="prefs.distance" class="k-range" />
           </div>
-
-          <!-- Maximum Distance -->
-          <div class="p-4 border-b border-white/5 space-y-3">
-             <div class="flex items-center justify-between">
-               <p class="text-sm font-bold text-white">Maximum Distance</p>
-               <p class="text-sm font-bold text-white/80">{{ distance }}km</p>
-             </div>
-             <input type="range" v-model="distance" min="1" max="100" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--k-line)">
+            <div class="flex justify-between mb-2"><span class="text-sm font-medium">Minimum age</span><span class="text-sm font-semibold text-gold-300">{{ prefs.ageMin }}</span></div>
+            <input type="range" min="18" max="70" v-model.number="prefs.ageMin" class="k-range mb-4" />
+            <div class="flex justify-between mb-2"><span class="text-sm font-medium">Maximum age</span><span class="text-sm font-semibold text-gold-300">{{ prefs.ageMax }}</span></div>
+            <input type="range" min="18" max="80" v-model.number="prefs.ageMax" class="k-range" />
           </div>
-
-          <!-- Age Range -->
-          <div class="p-4 border-b border-white/5 space-y-3">
-             <div class="flex items-center justify-between">
-               <p class="text-sm font-bold text-white">Age Range</p>
-               <p class="text-sm font-bold text-white/80">{{ ageRange[0] }} - {{ ageRange[1] }}</p>
-             </div>
-             <div class="flex items-center gap-4">
-               <input type="range" v-model="ageRange[0]" min="18" max="50" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-               <input type="range" v-model="ageRange[1]" min="25" max="100" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-             </div>
+          <div class="k-row"><div class="k-row-ic"><Users :size="16" /></div><div class="grow"><div class="t">Show me</div></div>
+            <div class="flex gap-1.5">
+              <button v-for="g in genders" :key="g.v" @click="prefs.gender = g.v"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                :class="prefs.gender === g.v ? 'bg-gold-500 text-night-950' : 'bg-white/5 text-white/60'">{{ g.label }}</button>
+            </div>
+          </div>
+          <div class="k-row"><div class="k-row-ic"><BadgeCheck :size="16" /></div><div class="grow"><div class="t">Verified profiles only</div></div>
+            <button class="k-toggle" :class="prefs.verifiedOnly ? 'on' : ''" @click="prefs.verifiedOnly = !prefs.verifiedOnly"><span class="knob"></span></button>
           </div>
         </div>
-
-        <div class="bg-white/5 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm">
-           <div class="p-4 border-b border-white/5 flex items-center justify-between">
-             <p class="text-sm font-bold text-white">Region Preference</p>
-             <span class="text-emerald-500 text-xs font-bold">{{ selectedRegion }}</span>
-           </div>
-           
-           <div class="p-2 space-y-1">
-             <button 
-               v-for="region in regions" 
-               :key="region"
-               @click="selectedRegion = region"
-               class="w-full flex items-center justify-between p-3 rounded-xl transition-colors"
-               :class="selectedRegion === region ? 'bg-emerald-500/10 text-emerald-500' : 'hover:bg-white/5 text-white/60'"
-             >
-               <span class="text-sm font-medium">{{ region }}</span>
-               <div v-if="selectedRegion === region" class="w-2 h-2 rounded-full bg-emerald-500"></div>
-             </button>
-           </div>
-        </div>
+        <button class="k-btn k-btn-gold w-full mt-3" style="padding:13px" :disabled="saving" @click="saveDiscovery">
+          {{ saving ? 'Saving…' : 'Save discovery settings' }}
+        </button>
       </section>
 
       <!-- Notifications -->
-      <section class="space-y-4">
-        <h2 class="text-xs font-bold text-white/40 uppercase tracking-widest pl-2">Notifications</h2>
-        <div class="bg-white/5 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm">
-           
-           <div class="p-4 border-b border-white/5 flex items-center justify-between">
-             <p class="text-sm font-bold text-white">New Matches</p>
-             <div 
-               class="w-12 h-7 rounded-full p-1 transition-colors cursor-pointer"
-               :class="notifications.matches ? 'bg-emerald-500' : 'bg-white/10'"
-               @click="notifications.matches = !notifications.matches"
-             >
-               <div class="w-5 h-5 bg-white rounded-full shadow-sm transition-transform" :class="notifications.matches ? 'translate-x-5' : 'translate-x-0'"></div>
-             </div>
-           </div>
-
-           <div class="p-4 border-b border-white/5 flex items-center justify-between">
-             <p class="text-sm font-bold text-white">Messages</p>
-             <div 
-               class="w-12 h-7 rounded-full p-1 transition-colors cursor-pointer"
-               :class="notifications.messages ? 'bg-emerald-500' : 'bg-white/10'"
-               @click="notifications.messages = !notifications.messages"
-             >
-               <div class="w-5 h-5 bg-white rounded-full shadow-sm transition-transform" :class="notifications.messages ? 'translate-x-5' : 'translate-x-0'"></div>
-             </div>
-           </div>
-
-           <div class="p-4 flex items-center justify-between">
-             <p class="text-sm font-bold text-white">Promotions</p>
-             <div 
-               class="w-12 h-7 rounded-full p-1 transition-colors cursor-pointer"
-               :class="notifications.promotions ? 'bg-emerald-500' : 'bg-white/10'"
-               @click="notifications.promotions = !notifications.promotions"
-             >
-               <div class="w-5 h-5 bg-white rounded-full shadow-sm transition-transform" :class="notifications.promotions ? 'translate-x-5' : 'translate-x-0'"></div>
-             </div>
-           </div>
-
+      <section>
+        <p class="k-label mb-3">Notifications</p>
+        <div class="k-card overflow-hidden">
+          <div class="k-row"><div class="k-row-ic"><Sparkles :size="16" /></div><div class="grow"><div class="t">New matches</div></div><button class="k-toggle" :class="notif.matches?'on':''" @click="notif.matches=!notif.matches"><span class="knob"></span></button></div>
+          <div class="k-row"><div class="k-row-ic"><MessageCircle :size="16" /></div><div class="grow"><div class="t">Messages</div></div><button class="k-toggle" :class="notif.messages?'on':''" @click="notif.messages=!notif.messages"><span class="knob"></span></button></div>
+          <div class="k-row"><div class="k-row-ic"><Heart :size="16" /></div><div class="grow"><div class="t">Likes</div></div><button class="k-toggle" :class="notif.likes?'on':''" @click="notif.likes=!notif.likes"><span class="knob"></span></button></div>
+          <div class="k-row"><div class="k-row-ic"><Star :size="16" /></div><div class="grow"><div class="t">Daily picks reminder</div></div><button class="k-toggle" :class="notif.picks?'on':''" @click="notif.picks=!notif.picks"><span class="knob"></span></button></div>
         </div>
       </section>
 
-      <!-- Legal & Danger Zone -->
-      <section class="space-y-4 pt-4">
-        <div class="bg-white/5 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm">
-           <button class="w-full p-4 text-left text-sm font-bold text-white/80 hover:bg-white/5 border-b border-white/5 transition-colors">
-             Privacy Policy
-           </button>
-           <button class="w-full p-4 text-left text-sm font-bold text-white/80 hover:bg-white/5 transition-colors">
-             Terms of Service
-           </button>
-        </div>
-
-        <button class="w-full p-4 rounded-2xl border border-white/10 text-white/40 font-bold hover:bg-white/5 hover:text-white transition-colors text-sm">
-           Share Kondani
-        </button>
-
-        <div class="flex flex-col items-center gap-4 pt-8 pb-12">
-           <p class="text-white/20 text-xs font-mono">Version 1.0.0 (Build 104)</p>
-           <button class="text-red-500/80 font-bold text-sm hover:text-red-400">Delete Account</button>
+      <!-- Privacy & safety -->
+      <section>
+        <p class="k-label mb-3">Privacy &amp; safety</p>
+        <div class="k-card overflow-hidden">
+          <div class="k-row"><div class="k-row-ic"><Eye :size="16" /></div><div class="grow"><div class="t">Profile visibility</div><div class="d">{{ isVisible ? 'Visible to nearby users' : 'Hidden from everyone' }}</div></div><button class="k-toggle" :class="isVisible?'on':''" @click="toggleVisibility"><span class="knob"></span></button></div>
+          <div class="k-row"><div class="k-row-ic"><CircleDot :size="16" /></div><div class="grow"><div class="t">Show online status</div></div><button class="k-toggle" :class="priv.online?'on':''" @click="priv.online=!priv.online"><span class="knob"></span></button></div>
+          <div class="k-row"><div class="k-row-ic"><CheckCheck :size="16" /></div><div class="grow"><div class="t">Read receipts</div></div><button class="k-toggle" :class="priv.receipts?'on':''" @click="priv.receipts=!priv.receipts"><span class="knob"></span></button></div>
+          <div class="k-row cursor-pointer" @click="router.push('/safety')"><div class="k-row-ic"><Shield :size="16" /></div><div class="grow"><div class="t">Safety center</div></div><ChevronRight :size="18" class="text-white/30" /></div>
         </div>
       </section>
 
+      <!-- Membership -->
+      <section v-if="!isPremium">
+        <p class="k-label mb-3">Membership</p>
+        <div class="k-card flex items-center gap-4" style="padding:18px;border-color:rgba(244,183,64,.3)">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="20" /></div>
+          <div class="flex-1"><div class="font-semibold text-gold-300">You're on Free</div><div class="text-xs text-white/55 mt-0.5">Gold is just MWK 600/mo — see who likes you &amp; unlimited likes.</div></div>
+          <button class="k-btn k-btn-gold" style="padding:9px 18px;font-size:13px" @click="router.push('/premium')">Upgrade</button>
+        </div>
+      </section>
+
+      <!-- Support -->
+      <section>
+        <p class="k-label mb-3">Support</p>
+        <div class="k-card overflow-hidden">
+          <div class="k-row cursor-pointer" @click="router.push('/support')"><div class="k-row-ic"><LifeBuoy :size="16" /></div><div class="grow"><div class="t">Help center</div></div><ChevronRight :size="18" class="text-white/30" /></div>
+          <div class="k-row cursor-pointer" @click="router.push('/safety-center')"><div class="k-row-ic"><ScrollText :size="16" /></div><div class="grow"><div class="t">Community guidelines</div></div><ChevronRight :size="18" class="text-white/30" /></div>
+          <div class="k-row cursor-pointer" @click="router.push('/privacy')"><div class="k-row-ic"><FileText :size="16" /></div><div class="grow"><div class="t">Terms &amp; Privacy</div></div><ChevronRight :size="18" class="text-white/30" /></div>
+        </div>
+      </section>
+
+      <!-- Account actions -->
+      <section>
+        <p class="k-label mb-3">Account actions</p>
+        <div class="k-card overflow-hidden">
+          <div class="k-row cursor-pointer" @click="handleLogout"><div class="k-row-ic"><LogOut :size="16" /></div><div class="grow"><div class="t">Sign out</div></div><ChevronRight :size="18" class="text-white/30" /></div>
+          <div class="k-row cursor-pointer" @click="confirmDelete"><div class="k-row-ic" style="color:var(--k-coral)"><Trash2 :size="16" /></div><div class="grow"><div class="t" style="color:var(--k-coral)">Delete account</div><div class="d">Permanent — this can't be undone</div></div><ChevronRight :size="18" class="text-white/30" /></div>
+        </div>
+      </section>
+
+      <p class="text-center text-white/30 text-xs">Kondani v1.0 · Made in Malawi 🇲🇼</p>
     </div>
   </div>
 </template>
 
 <script setup>
+import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useSettingsStore } from '@/stores/settings'
-import { ArrowLeft as ArrowLeftIcon, MapPin as MapPinIcon } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
+import {
+  ArrowLeft, Smartphone, UserPen, MapPin, Users, BadgeCheck, Sparkles, MessageCircle,
+  Heart, Star, Eye, CircleDot, CheckCheck, Shield, Crown, LifeBuoy, ScrollText,
+  FileText, LogOut, Trash2, ChevronRight
+} from 'lucide-vue-next'
 
 const router = useRouter()
-const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
+const { success, error: toastError } = useToast()
 
-// Use storeToRefs to keep reactivity while destructuring
-const { distance, ageRange, selectedRegion, notifications } = storeToRefs(settingsStore)
+const user = computed(() => authStore.user || {})
+const isPremium = computed(() => !!user.value.isPremium)
+const district = computed(() => user.value.district || '')
+const maskedPhone = computed(() => {
+  const p = user.value.phoneNumber || ''
+  return p ? p.slice(0, 7) + ' •• •• ' + p.slice(-2) : '—'
+})
 
-const regions = ['Whole Malawi', 'Central Region', 'Southern Region', 'Northern Region']
+const genders = [{ v: 'Everyone', label: 'Everyone' }, { v: 'Male', label: 'Men' }, { v: 'Female', label: 'Women' }]
 
+const prefs = reactive({
+  distance: user.value.preferences?.distance ?? 50,
+  ageMin: user.value.preferences?.ageMin ?? 18,
+  ageMax: user.value.preferences?.ageMax ?? 45,
+  gender: user.value.preferences?.gender ?? 'Everyone',
+  verifiedOnly: user.value.preferences?.verifiedOnly ?? false
+})
+const notif = reactive({ matches: true, messages: true, likes: true, picks: false })
+const priv = reactive({ online: true, receipts: false })
+const isVisible = ref(user.value.isVisible !== false)
+const saving = ref(false)
+
+const saveDiscovery = async () => {
+  saving.value = true
+  try {
+    await authStore.updateUserProfile({ preferences: { ...prefs } })
+    success('Discovery settings saved')
+  } catch (e) {
+    toastError('Could not save settings')
+  } finally {
+    saving.value = false
+  }
+}
+
+const toggleVisibility = async () => {
+  isVisible.value = !isVisible.value
+  try { await authStore.updateUserProfile({ isVisible: isVisible.value }) }
+  catch (e) { isVisible.value = !isVisible.value; toastError('Could not update visibility') }
+}
+
+const handleLogout = async () => {
+  if (confirm('Sign out of Kondani?')) { await authStore.logout(); router.push('/login') }
+}
+const confirmDelete = () => {
+  if (confirm('Delete your account permanently? This cannot be undone.')) {
+    toastError('Account deletion is coming soon — contact support to delete now.')
+  }
+}
 </script>
 
 <style scoped>
-/* Custom Range Slider styling could go here if needed */
+.settings { overflow-x: hidden; }
 </style>
