@@ -12,9 +12,9 @@
 
     <div class="relative z-10 max-w-lg mx-auto px-5 py-9 pb-28">
       <div class="text-center mb-8">
-        <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="30" /></div>
-        <h1 class="k-title" style="font-size:2.1rem">Stand out. Match faster.</h1>
-        <p class="text-white/60 mt-2">See who likes you and get unlimited likes.</p>
+        <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="26" /></div>
+        <h1 class="k-serif" style="font-size:1.55rem;line-height:1.15">Stand out. Match faster.</h1>
+        <p class="text-white/60 mt-2 text-sm">See who likes you and get unlimited likes.</p>
       </div>
 
       <div class="space-y-3 mb-8">
@@ -30,7 +30,7 @@
           <div>
             <div class="k-label">Kondani Gold</div>
             <div class="flex items-end gap-1 mt-2">
-              <span class="k-serif" style="font-size:2.4rem;color:var(--k-gold-l)">MWK 600</span>
+              <span class="k-serif" style="font-size:1.9rem;color:var(--k-gold-l)">MWK 600</span>
               <span class="text-white/50 mb-1.5">/ month</span>
             </div>
             <div class="text-xs text-white/50 mt-1">Cancel anytime. No hidden fees.</div>
@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <button class="k-btn k-btn-gold w-full" style="padding:16px;font-size:16px" @click="handleSubscribe">
+      <button class="k-btn k-btn-gold w-full" style="padding:14px;font-size:15px" @click="handleSubscribe">
         Get Gold — MWK 600/month
       </button>
 
