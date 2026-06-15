@@ -1,6 +1,7 @@
 const Message = require('../models/Message');
 const User = require('../models/User');
 const Intent = require('../models/Intent');
+const { storeUpload } = require('../services/cloudinaryService');
 
 // In-memory storage for online users and typing indicators
 // In production, this should be replaced with Redis or similar
@@ -199,7 +200,7 @@ exports.setTyping = async (req, res) => {
 exports.uploadChatMedia = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-        const url = `/uploads/chat-media/${req.file.filename}`;
+        const url = await storeUpload(req.file, 'chat-media', 'auto');
         res.json({ url });
     } catch (err) {
         console.error('uploadChatMedia error:', err);

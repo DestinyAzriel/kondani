@@ -13,7 +13,7 @@
       <div class="relative mb-7">
         <div class="absolute inset-0 rounded-full blur-2xl animate-pulse"
              style="background: rgba(45,212,191,.25)"></div>
-        <img :src="otherUser.photo" class="relative w-32 h-32 rounded-full object-cover border-4 border-lagoon-400 shadow-2xl" />
+        <img :src="mediaUrl(otherUser.photo)" class="relative w-32 h-32 rounded-full object-cover border-4 border-lagoon-400 shadow-2xl" />
       </div>
       <h2 class="text-3xl font-bold font-display mb-2">{{ otherUser.name }}</h2>
       <p class="text-white/60 text-lg">
@@ -58,6 +58,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Mic as MicIcon, MicOff as MicOffIcon, Video as VideoIcon, VideoOff as VideoOffIcon, PhoneOff as PhoneOffIcon } from 'lucide-vue-next'
 import { socketService } from '@/services/socketService'
+import { mediaUrl } from '@/utils/media'
 import { useAuthStore } from '@/stores/auth'
 import { callState, clearCall } from '@/services/callState'
 

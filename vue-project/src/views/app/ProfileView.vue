@@ -128,8 +128,8 @@ const authStore = useAuthStore()
 const { success, error: toastError } = useToast()
 const { profile, saveProfile } = useProfile()
 
-const API_ORIGIN = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
-const mediaSrc = (u) => (!u ? 'https://via.placeholder.com/300' : (u.startsWith('http') || u.startsWith('blob:') ? u : API_ORIGIN + u))
+import { mediaUrl } from '@/utils/media'
+const mediaSrc = (u) => mediaUrl(u)
 const photoList = computed(() => profile.value.photos || [])
 const mainPhoto = computed(() => (photoList.value[0] ? mediaSrc(photoList.value[0]) : 'https://via.placeholder.com/300'))
 const photoCount = computed(() => photoList.value.length)

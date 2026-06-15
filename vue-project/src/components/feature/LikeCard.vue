@@ -52,10 +52,6 @@ const props = defineProps({
 })
 defineEmits(['click', 'sayHi', 'upgrade'])
 
-const API_ORIGIN = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
-const photo = computed(() => {
-  const p = props.like.photo || props.like.avatar
-  if (!p) return ''
-  return p.startsWith('http') ? p : API_ORIGIN + p
-})
+import { mediaUrl } from '@/utils/media'
+const photo = computed(() => mediaUrl(props.like.photo || props.like.avatar))
 </script>

@@ -95,12 +95,8 @@ const { success, info } = useToast()
 const picks = ref([])
 const isLoading = ref(true)
 
-const API_ORIGIN = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
-const photoOf = (p) => {
-  const ph = p.photos?.[0]
-  if (!ph) return ''
-  return ph.startsWith('http') ? ph : API_ORIGIN + ph
-}
+import { mediaUrl } from '@/utils/media'
+const photoOf = (p) => mediaUrl(p.photos?.[0])
 const ringStyle = (score = 0) => ({
   background: `conic-gradient(#f4b740 0% ${score}%, rgba(255,255,255,.12) ${score}% 100%)`
 })

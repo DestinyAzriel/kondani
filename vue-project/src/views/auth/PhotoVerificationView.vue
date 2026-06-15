@@ -77,8 +77,8 @@ const authStore = useAuthStore()
 
 const FACEAPI_SRC = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js'
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
-const API_ORIGIN = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
-const mediaSrc = (u) => (!u ? '' : (u.startsWith('http') || u.startsWith('blob:') ? u : API_ORIGIN + u))
+import { mediaUrl } from '@/utils/media'
+const mediaSrc = (u) => mediaUrl(u)
 
 const poses = ['Look straight at the camera', 'Turn your head slightly left', 'Turn your head slightly right', 'Give a small smile']
 const step = ref('instructions')

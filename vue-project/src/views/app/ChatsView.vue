@@ -23,7 +23,7 @@
             @click="openChatWithUser(match.id)"
           >
             <div class="relative w-16 h-16 mx-auto mb-1.5">
-              <img :src="match.photo" class="w-full h-full rounded-full object-cover border-2 border-gold-400 p-0.5 group-hover:scale-105 transition-transform" />
+              <img :src="mediaUrl(match.photo)" class="w-full h-full rounded-full object-cover border-2 border-gold-400 p-0.5 group-hover:scale-105 transition-transform" />
               <div v-if="match.isVerified" class="absolute bottom-0 right-0 bg-gradient-to-r from-gold-300 to-gold-500 rounded-full p-1 border-2 border-night-950">
                 <CheckIcon size="9" class="text-night-950 stroke-[4]" />
               </div>
@@ -49,7 +49,7 @@
             @click="openChat(chat.id)"
           >
             <div class="relative">
-              <img :src="chat.photo" class="w-14 h-14 rounded-2xl object-cover" />
+              <img :src="mediaUrl(chat.photo)" class="w-14 h-14 rounded-2xl object-cover" />
               <div v-if="chat.online" class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-night-950" style="background:var(--k-lagoon)"></div>
             </div>
 
@@ -99,6 +99,7 @@ import { socketService } from '@/services/socketService'
 import { Check as CheckIcon, BadgeCheck } from 'lucide-vue-next'
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()
 const chats = ref([])

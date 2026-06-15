@@ -4,6 +4,7 @@ const axios = require('axios'); // Add axios for Telegram API calls
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const { storeUpload } = require('../services/cloudinaryService');
 
 // Configure axios with timeout and retry settings
 const telegramAxios = axios.create({
@@ -191,9 +192,11 @@ exports.updateProfile = async (req, res) => {
         
         // Handle photo uploads if present
         if (req.files && req.files.length > 0) {
-            // Process uploaded files
-            const photoUrls = req.files.map(file => `/uploads/${file.filename}`);
-            
+            // Upload each new file to Cloudinary (or disk fallback) → store the URL
+            const photoUrls = await Promise.all(
+                req.files.map(file => storeUpload(file, 'photos', 'image'))
+            );
+
             // If we have existing photo URLs from the client, merge them
             if (req.body.photoUrls) {
                 try {

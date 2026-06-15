@@ -118,12 +118,8 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const API_ORIGIN = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
-const mediaSrc = (u) => {
-  if (!u) return 'https://via.placeholder.com/150'
-  if (u.startsWith('http') || u.startsWith('blob:') || u.startsWith('data:')) return u
-  return API_ORIGIN + u
-}
+import { mediaUrl } from '@/utils/media'
+const mediaSrc = (u) => mediaUrl(u)
 
 const messagesContainer = ref(null)
 const messages = ref([])

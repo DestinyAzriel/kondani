@@ -111,8 +111,8 @@ const sidebarTab = ref('matches')
 const chats = ref([])
 const newMatches = ref([])
 
-const API_ORIGIN = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
-const src = (u) => (!u ? 'https://via.placeholder.com/150' : (u.startsWith('http') ? u : API_ORIGIN + u))
+import { mediaUrl } from '@/utils/media'
+const src = (u) => mediaUrl(u)
 
 const topNavItems = [
   { name: 'discover', route: '/encounters', label: 'Discover', icon: Flame },

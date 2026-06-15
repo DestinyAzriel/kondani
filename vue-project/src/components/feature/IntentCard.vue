@@ -59,12 +59,8 @@ const props = defineProps({ intent: { type: Object, required: true } })
 defineEmits(['click', 'pass', 'join'])
 
 const imageError = ref(false)
-const API_ORIGIN = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
-const photo = computed(() => {
-  const p = props.intent.photos?.[0]
-  if (!p) return ''
-  return p.startsWith('http') ? p : API_ORIGIN + p
-})
+import { mediaUrl } from '@/utils/media'
+const photo = computed(() => mediaUrl(props.intent.photos?.[0]))
 </script>
 
 <style scoped>

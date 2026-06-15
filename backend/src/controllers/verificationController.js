@@ -1,5 +1,6 @@
 const IDVerification = require('../models/IDVerification');
 const User = require('../models/User');
+const { storeUpload } = require('../services/cloudinaryService');
 
 // Auto-approve when the browser-side face-api.js similarity is at least this %.
 // Score = round((1 - euclideanDistance) * 100); a distance < ~0.5 (a solid
@@ -34,7 +35,7 @@ exports.submitPhotoVerification = async (req, res) => {
             });
         }
 
-        const selfieUrl = `/uploads/selfies/${req.file.filename}`;
+        const selfieUrl = await storeUpload(req.file, 'selfies', 'image');
         const score = Number(faceMatchScore) || 0;
         const live = livenessPassed === 'true' || livenessPassed === true;
         const passed = score >= AUTO_APPROVE_THRESHOLD && live;

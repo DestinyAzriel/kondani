@@ -14,7 +14,7 @@
       <div class="relative w-full h-full bg-night-800">
         <img
           v-if="profile.photos && profile.photos.length"
-          :src="profile.photos[currentPhotoIndex]"
+          :src="mediaUrl(profile.photos[currentPhotoIndex])"
           class="w-full h-full object-cover pointer-events-none select-none"
           draggable="false"
           alt="Profile photo"
@@ -114,6 +114,7 @@
 import { ref, computed } from 'vue'
 import { MapPin as MapPinIcon, Check as CheckIcon, MoreVertical as MoreVerticalIcon, Image as ImageIcon } from 'lucide-vue-next'
 import ReportModal from '@/components/feature/modal/ReportModal.vue'
+import { mediaUrl } from '@/utils/media'
 
 const props = defineProps({
   profile: { type: Object, required: true }

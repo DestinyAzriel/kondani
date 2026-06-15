@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import DesktopNav from '@/components/layout/DesktopNav.vue'
+import { mediaUrl } from '@/utils/media'
 import ResponsiveContainer from '@/components/layout/ResponsiveContainer.vue'
 import { Phone as PhoneIcon, PhoneOff as PhoneOffIcon, Video as VideoIcon } from 'lucide-vue-next'
 import { socketService } from '@/services/socketService'
@@ -77,7 +78,7 @@ onUnmounted(() => {
       <div class="bg-night-900 border border-white/10 rounded-3xl p-7 w-full max-w-sm text-center shadow-2xl">
         <div class="relative w-24 h-24 mx-auto mb-4">
           <div class="absolute inset-0 rounded-full blur-xl animate-pulse" style="background: rgba(45,212,191,.3)"></div>
-          <img :src="incomingCall.photo" class="relative w-full h-full rounded-full object-cover border-4 border-lagoon-400" />
+          <img :src="mediaUrl(incomingCall.photo)" class="relative w-full h-full rounded-full object-cover border-4 border-lagoon-400" />
         </div>
         <h3 class="text-xl font-bold font-display mb-1">{{ incomingCall.name }}</h3>
         <p class="text-lagoon-300 text-sm font-medium mb-8">
