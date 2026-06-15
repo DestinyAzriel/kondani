@@ -4,7 +4,9 @@ import axios from 'axios'
 // Create axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
-  timeout: 10000,
+  // The backend sleeps on Render's free tier and can take ~30s to wake on the
+  // first request. Allow enough time so the first login doesn't time out.
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -30,6 +32,12 @@ api.interceptors.response.use(
       // Token expired → logout
       localStorage.removeItem('kondani_token')
       window.location.href = '/login'
+    }
+    // Friendlier message for cold-start timeouts / network drops
+    if (error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '')) {
+      error.message = 'The server is waking up — please try again in a moment.'
+    } else if (!error.response) {
+      error.message = 'Network error — check your connection and try again.'
     }
     return Promise.reject(error)
   }
