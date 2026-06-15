@@ -6,109 +6,118 @@
       <div class="k-stars"></div>
     </div>
 
-    <div class="max-w-2xl mx-auto px-5 relative" style="margin-top:-66px">
-      <!-- header row -->
-      <div class="flex items-end justify-between gap-3">
-        <div class="avwrap">
-          <img :src="mainPhoto" class="av" alt="" />
-          <div v-if="profile.isVerified" class="seal"><Check :size="15" /></div>
-        </div>
-        <div class="flex gap-2 pb-1">
-          <button v-if="!isEditing" class="k-btn k-btn-ghost" style="padding:9px 16px;font-size:13px" @click="toggleEdit"><Pencil :size="15" /> Edit</button>
-          <button v-else class="k-btn k-btn-gold" style="padding:9px 18px;font-size:13px" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done' }}</button>
-        </div>
-      </div>
+    <div class="max-w-5xl mx-auto px-5 relative">
+      <div class="grid lg:grid-cols-[330px_minmax(0,1fr)] gap-7 items-start">
 
-      <div class="mt-3">
-        <div class="flex items-center gap-3">
-          <h1 class="k-title" style="font-size:2rem">{{ profile.name || 'Your name' }}</h1>
-          <span v-if="profile.age" class="text-xl text-white/60">{{ profile.age }}</span>
-          <span v-if="profile.isVerified" class="k-ver"><BadgeCheck :size="12" /> Verified</span>
-        </div>
-        <div class="flex items-center gap-1.5 text-lagoon-300 text-sm mt-1.5"><MapPin :size="15" /> {{ profile.district || 'Set your location' }}</div>
-      </div>
+        <!-- LEFT: identity (sticky on desktop) -->
+        <div class="lg:sticky lg:top-6">
+          <!-- header row -->
+          <div class="flex items-end justify-between gap-3" style="margin-top:-66px">
+            <div class="avwrap">
+              <img :src="mainPhoto" class="av" alt="" />
+              <div v-if="profile.isVerified" class="seal"><Check :size="15" /></div>
+            </div>
+            <div class="flex gap-2 pb-1">
+              <button v-if="!isEditing" class="k-btn k-btn-ghost" style="padding:9px 16px;font-size:13px" @click="toggleEdit"><Pencil :size="15" /> Edit</button>
+              <button v-else class="k-btn k-btn-gold" style="padding:9px 18px;font-size:13px" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done' }}</button>
+            </div>
+          </div>
 
-      <!-- stats -->
-      <div class="grid grid-cols-3 gap-3 mt-6">
-        <div class="k-card text-center" style="padding:15px"><div class="k-serif text-gold-300" style="font-size:1.5rem">{{ completeness }}%</div><div class="text-xs text-white/55 mt-1">Complete</div></div>
-        <div class="k-card text-center" style="padding:15px"><div class="k-serif text-lagoon-300" style="font-size:1.5rem">{{ matchCount }}</div><div class="text-xs text-white/55 mt-1">Matches</div></div>
-        <div class="k-card text-center" style="padding:15px"><div class="k-serif" style="font-size:1.5rem">{{ photoCount }}</div><div class="text-xs text-white/55 mt-1">Photos</div></div>
-      </div>
+          <div class="mt-3">
+            <div class="flex items-center gap-3 flex-wrap">
+              <h1 class="k-title" style="font-size:1.9rem">{{ profile.name || 'Your name' }}</h1>
+              <span v-if="profile.age" class="text-xl text-white/60">{{ profile.age }}</span>
+              <span v-if="profile.isVerified" class="k-ver"><BadgeCheck :size="12" /> Verified</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-lagoon-300 text-sm mt-1.5"><MapPin :size="15" /> {{ profile.district || 'Set your location' }}</div>
+          </div>
 
-      <!-- completeness checklist (only if <100) -->
-      <div v-if="completeness < 100" class="k-card mt-5" style="padding:18px">
-        <p class="k-label mb-3">Finish your profile</p>
-        <div class="space-y-2.5">
-          <div v-for="c in checklist" :key="c.t" class="flex items-center gap-3 text-sm" :class="c.done ? 'text-white/45' : 'text-white'">
-            <span class="cdot" :class="c.done ? 'd' : 't'"><component :is="c.done ? Check : c.icon" :size="11" /></span>
-            {{ c.t }}
-            <span v-if="!c.done && c.cta" class="ml-auto text-gold-300 text-xs font-medium cursor-pointer flex items-center gap-1" @click="c.action"> {{ c.cta }} <ArrowRight :size="13" /></span>
+          <!-- stats -->
+          <div class="grid grid-cols-3 gap-3 mt-6">
+            <div class="k-card text-center" style="padding:15px"><div class="k-serif text-gold-300" style="font-size:1.5rem">{{ completeness }}%</div><div class="text-xs text-white/55 mt-1">Complete</div></div>
+            <div class="k-card text-center" style="padding:15px"><div class="k-serif text-lagoon-300" style="font-size:1.5rem">{{ matchCount }}</div><div class="text-xs text-white/55 mt-1">Matches</div></div>
+            <div class="k-card text-center" style="padding:15px"><div class="k-serif" style="font-size:1.5rem">{{ photoCount }}</div><div class="text-xs text-white/55 mt-1">Photos</div></div>
+          </div>
+
+          <!-- completeness checklist (only if <100) -->
+          <div v-if="completeness < 100" class="k-card mt-5" style="padding:18px">
+            <p class="k-label mb-3">Finish your profile</p>
+            <div class="space-y-2.5">
+              <div v-for="c in checklist" :key="c.t" class="flex items-center gap-3 text-sm" :class="c.done ? 'text-white/45' : 'text-white'">
+                <span class="cdot" :class="c.done ? 'd' : 't'"><component :is="c.done ? Check : c.icon" :size="11" /></span>
+                {{ c.t }}
+                <span v-if="!c.done && c.cta" class="ml-auto text-gold-300 text-xs font-medium cursor-pointer flex items-center gap-1" @click="c.action"> {{ c.cta }} <ArrowRight :size="13" /></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- verify -->
+          <div v-if="!profile.isVerified" class="k-card mt-5 flex items-center gap-4" style="padding:18px;border-color:rgba(244,183,64,.25)">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.12);color:var(--k-gold)"><ShieldCheck :size="20" /></div>
+            <div class="flex-1"><div class="font-semibold text-sm">Get the gold badge</div><div class="text-xs text-white/55 mt-0.5">A quick selfie — 4× more matches.</div></div>
+            <button class="k-btn k-btn-gold" style="padding:9px 16px;font-size:12.5px" @click="router.push('/verify-photo')">Verify</button>
+          </div>
+
+          <!-- gold -->
+          <div v-if="!profile.isPremium" class="k-card mt-5 flex items-center gap-4" style="padding:18px;border-color:rgba(244,183,64,.3)">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="20" /></div>
+            <div class="flex-1"><div class="font-semibold text-gold-300 text-sm">Kondani Gold</div><div class="text-xs text-white/55 mt-0.5">See who likes you — MWK 600/mo.</div></div>
+            <button class="k-btn k-btn-gold" style="padding:9px 16px;font-size:12.5px" @click="router.push('/premium')">Upgrade</button>
+          </div>
+
+          <!-- actions -->
+          <div class="mt-5 space-y-3">
+            <button class="k-btn k-btn-ghost w-full" style="padding:13px" @click="router.push('/settings')"><Settings :size="16" /> Account settings</button>
+            <button class="w-full font-medium text-sm py-2" style="color:var(--k-coral)" @click="handleLogout">Sign out</button>
           </div>
         </div>
-      </div>
 
-      <!-- photos -->
-      <div class="k-card mt-5" style="padding:18px">
-        <p class="k-label mb-3">Photos</p>
-        <PhotoUpload v-if="isEditing" v-model="editForm.photos" :max-photos="6" />
-        <div v-else class="gallery">
-          <div v-for="(p, i) in photoList" :key="i" class="g"><img :src="mediaSrc(p)" alt="" /><span v-if="i===0" class="main">Main</span></div>
-          <div v-for="n in emptySlots" :key="'e'+n" class="add"><Plus :size="20" /></div>
-        </div>
-      </div>
-
-      <!-- about -->
-      <div class="k-card mt-5" style="padding:18px">
-        <p class="k-label mb-2.5">About me</p>
-        <textarea v-if="isEditing" v-model="editForm.bio" rows="4" maxlength="500" class="ta" placeholder="Tell people a bit about you…"></textarea>
-        <p v-else class="text-[15px] leading-relaxed text-white/85">{{ profile.bio || 'Add a bio to show your personality.' }}</p>
-      </div>
-
-      <!-- interests -->
-      <div class="k-card mt-5" style="padding:18px">
-        <p class="k-label mb-3">Interests</p>
-        <div v-if="isEditing">
-          <div class="flex gap-2 mb-3">
-            <input v-model="newInterest" @keyup.enter="addInterest" class="inp flex-1" placeholder="Add an interest…" />
-            <button class="k-btn k-btn-gold" style="padding:0 16px" @click="addInterest">Add</button>
+        <!-- RIGHT: content -->
+        <div class="lg:pt-2">
+          <!-- photos -->
+          <div class="k-card" style="padding:18px">
+            <p class="k-label mb-3">Photos</p>
+            <PhotoUpload v-if="isEditing" v-model="editForm.photos" :max-photos="6" />
+            <div v-else class="gallery">
+              <div v-for="(p, i) in photoList" :key="i" class="g"><img :src="mediaSrc(p)" alt="" /><span v-if="i===0" class="main">Main</span></div>
+              <div v-for="n in emptySlots" :key="'e'+n" class="add"><Plus :size="20" /></div>
+            </div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <span v-for="(it,i) in editForm.interests" :key="i" class="k-chip">{{ it }} <X :size="13" class="cursor-pointer" style="color:var(--k-coral)" @click="editForm.interests.splice(i,1)" /></span>
+
+          <!-- about -->
+          <div class="k-card mt-5" style="padding:18px">
+            <p class="k-label mb-2.5">About me</p>
+            <textarea v-if="isEditing" v-model="editForm.bio" rows="4" maxlength="500" class="ta" placeholder="Tell people a bit about you…"></textarea>
+            <p v-else class="text-[15px] leading-relaxed text-white/85">{{ profile.bio || 'Add a bio to show your personality.' }}</p>
+          </div>
+
+          <!-- interests -->
+          <div class="k-card mt-5" style="padding:18px">
+            <p class="k-label mb-3">Interests</p>
+            <div v-if="isEditing">
+              <div class="flex gap-2 mb-3">
+                <input v-model="newInterest" @keyup.enter="addInterest" class="inp flex-1" placeholder="Add an interest…" />
+                <button class="k-btn k-btn-gold" style="padding:0 16px" @click="addInterest">Add</button>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span v-for="(it,i) in editForm.interests" :key="i" class="k-chip">{{ it }} <X :size="13" class="cursor-pointer" style="color:var(--k-coral)" @click="editForm.interests.splice(i,1)" /></span>
+              </div>
+            </div>
+            <div v-else class="flex flex-wrap gap-2">
+              <span v-for="(it,i) in profile.interests" :key="i" class="k-chip">{{ it }}</span>
+              <span v-if="!profile.interests?.length" class="text-white/45 text-sm">No interests yet.</span>
+            </div>
+          </div>
+
+          <!-- prompts (read-only) -->
+          <div v-if="profile.prompts?.length" class="mt-5">
+            <p class="k-label mb-3">Prompts</p>
+            <div v-for="(pr,i) in profile.prompts" :key="i" class="k-card mb-3" style="padding:16px">
+              <div class="text-xs text-gold-300 font-medium mb-1.5">{{ pr.question }}</div>
+              <div class="k-serif" style="font-size:17px">"{{ pr.answer }}"</div>
+            </div>
           </div>
         </div>
-        <div v-else class="flex flex-wrap gap-2">
-          <span v-for="(it,i) in profile.interests" :key="i" class="k-chip">{{ it }}</span>
-          <span v-if="!profile.interests?.length" class="text-white/45 text-sm">No interests yet.</span>
-        </div>
-      </div>
-
-      <!-- prompts (read-only) -->
-      <div v-if="profile.prompts?.length" class="mt-5">
-        <p class="k-label mb-3">Prompts</p>
-        <div v-for="(pr,i) in profile.prompts" :key="i" class="k-card mb-3" style="padding:16px">
-          <div class="text-xs text-gold-300 font-medium mb-1.5">{{ pr.question }}</div>
-          <div class="k-serif" style="font-size:17px">"{{ pr.answer }}"</div>
-        </div>
-      </div>
-
-      <!-- verify -->
-      <div v-if="!profile.isVerified" class="k-card mt-5 flex items-center gap-4" style="padding:18px;border-color:rgba(244,183,64,.25)">
-        <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.12);color:var(--k-gold)"><ShieldCheck :size="20" /></div>
-        <div class="flex-1"><div class="font-semibold text-sm">Get the gold badge</div><div class="text-xs text-white/55 mt-0.5">A quick selfie — 4× more matches.</div></div>
-        <button class="k-btn k-btn-gold" style="padding:9px 16px;font-size:12.5px" @click="router.push('/verify-photo')">Verify</button>
-      </div>
-
-      <!-- gold -->
-      <div v-if="!profile.isPremium" class="k-card mt-5 flex items-center gap-4" style="padding:18px;border-color:rgba(244,183,64,.3)">
-        <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="20" /></div>
-        <div class="flex-1"><div class="font-semibold text-gold-300 text-sm">Kondani Gold</div><div class="text-xs text-white/55 mt-0.5">See who likes you — MWK 600/mo.</div></div>
-        <button class="k-btn k-btn-gold" style="padding:9px 16px;font-size:12.5px" @click="router.push('/premium')">Upgrade</button>
-      </div>
-
-      <!-- actions -->
-      <div class="mt-6 space-y-3">
-        <button class="k-btn k-btn-ghost w-full" style="padding:13px" @click="router.push('/settings')"><Settings :size="16" /> Account settings</button>
-        <button class="w-full font-medium text-sm py-2" style="color:var(--k-coral)" @click="handleLogout">Sign out</button>
       </div>
     </div>
   </div>

@@ -1,13 +1,19 @@
 <template>
   <div class="login min-h-screen flex">
-    <!-- Left: photo panel (desktop) -->
-    <div class="photo-side">
+    <!-- Left: photo panel (desktop) — copy + image differ by mode -->
+    <div class="photo-side" :class="isSignup ? 'is-signup' : 'is-signin'">
       <img :src="heroImg" alt="" />
       <div class="photo-scrim"></div>
       <div class="photo-copy">
         <div class="brand"><KondaniMark :size="40" /><b>Kondani</b></div>
-        <h2 class="serif">Find <em>love</em> in the warm heart of Africa.</h2>
-        <p>Kondani means love. Verified Malawians, real meetups.</p>
+        <template v-if="isSignup">
+          <h2 class="serif">Find <em>love</em> in the warm heart of Africa.</h2>
+          <p>Kondani means love. Join thousands of verified Malawians looking for something real.</p>
+        </template>
+        <template v-else>
+          <h2 class="serif">Welcome <em>back</em>.</h2>
+          <p>Your matches and conversations are waiting for you.</p>
+        </template>
       </div>
     </div>
 
@@ -17,10 +23,19 @@
       <div class="form-inner">
         <router-link to="/" class="brand mob-brand"><KondaniMark :size="36" /><b>Kondani</b></router-link>
 
-        <h1 class="serif heading">{{ step === 1 ? (isSignup ? 'Create your account' : 'Welcome back') : 'Enter your code' }}</h1>
-        <p class="sub">{{ step === 1
-          ? "Enter your number — we'll send you a verification code."
-          : `We sent a 6-digit code to +265 ${cleanedPhone}` }}</p>
+        <h1 class="serif heading">{{ step === 2 ? 'Enter your code' : (isSignup ? 'Create your account' : 'Sign in') }}</h1>
+        <p class="sub">{{ step === 2
+          ? `We sent a 6-digit code to +265 ${cleanedPhone}`
+          : (isSignup
+            ? 'Join free in under a minute — all you need is your phone number.'
+            : 'Enter your number and we\'ll text you a code.') }}</p>
+
+        <!-- Signup-only value props -->
+        <div v-if="step === 1 && isSignup" class="perks">
+          <div class="perk"><BadgeCheck :size="17" /><span>Verified profiles only</span></div>
+          <div class="perk"><MapPin :size="17" /><span>Real people near you</span></div>
+          <div class="perk"><Heart :size="17" /><span>Free to join</span></div>
+        </div>
 
         <!-- Step 1 -->
         <form v-if="step === 1" @submit.prevent="sendOTP" class="space">
@@ -31,12 +46,22 @@
           </div>
           <p v-if="authStore.error" class="err">{{ authStore.error }}</p>
           <button type="submit" class="btn-gold" :disabled="!isValidPhone || authStore.loading">
-            <span v-if="authStore.loading" class="spin"></span>{{ authStore.loading ? 'Sending…' : 'Send code' }}
+            <span v-if="authStore.loading" class="spin"></span>{{ authStore.loading ? 'Sending…' : (isSignup ? 'Create account' : 'Sign in') }}
           </button>
-          <div class="note">
-            <span class="lock">🔒</span>
+
+          <div v-if="isSignup" class="note">
+            <Lock :size="16" />
             <p><span class="hl">Quick &amp; secure.</span> We send a one-time code to confirm your number — it keeps Kondani real and bot-free.</p>
           </div>
+
+          <p class="switch">
+            <template v-if="isSignup">Already have an account?
+              <router-link to="/login">Sign in</router-link>
+            </template>
+            <template v-else>New to Kondani?
+              <router-link to="/login?signup=1">Create an account</router-link>
+            </template>
+          </p>
         </form>
 
         <!-- Step 2 -->
@@ -45,7 +70,7 @@
           <input v-model="otp" type="text" inputmode="numeric" maxlength="6" placeholder="••••••" class="otp-input" />
           <p v-if="authStore.error" class="err">{{ authStore.error }}</p>
           <button type="submit" class="btn-gold" :disabled="otp.length !== 6 || authStore.loading">
-            <span v-if="authStore.loading" class="spin"></span>{{ authStore.loading ? 'Verifying…' : 'Verify & continue' }}
+            <span v-if="authStore.loading" class="spin"></span>{{ authStore.loading ? 'Verifying…' : (isSignup ? 'Create account' : 'Verify & sign in') }}
           </button>
           <div class="row-between">
             <button type="button" class="textlink" @click="step = 1">← Change number</button>
@@ -66,12 +91,14 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
+import { BadgeCheck, MapPin, Heart, Lock } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
 const isSignup = computed(() => route.query.signup === '1')
+// Single approved African-couple image; modes differ via copy, not photo.
 const heroImg = 'https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=1100&q=80&fit=crop'
 
 const phone = ref('')
@@ -145,6 +172,17 @@ const verifyOTP = async () => {
 .textlink:hover { color: #5eead4; }
 .terms { text-align: center; font-size: 11px; color: rgba(241,248,246,.35); margin-top: 26px; }
 .terms a { color: rgba(241,248,246,.55); }
+
+/* signup value props */
+.perks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.perk { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: rgba(241,248,246,.8); }
+.perk svg { color: #f4b740; flex-shrink: 0; }
+
+/* mode switch link */
+.switch { text-align: center; font-size: 13px; color: rgba(241,248,246,.5); }
+.switch a { color: #ffd98a; font-weight: 600; text-decoration: none; }
+.switch a:hover { text-decoration: underline; }
+.note svg { color: #5eead4; flex-shrink: 0; margin-top: 1px; }
 
 @media (min-width: 1024px) {
   .photo-side { display: block; }

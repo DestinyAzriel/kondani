@@ -4,13 +4,13 @@
 
     <!-- Header -->
     <div class="sticky top-0 z-20 bg-night-950/90 backdrop-blur-md border-b border-white/5">
-      <div class="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
+      <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
         <button @click="router.back()" class="k-iconbtn"><ArrowLeft :size="20" /></button>
         <h1 class="k-title" style="font-size:1.7rem">Settings</h1>
       </div>
     </div>
 
-    <div class="max-w-3xl mx-auto px-4 py-6 relative z-10 space-y-7">
+    <div class="max-w-5xl mx-auto px-4 py-6 relative z-10 space-y-7 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-7 lg:gap-y-7 lg:items-start">
 
       <!-- Account -->
       <section>
@@ -103,7 +103,7 @@
         </div>
       </section>
 
-      <p class="text-center text-white/30 text-xs">Kondani v1.0 · Made in Malawi 🇲🇼</p>
+      <p class="text-center text-white/30 text-xs lg:col-span-2">Kondani v1.0 · Made in Malawi 🇲🇼</p>
     </div>
   </div>
 </template>
