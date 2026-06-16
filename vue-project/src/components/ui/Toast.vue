@@ -53,7 +53,7 @@ const toastClass = (type) => {
   
   switch (type) {
     case 'success':
-      return `${baseClasses} bg-emerald-500/10 border-emerald-500/30 text-emerald-400`
+      return `${baseClasses} bg-lagoon-400/10 border-lagoon-400/30 text-lagoon-300`
     case 'error':
       return `${baseClasses} bg-red-500/10 border-red-500/30 text-red-400`
     case 'warning':

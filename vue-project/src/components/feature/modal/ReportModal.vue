@@ -63,8 +63,8 @@
                   <p class="text-sm text-white/70">Why are you reporting this user?</p>
                   
                   <div class="space-y-2">
-                    <label v-for="reason in reportReasons" :key="reason.id" class="flex items-center gap-3 p-3 rounded-lg border border-white/10 cursor-pointer hover:bg-white/5 transition-colors" :class="selectedReason === reason.id ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-white/5'">
-                      <input type="radio" :value="reason.id" v-model="selectedReason" class="text-emerald-500 focus:ring-emerald-500 bg-transparent border-white/30" />
+                    <label v-for="reason in reportReasons" :key="reason.id" class="flex items-center gap-3 p-3 rounded-lg border border-white/10 cursor-pointer hover:bg-white/5 transition-colors" :class="selectedReason === reason.id ? 'bg-gold-500/10 border-gold-400/50' : 'bg-white/5'">
+                      <input type="radio" :value="reason.id" v-model="selectedReason" class="accent-[#f4b740] bg-transparent border-white/30" />
                       <span class="text-white text-sm font-medium">{{ reason.label }}</span>
                     </label>
                   </div>
@@ -73,7 +73,7 @@
                     <textarea 
                       v-model="description" 
                       placeholder="Please provide more details..." 
-                      class="w-full bg-deep-950 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                      class="w-full bg-deep-950 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-gold-400 transition-colors"
                       rows="3"
                     ></textarea>
                   </div>

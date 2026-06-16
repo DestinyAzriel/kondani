@@ -1,10 +1,10 @@
 <template>
   <div v-if="show" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" @click.self="$emit('close')">
-    <div class="bg-deep-900 w-full md:max-w-lg md:rounded-2xl rounded-t-3xl border-t md:border border-white/10 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up">
-      
+    <div class="w-full md:max-w-lg md:rounded-2xl rounded-t-3xl border-t md:border border-white/10 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up" style="background:var(--k-card)">
+
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-white/10">
-        <h2 class="text-xl font-bold text-white font-display">Filters</h2>
+        <h2 class="k-serif text-xl text-white">Filters</h2>
         <button @click="$emit('close')" class="p-2 text-white/60 hover:text-white transition-colors">
           <XIcon size="24" />
         </button>
@@ -23,7 +23,7 @@
               type="range" 
               min="18" 
               max="60" 
-              class="flex-1 accent-emerald-500"
+              class="flex-1 accent-[#f4b740]"
             />
             <span class="text-white font-medium">{{ filters.ageMax }}</span>
             <input 
@@ -31,7 +31,7 @@
               type="range" 
               min="18" 
               max="60" 
-              class="flex-1 accent-emerald-500"
+              class="flex-1 accent-[#f4b740]"
             />
           </div>
           <p class="text-xs text-white/40 mt-2">{{ filters.ageMin }} - {{ filters.ageMax }} years old</p>
@@ -46,7 +46,7 @@
             min="1" 
             max="500" 
             step="5"
-            class="w-full accent-emerald-500"
+            class="w-full accent-[#f4b740]"
           />
           <p class="text-xs text-white/40 mt-2">Up to {{ filters.distance }} km away</p>
         </div>
@@ -62,7 +62,7 @@
               :class="[
                 'px-4 py-2 rounded-full text-sm font-medium transition-all',
                 filters.region === region
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-300 text-night-950'
                   : 'bg-white/5 text-white/60 hover:bg-white/10'
               ]"
             >
@@ -82,7 +82,7 @@
               :class="[
                 'px-4 py-2 rounded-full text-sm font-medium transition-all',
                 filters.gender === gender
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-300 text-night-950'
                   : 'bg-white/5 text-white/60 hover:bg-white/10'
               ]"
             >
@@ -102,7 +102,7 @@
               :class="[
                 'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
                 filters.interests.includes(interest)
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-300 text-night-950'
                   : 'bg-white/5 text-white/60 hover:bg-white/10'
               ]"
             >
@@ -121,7 +121,7 @@
             @click="filters.verifiedOnly = !filters.verifiedOnly"
             :class="[
               'relative w-12 h-6 rounded-full transition-colors',
-              filters.verifiedOnly ? 'bg-emerald-500' : 'bg-white/20'
+              filters.verifiedOnly ? 'bg-gradient-to-r from-gold-500 to-gold-300' : 'bg-white/20'
             ]"
           >
             <span
@@ -145,7 +145,7 @@
         </button>
         <button
           @click="applyFilters"
-          class="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-full font-bold shadow-lg shadow-emerald-600/20 hover:scale-105 transition-transform active:scale-95"
+          class="flex-1 px-6 py-3 bg-gradient-to-r from-gold-500 to-gold-300 text-night-950 rounded-full font-bold shadow-lg shadow-gold-600/30 hover:scale-105 transition-transform active:scale-95"
         >
           Apply Filters
         </button>
@@ -248,18 +248,18 @@ input[type="range"]::-webkit-slider-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #10b981;
+  background: #f4b740;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 8px rgba(244, 183, 64, 0.4);
 }
 
 input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #10b981;
+  background: #f4b740;
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 8px rgba(244, 183, 64, 0.4);
 }
 </style>

@@ -48,7 +48,7 @@
         <!-- Primary Badge -->
         <div
           v-if="photo && index === 0"
-          class="absolute bottom-2 left-2 px-2 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full"
+          class="absolute bottom-2 left-2 px-2 py-1 bg-gradient-to-r from-gold-500 to-gold-300 text-night-950 text-xs font-bold rounded-full"
         >
           Primary
         </div>
@@ -76,12 +76,12 @@
     <!-- Upload Progress -->
     <div v-if="uploading" class="bg-white/5 rounded-xl p-4 border border-white/10">
       <div class="flex items-center gap-3 mb-2">
-        <div class="animate-spin w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full"></div>
+        <div class="animate-spin w-5 h-5 border-2 border-gold-400 border-t-transparent rounded-full"></div>
         <span class="text-white/80 text-sm font-medium">Uploading {{ uploadProgress }}%</span>
       </div>
       <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
         <div
-          class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-300"
+          class="h-full bg-gradient-to-r from-gold-500 to-gold-300 transition-all duration-300"
           :style="{ width: `${uploadProgress}%` }"
         ></div>
       </div>

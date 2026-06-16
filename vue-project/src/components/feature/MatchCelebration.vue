@@ -105,7 +105,7 @@ const createConfetti = () => {
 
   const confettiPieces = []
   const confettiCount = 150
-  const colors = ['#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6']
+  const colors = ['#f4b740', '#ffd98a', '#2dd4bf', '#ff7a6b', '#ffffff']
 
   class ConfettiPiece {
     constructor() {
@@ -241,9 +241,9 @@ onUnmounted(() => {
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  border: 4px solid #10b981;
+  border: 4px solid #f4b740;
   overflow: hidden;
-  box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 30px rgba(244, 183, 64, 0.45);
 }
 
 .photo-left {
@@ -278,9 +278,9 @@ onUnmounted(() => {
 }
 
 .action-button.primary {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, #f4b740, #ffd98a);
+  color: #050d12;
+  box-shadow: 0 4px 12px rgba(244, 183, 64, 0.35);
 }
 
 .action-button.primary:hover {
