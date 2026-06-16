@@ -1,99 +1,90 @@
 <template>
   <div class="profile k-page pb-28 relative">
-    <!-- cover -->
-    <div class="cover">
-      <div class="cover-grad"></div>
-      <div class="k-stars"></div>
-    </div>
+    <div class="k-stars"></div>
+    <div class="absolute top-[-12%] right-[-8%] w-[45%] h-[40%] rounded-full blur-[130px] pointer-events-none"
+         style="background:radial-gradient(circle,rgba(244,183,64,.12),transparent 70%)"></div>
 
-    <div class="max-w-5xl mx-auto px-5 relative">
-      <div class="grid lg:grid-cols-[330px_minmax(0,1fr)] gap-7 items-start">
+    <div class="max-w-5xl mx-auto px-5 pt-8 relative z-10">
+      <div class="grid lg:grid-cols-[360px_minmax(0,1fr)] gap-8 items-start">
 
-        <!-- LEFT: identity (sticky on desktop) -->
-        <div class="lg:sticky lg:top-6">
-          <!-- header row -->
-          <div class="flex items-end justify-between gap-3" style="margin-top:-66px">
-            <div class="avwrap">
-              <img :src="mainPhoto" class="av" alt="" />
-              <div v-if="profile.isVerified" class="seal"><Check :size="15" /></div>
-            </div>
-            <div class="flex gap-2 pb-1">
-              <button v-if="!isEditing" class="k-btn k-btn-ghost" style="padding:9px 16px;font-size:13px" @click="toggleEdit"><Pencil :size="15" /> Edit</button>
-              <button v-else class="k-btn k-btn-gold" style="padding:9px 18px;font-size:13px" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done' }}</button>
-            </div>
-          </div>
-
-          <div class="mt-3">
-            <div class="flex items-center gap-3 flex-wrap">
-              <h1 class="k-title" style="font-size:1.9rem">{{ profile.name || 'Your name' }}</h1>
-              <span v-if="profile.age" class="text-xl text-white/60">{{ profile.age }}</span>
-              <span v-if="profile.isVerified" class="k-ver"><BadgeCheck :size="12" /> Verified</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-lagoon-300 text-sm mt-1.5"><MapPin :size="15" /> {{ profile.district || 'Set your location' }}</div>
-          </div>
-
-          <!-- stats -->
-          <div class="grid grid-cols-3 gap-3 mt-6">
-            <div class="k-card text-center" style="padding:15px"><div class="k-serif text-gold-300" style="font-size:1.5rem">{{ completeness }}%</div><div class="text-xs text-white/55 mt-1">Complete</div></div>
-            <div class="k-card text-center" style="padding:15px"><div class="k-serif text-lagoon-300" style="font-size:1.5rem">{{ matchCount }}</div><div class="text-xs text-white/55 mt-1">Matches</div></div>
-            <div class="k-card text-center" style="padding:15px"><div class="k-serif" style="font-size:1.5rem">{{ photoCount }}</div><div class="text-xs text-white/55 mt-1">Photos</div></div>
-          </div>
-
-          <!-- completeness checklist (only if <100) -->
-          <div v-if="completeness < 100" class="k-card mt-5" style="padding:18px">
-            <p class="k-label mb-3">Finish your profile</p>
-            <div class="space-y-2.5">
-              <div v-for="c in checklist" :key="c.t" class="flex items-center gap-3 text-sm" :class="c.done ? 'text-white/45' : 'text-white'">
-                <span class="cdot" :class="c.done ? 'd' : 't'"><component :is="c.done ? Check : c.icon" :size="11" /></span>
-                {{ c.t }}
-                <span v-if="!c.done && c.cta" class="ml-auto text-gold-300 text-xs font-medium cursor-pointer flex items-center gap-1" @click="c.action"> {{ c.cta }} <ArrowRight :size="13" /></span>
+        <!-- LEFT: live preview card + actions (sticky) -->
+        <div class="lg:sticky lg:top-8 space-y-4">
+          <!-- Preview card — how you appear to others -->
+          <div class="pcard">
+            <img v-if="photoCount" :src="mainPhoto" alt="" />
+            <div v-else class="pcard-empty"><ImageIcon :size="40" :stroke-width="1.5" /><span>Add a photo</span></div>
+            <div class="pcard-grad"></div>
+            <div v-if="profile.isVerified" class="pcard-seal"><BadgeCheck :size="16" /></div>
+            <div class="pcard-info">
+              <div class="flex items-end gap-2">
+                <h1 class="k-serif" style="font-size:1.9rem;line-height:1">{{ profile.name || 'Your name' }}</h1>
+                <span v-if="profile.age" class="text-xl text-white/85 leading-none mb-0.5">{{ profile.age }}</span>
               </div>
+              <div v-if="profile.district" class="flex items-center gap-1.5 text-sm text-white/80 mt-2"><MapPin :size="14" /> {{ profile.district }}</div>
             </div>
           </div>
 
-          <!-- verify -->
-          <div v-if="!profile.isVerified" class="k-card mt-5 flex items-center gap-4" style="padding:18px;border-color:rgba(244,183,64,.25)">
-            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.12);color:var(--k-gold)"><ShieldCheck :size="20" /></div>
-            <div class="flex-1"><div class="font-semibold text-sm">Get the gold badge</div><div class="text-xs text-white/55 mt-0.5">A quick selfie — 4× more matches.</div></div>
-            <button class="k-btn k-btn-gold" style="padding:9px 16px;font-size:12.5px" @click="router.push('/verify-photo')">Verify</button>
+          <!-- Profile strength -->
+          <div class="k-card" style="padding:16px">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="k-label">Profile strength</span>
+              <span class="k-serif text-gold-300" style="font-size:1.05rem">{{ completeness }}%</span>
+            </div>
+            <div class="pbar"><i :style="{ width: completeness + '%' }"></i></div>
+            <div v-if="incomplete.length" class="mt-3 space-y-1.5">
+              <button v-for="c in incomplete" :key="c.t" class="finish-row" @click="c.action">
+                <span class="flex items-center gap-2"><component :is="c.icon" :size="14" /> {{ c.t }}</span>
+                <ArrowRight :size="14" class="text-gold-300" />
+              </button>
+            </div>
           </div>
 
-          <!-- gold -->
-          <div v-if="!profile.isPremium" class="k-card mt-5 flex items-center gap-4" style="padding:18px;border-color:rgba(244,183,64,.3)">
-            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="20" /></div>
-            <div class="flex-1"><div class="font-semibold text-gold-300 text-sm">Kondani Gold</div><div class="text-xs text-white/55 mt-0.5">See who likes you — MWK 600/mo.</div></div>
-            <button class="k-btn k-btn-gold" style="padding:9px 16px;font-size:12.5px" @click="router.push('/premium')">Upgrade</button>
+          <button v-if="!isEditing" class="k-btn k-btn-ghost w-full" style="padding:12px" @click="toggleEdit"><Pencil :size="15" /> Edit profile</button>
+          <button v-else class="k-btn k-btn-gold w-full" style="padding:12px" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done editing' }}</button>
+
+          <!-- compact verify / gold -->
+          <div v-if="!profile.isVerified" class="k-card flex items-center gap-3" style="padding:14px;border-color:rgba(244,183,64,.25)">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.12);color:var(--k-gold)"><ShieldCheck :size="17" /></div>
+            <div class="flex-1 min-w-0"><div class="font-semibold text-[13px]">Get verified</div><div class="text-xs text-white/55">A quick selfie · 4× matches</div></div>
+            <button class="k-btn k-btn-gold" style="padding:7px 13px;font-size:12px" @click="router.push('/verify-photo')">Verify</button>
+          </div>
+          <div v-if="!profile.isPremium" class="k-card flex items-center gap-3" style="padding:14px;border-color:rgba(244,183,64,.3)">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="17" /></div>
+            <div class="flex-1 min-w-0"><div class="font-semibold text-gold-300 text-[13px]">Kondani Gold</div><div class="text-xs text-white/55">See who likes you · 600/mo</div></div>
+            <button class="k-btn k-btn-gold" style="padding:7px 13px;font-size:12px" @click="router.push('/premium')">Get</button>
           </div>
 
-          <!-- actions -->
-          <div class="mt-5 space-y-3">
-            <button class="k-btn k-btn-ghost w-full" style="padding:13px" @click="router.push('/settings')"><Settings :size="16" /> Account settings</button>
-            <button class="w-full font-medium text-sm py-2" style="color:var(--k-coral)" @click="handleLogout">Sign out</button>
+          <div class="flex items-center gap-2 pt-1">
+            <button class="k-btn k-btn-ghost flex-1" style="padding:11px;font-size:13px" @click="router.push('/settings')"><Settings :size="15" /> Settings</button>
+            <button class="k-btn k-btn-ghost" style="padding:11px 14px;font-size:13px;color:var(--k-coral)" @click="handleLogout"><LogOut :size="15" /></button>
           </div>
         </div>
 
-        <!-- RIGHT: content -->
-        <div class="lg:pt-2">
+        <!-- RIGHT: editorial content -->
+        <div class="space-y-5">
           <!-- photos -->
-          <div class="k-card" style="padding:18px">
-            <p class="k-label mb-3">Photos</p>
+          <div class="k-card" style="padding:20px">
+            <div class="flex items-center justify-between mb-4">
+              <p class="k-label">Photos</p>
+              <span class="text-xs text-white/45">{{ photoCount }}/6</span>
+            </div>
             <PhotoUpload v-if="isEditing" v-model="editForm.photos" :max-photos="6" />
             <div v-else class="gallery">
               <div v-for="(p, i) in photoList" :key="i" class="g"><img :src="mediaSrc(p)" alt="" /><span v-if="i===0" class="main">Main</span></div>
-              <div v-for="n in emptySlots" :key="'e'+n" class="add"><Plus :size="20" /></div>
+              <div v-for="n in emptySlots" :key="'e'+n" class="add" @click="toggleEdit"><Plus :size="20" /></div>
             </div>
           </div>
 
           <!-- about -->
-          <div class="k-card mt-5" style="padding:18px">
-            <p class="k-label mb-2.5">About me</p>
+          <div class="k-card" style="padding:20px">
+            <p class="k-label mb-3">About me</p>
             <textarea v-if="isEditing" v-model="editForm.bio" rows="4" maxlength="500" class="ta" placeholder="Tell people a bit about you…"></textarea>
-            <p v-else class="text-[15px] leading-relaxed text-white/85">{{ profile.bio || 'Add a bio to show your personality.' }}</p>
+            <p v-else class="text-[15px] leading-relaxed" :class="profile.bio ? 'text-white/85' : 'text-white/45'">{{ profile.bio || 'Add a bio to show your personality.' }}</p>
           </div>
 
           <!-- interests -->
-          <div class="k-card mt-5" style="padding:18px">
-            <p class="k-label mb-3">Interests</p>
+          <div class="k-card" style="padding:20px">
+            <p class="k-label mb-3.5">Interests</p>
             <div v-if="isEditing">
               <div class="flex gap-2 mb-3">
                 <input v-model="newInterest" @keyup.enter="addInterest" class="inp flex-1" placeholder="Add an interest…" />
@@ -110,9 +101,9 @@
           </div>
 
           <!-- prompts (read-only) -->
-          <div v-if="profile.prompts?.length" class="mt-5">
-            <p class="k-label mb-3">Prompts</p>
-            <div v-for="(pr,i) in profile.prompts" :key="i" class="k-card mb-3" style="padding:16px">
+          <div v-if="profile.prompts?.length" class="space-y-3">
+            <p class="k-label">Prompts</p>
+            <div v-for="(pr,i) in profile.prompts" :key="i" class="k-card" style="padding:18px">
               <div class="text-xs text-gold-300 font-medium mb-1.5">{{ pr.question }}</div>
               <div class="k-serif" style="font-size:17px">"{{ pr.answer }}"</div>
             </div>
@@ -130,7 +121,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import PhotoUpload from '@/components/feature/PhotoUpload.vue'
-import { Check, BadgeCheck, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ArrowRight, Camera } from 'lucide-vue-next'
+import { BadgeCheck, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ArrowRight, Camera, LogOut, Image as ImageIcon } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -140,7 +131,7 @@ const { profile, saveProfile } = useProfile()
 import { mediaUrl } from '@/utils/media'
 const mediaSrc = (u) => mediaUrl(u)
 const photoList = computed(() => profile.value.photos || [])
-const mainPhoto = computed(() => (photoList.value[0] ? mediaSrc(photoList.value[0]) : 'https://via.placeholder.com/300'))
+const mainPhoto = computed(() => (photoList.value[0] ? mediaSrc(photoList.value[0]) : ''))
 const photoCount = computed(() => photoList.value.length)
 const emptySlots = computed(() => Math.max(0, Math.min(6, 6 - photoCount.value)))
 const matchCount = computed(() => profile.value.matches?.length || 0)
@@ -151,12 +142,13 @@ const newInterest = ref('')
 const editForm = reactive({ bio: '', interests: [], photos: [] })
 
 const checklist = computed(() => [
-  { t: 'Add photos', done: photoCount.value >= 1, icon: Camera, cta: 'Add', action: toggleEdit },
-  { t: 'Write a bio', done: !!profile.value.bio, icon: Pencil, cta: 'Add', action: toggleEdit },
-  { t: 'Pick 3+ interests', done: (profile.value.interests?.length || 0) >= 3, icon: Plus, cta: 'Add', action: toggleEdit },
-  { t: 'Verify with a selfie', done: !!profile.value.isVerified, icon: Camera, cta: 'Verify', action: () => router.push('/verify-photo') }
+  { t: 'Add photos', done: photoCount.value >= 1, icon: Camera, action: toggleEdit },
+  { t: 'Write a bio', done: !!profile.value.bio, icon: Pencil, action: toggleEdit },
+  { t: 'Pick 3+ interests', done: (profile.value.interests?.length || 0) >= 3, icon: Plus, action: toggleEdit },
+  { t: 'Verify with a selfie', done: !!profile.value.isVerified, icon: ShieldCheck, action: () => router.push('/verify-photo') }
 ])
 const completeness = computed(() => checklist.value.filter(c => c.done).length * 25)
+const incomplete = computed(() => checklist.value.filter(c => !c.done))
 
 function toggleEdit() {
   if (!isEditing.value) {
@@ -187,22 +179,31 @@ const handleLogout = async () => {
 
 <style scoped>
 .profile { overflow-x: hidden; }
-.cover { height: 180px; position: relative; overflow: hidden; }
-.cover-grad { position: absolute; inset: 0; background: linear-gradient(120deg, rgba(45,212,191,.22), rgba(244,183,64,.16)); }
-.cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, var(--k-night)); }
-.avwrap { position: relative; }
-.av { width: 122px; height: 122px; border-radius: 26px; object-fit: cover; border: 4px solid var(--k-night); box-shadow: 0 16px 40px rgba(0,0,0,.6); background: #0e1f29; }
-.seal { position: absolute; bottom: -6px; right: -6px; width: 30px; height: 30px; border-radius: 50%; background: var(--k-gold); color: var(--k-night); display: flex; align-items: center; justify-content: center; border: 3px solid var(--k-night); }
-.cdot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.cdot.d { background: var(--k-lagoon); color: var(--k-night); }
-.cdot.t { border: 1.5px solid var(--k-gold); color: var(--k-gold); }
+
+/* preview card */
+.pcard { position: relative; width: 100%; aspect-ratio: 3/4; border-radius: 24px; overflow: hidden; border: 1px solid var(--k-line); box-shadow: 0 24px 60px rgba(0,0,0,.55); background: linear-gradient(160deg,#0e1f29,#081016); }
+.pcard img { width: 100%; height: 100%; object-fit: cover; }
+.pcard-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,.3); font-size: 13px; }
+.pcard-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,13,18,.92), transparent 55%); pointer-events: none; }
+.pcard-seal { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: var(--k-gold); color: var(--k-night); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(244,183,64,.5); }
+.pcard-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 20px; }
+
+/* profile strength */
+.pbar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+.pbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--k-gold), var(--k-gold-l)); transition: width .4s ease; }
+.finish-row { width: 100%; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--k-txt); padding: 7px 0; cursor: pointer; background: none; border: none; }
+.finish-row:hover { color: var(--k-gold-l); }
+
+/* gallery */
 .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.gallery .g { aspect-ratio: 3/4; border-radius: 12px; overflow: hidden; position: relative; }
+.gallery .g { aspect-ratio: 3/4; border-radius: 14px; overflow: hidden; position: relative; }
 .gallery .g img { width: 100%; height: 100%; object-fit: cover; }
-.gallery .g .main { position: absolute; top: 6px; left: 6px; font-size: 9.5px; font-weight: 600; background: var(--k-gold); color: var(--k-night); padding: 2px 8px; border-radius: 6px; }
-.gallery .add { aspect-ratio: 3/4; border-radius: 12px; border: 1.5px dashed var(--k-line); display: flex; align-items: center; justify-content: center; color: var(--k-mut2); }
+.gallery .g .main { position: absolute; top: 7px; left: 7px; font-size: 9.5px; font-weight: 700; background: var(--k-gold); color: var(--k-night); padding: 2px 8px; border-radius: 6px; }
+.gallery .add { aspect-ratio: 3/4; border-radius: 14px; border: 1.5px dashed var(--k-line); display: flex; align-items: center; justify-content: center; color: var(--k-mut2); cursor: pointer; transition: border-color .2s, color .2s; }
+.gallery .add:hover { border-color: var(--k-gold); color: var(--k-gold); }
+
 .ta { width: 100%; background: rgba(255,255,255,.05); border: 1px solid var(--k-line); border-radius: 12px; padding: 12px; color: #fff; outline: none; resize: none; font-family: inherit; }
-.ta:focus { border-color: var(--k-lagoon); }
+.ta:focus { border-color: var(--k-gold); }
 .inp { background: rgba(255,255,255,.05); border: 1px solid var(--k-line); border-radius: 10px; padding: 10px 14px; color: #fff; outline: none; }
-.inp:focus { border-color: var(--k-lagoon); }
+.inp:focus { border-color: var(--k-gold); }
 </style>
