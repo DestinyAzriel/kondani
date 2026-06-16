@@ -8,6 +8,19 @@ import './assets/premium.css'
 import { activityService } from './services/activityService'
 import { useAuthStore } from './stores/auth'
 
+// We are NOT shipping a PWA service worker right now. Earlier builds did, which
+// left orphaned service workers caching a stale app shell for users (deploys
+// appeared to "not update"). Proactively unregister any existing SW and wipe
+// its caches so everyone always gets the latest deploy.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then((regs) => regs.forEach((r) => r.unregister()))
+    .catch(() => {})
+  if (window.caches?.keys) {
+    caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {})
+  }
+}
+
 // Global error handler
 window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error);
