@@ -1,77 +1,71 @@
 <template>
   <div class="profile k-page pb-28 relative">
     <div class="k-stars"></div>
-    <div class="absolute top-[-12%] right-[-8%] w-[45%] h-[40%] rounded-full blur-[130px] pointer-events-none"
-         style="background:radial-gradient(circle,rgba(244,183,64,.12),transparent 70%)"></div>
+    <div class="absolute top-[-12%] right-[-8%] w-[45%] h-[38%] rounded-full blur-[130px] pointer-events-none"
+         style="background:radial-gradient(circle,rgba(244,183,64,.1),transparent 70%)"></div>
 
-    <div class="max-w-5xl mx-auto px-5 pt-8 relative z-10">
-      <div class="grid lg:grid-cols-[360px_minmax(0,1fr)] gap-8 items-start">
+    <div class="max-w-5xl mx-auto px-5 pt-6 relative z-10">
+      <!-- top bar -->
+      <div class="flex items-center justify-between mb-7">
+        <h1 class="k-title" style="font-size:1.9rem">Profile</h1>
+        <button class="k-iconbtn" @click="router.push('/settings')"><Settings :size="19" /></button>
+      </div>
 
-        <!-- LEFT: live preview card + actions (sticky) -->
-        <div class="lg:sticky lg:top-8 space-y-4">
-          <!-- Preview card — how you appear to others -->
-          <div class="pcard">
-            <img v-if="photoCount" :src="mainPhoto" alt="" />
-            <div v-else class="pcard-empty"><ImageIcon :size="40" :stroke-width="1.5" /><span>Add a photo</span></div>
-            <div class="pcard-grad"></div>
-            <div v-if="profile.isVerified" class="pcard-seal"><BadgeCheck :size="16" /></div>
-            <div class="pcard-info">
-              <div class="flex items-end gap-2">
-                <h1 class="k-serif" style="font-size:1.9rem;line-height:1">{{ profile.name || 'Your name' }}</h1>
-                <span v-if="profile.age" class="text-xl text-white/85 leading-none mb-0.5">{{ profile.age }}</span>
+      <div class="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10">
+
+        <!-- LEFT: identity + promos -->
+        <div class="lg:w-[330px] lg:flex-shrink-0 lg:sticky lg:top-6">
+          <div class="flex items-center gap-5 lg:flex-col lg:items-start">
+            <!-- avatar w/ completeness ring -->
+            <div class="av-ring" :style="{ '--pct': completeness }">
+              <img v-if="photoCount" :src="mainPhoto" class="av-img" alt="" />
+              <div v-else class="av-img av-empty"><ImageIcon :size="30" :stroke-width="1.5" /></div>
+              <span class="av-pct">{{ completeness }}%</span>
+            </div>
+
+            <div class="lg:mt-5">
+              <div class="flex items-center gap-2.5">
+                <h2 class="k-serif" style="font-size:1.6rem;line-height:1.1">{{ profile.name || 'Your name' }}<span v-if="profile.age" class="text-white/55 font-normal">, {{ profile.age }}</span></h2>
+                <span v-if="profile.isVerified" class="vseal"><Check :size="13" /></span>
+                <button v-else class="vseal vseal-todo" title="Get verified" @click="router.push('/verify-photo')"><BadgeCheck :size="15" /></button>
               </div>
-              <div v-if="profile.district" class="flex items-center gap-1.5 text-sm text-white/80 mt-2"><MapPin :size="14" /> {{ profile.district }}</div>
+              <button v-if="!isEditing" class="edit-pill mt-3" @click="toggleEdit"><Pencil :size="14" /> Edit profile</button>
+              <button v-else class="edit-pill edit-pill-on mt-3" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done editing' }}</button>
             </div>
           </div>
 
-          <!-- Profile strength -->
-          <div class="k-card" style="padding:16px">
-            <div class="flex items-center justify-between mb-2.5">
-              <span class="k-label">Profile strength</span>
-              <span class="k-serif text-gold-300" style="font-size:1.05rem">{{ completeness }}%</span>
-            </div>
-            <div class="pbar"><i :style="{ width: completeness + '%' }"></i></div>
-            <div v-if="incomplete.length" class="mt-3 space-y-1.5">
-              <button v-for="c in incomplete" :key="c.t" class="finish-row" @click="c.action">
-                <span class="flex items-center gap-2"><component :is="c.icon" :size="14" /> {{ c.t }}</span>
-                <ArrowRight :size="14" class="text-gold-300" />
-              </button>
-            </div>
+          <!-- promos (Tinder-style horizontal cards) -->
+          <div class="mt-6 space-y-3">
+            <button v-if="!profile.isVerified" class="promo" @click="router.push('/verify-photo')">
+              <span class="promo-ic"><ShieldCheck :size="19" /></span>
+              <span class="promo-txt"><b>Get verified</b><i>A quick selfie — earn the gold badge &amp; 4× more matches.</i></span>
+              <ChevronRight :size="20" class="text-white/35" />
+            </button>
+            <button v-if="!profile.isPremium" class="promo promo-gold" @click="router.push('/premium')">
+              <span class="promo-ic"><Crown :size="19" /></span>
+              <span class="promo-txt"><b style="color:var(--k-gold-l)">Try Kondani Gold</b><i>See who likes you and match faster — MWK 600/mo.</i></span>
+              <ChevronRight :size="20" class="text-white/35" />
+            </button>
           </div>
 
-          <button v-if="!isEditing" class="k-btn k-btn-ghost w-full" style="padding:12px" @click="toggleEdit"><Pencil :size="15" /> Edit profile</button>
-          <button v-else class="k-btn k-btn-gold w-full" style="padding:12px" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done editing' }}</button>
-
-          <!-- compact verify / gold -->
-          <div v-if="!profile.isVerified" class="k-card flex items-center gap-3" style="padding:14px;border-color:rgba(244,183,64,.25)">
-            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.12);color:var(--k-gold)"><ShieldCheck :size="17" /></div>
-            <div class="flex-1 min-w-0"><div class="font-semibold text-[13px]">Get verified</div><div class="text-xs text-white/55">A quick selfie · 4× matches</div></div>
-            <button class="k-btn k-btn-gold" style="padding:7px 13px;font-size:12px" @click="router.push('/verify-photo')">Verify</button>
-          </div>
-          <div v-if="!profile.isPremium" class="k-card flex items-center gap-3" style="padding:14px;border-color:rgba(244,183,64,.3)">
-            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="17" /></div>
-            <div class="flex-1 min-w-0"><div class="font-semibold text-gold-300 text-[13px]">Kondani Gold</div><div class="text-xs text-white/55">See who likes you · 600/mo</div></div>
-            <button class="k-btn k-btn-gold" style="padding:7px 13px;font-size:12px" @click="router.push('/premium')">Get</button>
-          </div>
-
-          <div class="flex items-center gap-2 pt-1">
+          <div class="flex items-center gap-2 mt-4">
             <button class="k-btn k-btn-ghost flex-1" style="padding:11px;font-size:13px" @click="router.push('/settings')"><Settings :size="15" /> Settings</button>
             <button class="k-btn k-btn-ghost" style="padding:11px 14px;font-size:13px;color:var(--k-coral)" @click="handleLogout"><LogOut :size="15" /></button>
           </div>
         </div>
 
-        <!-- RIGHT: editorial content -->
-        <div class="space-y-5">
+        <!-- RIGHT: content -->
+        <div class="flex-1 min-w-0 mt-2 lg:mt-0 space-y-5">
           <!-- photos -->
-          <div class="k-card" style="padding:20px">
-            <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="flex items-center justify-between mb-3">
               <p class="k-label">Photos</p>
               <span class="text-xs text-white/45">{{ photoCount }}/6</span>
             </div>
             <PhotoUpload v-if="isEditing" v-model="editForm.photos" :max-photos="6" />
-            <div v-else class="gallery">
+            <div v-else class="pgrid">
               <div v-for="(p, i) in photoList" :key="i" class="g"><img :src="mediaSrc(p)" alt="" /><span v-if="i===0" class="main">Main</span></div>
-              <div v-for="n in emptySlots" :key="'e'+n" class="add" @click="toggleEdit"><Plus :size="20" /></div>
+              <button v-for="n in emptySlots" :key="'e'+n" class="add" @click="toggleEdit"><span class="add-plus"><Plus :size="18" /></span></button>
             </div>
           </div>
 
@@ -100,7 +94,7 @@
             </div>
           </div>
 
-          <!-- prompts (read-only) -->
+          <!-- prompts -->
           <div v-if="profile.prompts?.length" class="space-y-3">
             <p class="k-label">Prompts</p>
             <div v-for="(pr,i) in profile.prompts" :key="i" class="k-card" style="padding:18px">
@@ -121,20 +115,19 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import PhotoUpload from '@/components/feature/PhotoUpload.vue'
-import { BadgeCheck, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ArrowRight, Camera, LogOut, Image as ImageIcon } from 'lucide-vue-next'
+import { BadgeCheck, Check, Pencil, Plus, X, ShieldCheck, Crown, Settings, ChevronRight, Camera, LogOut, Image as ImageIcon } from 'lucide-vue-next'
+import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { success, error: toastError } = useToast()
 const { profile, saveProfile } = useProfile()
 
-import { mediaUrl } from '@/utils/media'
 const mediaSrc = (u) => mediaUrl(u)
 const photoList = computed(() => profile.value.photos || [])
 const mainPhoto = computed(() => (photoList.value[0] ? mediaSrc(photoList.value[0]) : ''))
 const photoCount = computed(() => photoList.value.length)
 const emptySlots = computed(() => Math.max(0, Math.min(6, 6 - photoCount.value)))
-const matchCount = computed(() => profile.value.matches?.length || 0)
 
 const isEditing = ref(false)
 const isSaving = ref(false)
@@ -142,13 +135,12 @@ const newInterest = ref('')
 const editForm = reactive({ bio: '', interests: [], photos: [] })
 
 const checklist = computed(() => [
-  { t: 'Add photos', done: photoCount.value >= 1, icon: Camera, action: toggleEdit },
-  { t: 'Write a bio', done: !!profile.value.bio, icon: Pencil, action: toggleEdit },
-  { t: 'Pick 3+ interests', done: (profile.value.interests?.length || 0) >= 3, icon: Plus, action: toggleEdit },
-  { t: 'Verify with a selfie', done: !!profile.value.isVerified, icon: ShieldCheck, action: () => router.push('/verify-photo') }
+  photoCount.value >= 1,
+  !!profile.value.bio,
+  (profile.value.interests?.length || 0) >= 3,
+  !!profile.value.isVerified
 ])
-const completeness = computed(() => checklist.value.filter(c => c.done).length * 25)
-const incomplete = computed(() => checklist.value.filter(c => !c.done))
+const completeness = computed(() => checklist.value.filter(Boolean).length * 25)
 
 function toggleEdit() {
   if (!isEditing.value) {
@@ -180,27 +172,44 @@ const handleLogout = async () => {
 <style scoped>
 .profile { overflow-x: hidden; }
 
-/* preview card */
-.pcard { position: relative; width: 100%; aspect-ratio: 3/4; border-radius: 24px; overflow: hidden; border: 1px solid var(--k-line); box-shadow: 0 24px 60px rgba(0,0,0,.55); background: linear-gradient(160deg,#0e1f29,#081016); }
-.pcard img { width: 100%; height: 100%; object-fit: cover; }
-.pcard-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,.3); font-size: 13px; }
-.pcard-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,13,18,.92), transparent 55%); pointer-events: none; }
-.pcard-seal { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: var(--k-gold); color: var(--k-night); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(244,183,64,.5); }
-.pcard-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 20px; }
+/* avatar + completeness ring */
+.av-ring { position: relative; width: 104px; height: 104px; border-radius: 50%; padding: 4px; flex-shrink: 0;
+  background: conic-gradient(var(--k-gold) calc(var(--pct) * 1%), rgba(255,255,255,.12) 0); }
+.av-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--k-night); display: block; }
+.av-empty { display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.3); background: #0e1f29; }
+.av-pct { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); background: var(--k-gold); color: var(--k-night);
+  font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 99px; border: 2px solid var(--k-night); }
 
-/* profile strength */
-.pbar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
-.pbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--k-gold), var(--k-gold-l)); transition: width .4s ease; }
-.finish-row { width: 100%; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--k-txt); padding: 7px 0; cursor: pointer; background: none; border: none; }
-.finish-row:hover { color: var(--k-gold-l); }
+/* verified seal */
+.vseal { width: 24px; height: 24px; border-radius: 50%; background: var(--k-gold); color: var(--k-night); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.vseal-todo { background: transparent; color: var(--k-gold); border: 1.5px dashed rgba(244,183,64,.6); cursor: pointer; width: 26px; height: 26px; }
 
-/* gallery */
-.gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.gallery .g { aspect-ratio: 3/4; border-radius: 14px; overflow: hidden; position: relative; }
-.gallery .g img { width: 100%; height: 100%; object-fit: cover; }
-.gallery .g .main { position: absolute; top: 7px; left: 7px; font-size: 9.5px; font-weight: 700; background: var(--k-gold); color: var(--k-night); padding: 2px 8px; border-radius: 6px; }
-.gallery .add { aspect-ratio: 3/4; border-radius: 14px; border: 1.5px dashed var(--k-line); display: flex; align-items: center; justify-content: center; color: var(--k-mut2); cursor: pointer; transition: border-color .2s, color .2s; }
-.gallery .add:hover { border-color: var(--k-gold); color: var(--k-gold); }
+/* edit pill */
+.edit-pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 99px; font-size: 13px; font-weight: 600;
+  background: rgba(255,255,255,.07); border: 1px solid var(--k-line); color: #fff; cursor: pointer; transition: background .2s; }
+.edit-pill:hover { background: rgba(255,255,255,.12); }
+.edit-pill-on { background: linear-gradient(95deg, var(--k-gold), var(--k-gold-l)); color: var(--k-night); border: none; }
+.edit-pill:disabled { opacity: .6; }
+
+/* promo cards */
+.promo { width: 100%; display: flex; align-items: center; gap: 13px; text-align: left; padding: 14px; border-radius: 16px;
+  background: var(--k-card); border: 1px solid var(--k-line); cursor: pointer; transition: border-color .2s, transform .15s; }
+.promo:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.16); }
+.promo-gold { border-color: rgba(244,183,64,.3); }
+.promo-ic { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(244,183,64,.13); color: var(--k-gold); }
+.promo-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.promo-txt b { font-size: 14px; font-weight: 600; color: #fff; }
+.promo-txt i { font-style: normal; font-size: 12px; color: var(--k-mut); line-height: 1.4; }
+
+/* photo grid */
+.pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pgrid .g { aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; position: relative; }
+.pgrid .g img { width: 100%; height: 100%; object-fit: cover; }
+.pgrid .g .main { position: absolute; top: 7px; left: 7px; font-size: 9.5px; font-weight: 700; background: var(--k-gold); color: var(--k-night); padding: 2px 8px; border-radius: 6px; }
+.pgrid .add { aspect-ratio: 3/4; border-radius: 16px; border: 1.5px dashed var(--k-line); background: rgba(255,255,255,.02); position: relative; cursor: pointer; transition: border-color .2s; }
+.pgrid .add:hover { border-color: var(--k-gold); }
+.pgrid .add-plus { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.1); color: #fff; display: flex; align-items: center; justify-content: center; }
+.pgrid .add:hover .add-plus { background: var(--k-gold); color: var(--k-night); }
 
 .ta { width: 100%; background: rgba(255,255,255,.05); border: 1px solid var(--k-line); border-radius: 12px; padding: 12px; color: #fff; outline: none; resize: none; font-family: inherit; }
 .ta:focus { border-color: var(--k-gold); }
