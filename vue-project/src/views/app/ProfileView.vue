@@ -8,33 +8,60 @@
       <!-- top bar -->
       <div class="flex items-center justify-between mb-7">
         <h1 class="k-title" style="font-size:1.9rem">Profile</h1>
-        <button class="k-iconbtn" @click="router.push('/settings')"><Settings :size="19" /></button>
+        <div class="flex items-center gap-2.5">
+          <button class="k-iconbtn" style="color:var(--k-coral)" title="Sign out" @click="handleLogout"><LogOut :size="18" /></button>
+          <button class="k-iconbtn" title="Settings" @click="router.push('/settings')"><Settings :size="19" /></button>
+        </div>
       </div>
 
-      <div class="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10">
+      <div class="lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-10 lg:items-start">
 
-        <!-- LEFT: identity + promos -->
-        <div class="lg:w-[330px] lg:flex-shrink-0 lg:sticky lg:top-6">
-          <div class="flex items-center gap-5 lg:flex-col lg:items-start">
-            <!-- avatar w/ completeness ring -->
+        <!-- LEFT column -->
+        <div class="lg:sticky lg:top-6">
+
+          <!-- MOBILE identity (avatar ring) -->
+          <div class="lg:hidden flex items-center gap-5">
             <div class="av-ring" :style="{ '--pct': completeness }">
               <img v-if="photoCount" :src="mainPhoto" class="av-img" alt="" />
-              <div v-else class="av-img av-empty"><ImageIcon :size="30" :stroke-width="1.5" /></div>
+              <div v-else class="av-img av-empty"><ImageIcon :size="28" :stroke-width="1.5" /></div>
               <span class="av-pct">{{ completeness }}%</span>
             </div>
-
-            <div class="lg:mt-5">
+            <div>
               <div class="flex items-center gap-2.5">
-                <h2 class="k-serif" style="font-size:1.6rem;line-height:1.1">{{ profile.name || 'Your name' }}<span v-if="profile.age" class="text-white/55 font-normal">, {{ profile.age }}</span></h2>
+                <h2 class="k-serif" style="font-size:1.5rem;line-height:1.1">{{ profile.name || 'Your name' }}<span v-if="profile.age" class="text-white/55 font-normal">, {{ profile.age }}</span></h2>
                 <span v-if="profile.isVerified" class="vseal"><Check :size="13" /></span>
-                <button v-else class="vseal vseal-todo" title="Get verified" @click="router.push('/verify-photo')"><BadgeCheck :size="15" /></button>
               </div>
               <button v-if="!isEditing" class="edit-pill mt-3" @click="toggleEdit"><Pencil :size="14" /> Edit profile</button>
-              <button v-else class="edit-pill edit-pill-on mt-3" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done editing' }}</button>
+              <button v-else class="edit-pill edit-pill-on mt-3" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done' }}</button>
             </div>
           </div>
 
-          <!-- promos (Tinder-style horizontal cards) -->
+          <!-- DESKTOP hero (big photo) -->
+          <div class="hidden lg:block">
+            <div class="hero">
+              <img v-if="photoCount" :src="mainPhoto" alt="" />
+              <div v-else class="hero-empty"><ImageIcon :size="48" :stroke-width="1.5" /><span>Add your first photo</span></div>
+              <div class="hero-grad"></div>
+              <div class="hero-info">
+                <div class="flex items-center gap-2.5">
+                  <h2 class="k-serif" style="font-size:2.1rem;line-height:1">{{ profile.name || 'Your name' }}<span v-if="profile.age" class="text-white/70 font-normal">, {{ profile.age }}</span></h2>
+                  <span v-if="profile.isVerified" class="vseal"><Check :size="14" /></span>
+                </div>
+                <div v-if="profile.district" class="flex items-center gap-1.5 text-sm text-white/80 mt-2"><MapPin :size="14" /> {{ profile.district }}</div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between mt-4 mb-2">
+              <span class="k-label">Profile strength</span>
+              <span class="k-serif text-gold-300" style="font-size:1rem">{{ completeness }}%</span>
+            </div>
+            <div class="pbar"><i :style="{ width: completeness + '%' }"></i></div>
+
+            <button v-if="!isEditing" class="edit-pill edit-pill-wide mt-4" @click="toggleEdit"><Pencil :size="15" /> Edit profile</button>
+            <button v-else class="edit-pill edit-pill-on edit-pill-wide mt-4" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done editing' }}</button>
+          </div>
+
+          <!-- promos -->
           <div class="mt-6 space-y-3">
             <button v-if="!profile.isVerified" class="promo" @click="router.push('/verify-photo')">
               <span class="promo-ic"><ShieldCheck :size="19" /></span>
@@ -47,15 +74,10 @@
               <ChevronRight :size="20" class="text-white/35" />
             </button>
           </div>
-
-          <div class="flex items-center gap-2 mt-4">
-            <button class="k-btn k-btn-ghost flex-1" style="padding:11px;font-size:13px" @click="router.push('/settings')"><Settings :size="15" /> Settings</button>
-            <button class="k-btn k-btn-ghost" style="padding:11px 14px;font-size:13px;color:var(--k-coral)" @click="handleLogout"><LogOut :size="15" /></button>
-          </div>
         </div>
 
-        <!-- RIGHT: content -->
-        <div class="flex-1 min-w-0 mt-2 lg:mt-0 space-y-5">
+        <!-- RIGHT content -->
+        <div class="mt-7 lg:mt-0 min-w-0 space-y-5">
           <!-- photos -->
           <div>
             <div class="flex items-center justify-between mb-3">
@@ -115,7 +137,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import PhotoUpload from '@/components/feature/PhotoUpload.vue'
-import { BadgeCheck, Check, Pencil, Plus, X, ShieldCheck, Crown, Settings, ChevronRight, Camera, LogOut, Image as ImageIcon } from 'lucide-vue-next'
+import { Check, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ChevronRight, LogOut, Image as ImageIcon } from 'lucide-vue-next'
 import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()
@@ -172,22 +194,34 @@ const handleLogout = async () => {
 <style scoped>
 .profile { overflow-x: hidden; }
 
-/* avatar + completeness ring */
-.av-ring { position: relative; width: 104px; height: 104px; border-radius: 50%; padding: 4px; flex-shrink: 0;
+/* mobile avatar ring */
+.av-ring { position: relative; width: 100px; height: 100px; border-radius: 50%; padding: 4px; flex-shrink: 0;
   background: conic-gradient(var(--k-gold) calc(var(--pct) * 1%), rgba(255,255,255,.12) 0); }
 .av-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--k-night); display: block; }
 .av-empty { display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.3); background: #0e1f29; }
 .av-pct { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); background: var(--k-gold); color: var(--k-night);
   font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 99px; border: 2px solid var(--k-night); }
 
+/* desktop hero photo */
+.hero { position: relative; width: 100%; aspect-ratio: 4/5; border-radius: 24px; overflow: hidden; border: 1px solid var(--k-line);
+  box-shadow: 0 24px 60px rgba(0,0,0,.55); background: linear-gradient(160deg,#0e1f29,#081016); }
+.hero img { width: 100%; height: 100%; object-fit: cover; }
+.hero-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: rgba(255,255,255,.3); font-size: 14px; }
+.hero-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,13,18,.92), transparent 50%); pointer-events: none; }
+.hero-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px; }
+
 /* verified seal */
 .vseal { width: 24px; height: 24px; border-radius: 50%; background: var(--k-gold); color: var(--k-night); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.vseal-todo { background: transparent; color: var(--k-gold); border: 1.5px dashed rgba(244,183,64,.6); cursor: pointer; width: 26px; height: 26px; }
+
+/* completeness bar */
+.pbar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+.pbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--k-gold), var(--k-gold-l)); transition: width .4s ease; }
 
 /* edit pill */
-.edit-pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 99px; font-size: 13px; font-weight: 600;
+.edit-pill { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 18px; border-radius: 99px; font-size: 13px; font-weight: 600;
   background: rgba(255,255,255,.07); border: 1px solid var(--k-line); color: #fff; cursor: pointer; transition: background .2s; }
 .edit-pill:hover { background: rgba(255,255,255,.12); }
+.edit-pill-wide { width: 100%; padding: 12px; }
 .edit-pill-on { background: linear-gradient(95deg, var(--k-gold), var(--k-gold-l)); color: var(--k-night); border: none; }
 .edit-pill:disabled { opacity: .6; }
 
