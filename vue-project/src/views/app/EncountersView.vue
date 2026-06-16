@@ -22,7 +22,20 @@
 
     <!-- Main -->
     <div class="relative z-10 w-full max-w-[1040px] mx-auto px-4 pb-28">
-      <div class="grid lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] gap-10 lg:items-center justify-center">
+      <!-- Empty: centered across the whole content area -->
+      <div v-if="!isLoading && profiles.length === 0" class="flex justify-center pt-2">
+        <EmptyState
+          type="no-cards"
+          title="No one new nearby"
+          message="Check back later, or widen your distance and filters to see more people."
+          action-text="Refresh"
+          secondary-text="Adjust filters"
+          @action="loadProfiles"
+          @secondary-action="showFilterModal = true"
+        />
+      </div>
+
+      <div v-else class="grid lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] gap-10 lg:items-center justify-center">
 
         <!-- Card column -->
         <div class="flex flex-col items-center w-full max-w-[440px] mx-auto lg:mx-0">
@@ -31,7 +44,7 @@
               <SkeletonLoader type="swipe-card" />
             </div>
 
-            <div v-else-if="profiles.length > 0" class="w-full h-full relative overflow-visible">
+            <div v-else class="w-full h-full relative overflow-visible">
               <SwipeCard
                 v-for="(profile, index) in profiles"
                 :key="profile.id"
@@ -41,17 +54,6 @@
                 @swipe="(dir) => handleSwipe(dir, index)"
               />
             </div>
-
-            <EmptyState
-              v-else
-              type="no-cards"
-              title="No one new nearby"
-              message="Check back later, or widen your distance and filters to see more people."
-              action-text="Refresh"
-              secondary-text="Adjust filters"
-              @action="loadProfiles"
-              @secondary-action="showFilterModal = true"
-            />
           </div>
 
           <!-- Heavy action buttons -->

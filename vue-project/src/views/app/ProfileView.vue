@@ -8,10 +8,7 @@
       <!-- top bar -->
       <div class="flex items-center justify-between mb-7">
         <h1 class="k-title" style="font-size:1.9rem">Profile</h1>
-        <div class="flex items-center gap-2.5">
-          <button class="k-iconbtn" style="color:var(--k-coral)" title="Sign out" @click="handleLogout"><LogOut :size="18" /></button>
-          <button class="k-iconbtn" title="Settings" @click="router.push('/settings')"><Settings :size="19" /></button>
-        </div>
+        <button class="k-iconbtn" title="Settings" @click="router.push('/settings')"><Settings :size="19" /></button>
       </div>
 
       <div class="lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-10 lg:items-start">

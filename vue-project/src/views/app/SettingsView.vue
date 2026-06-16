@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <div class="max-w-5xl mx-auto px-4 py-6 relative z-10 space-y-7 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-7 lg:gap-y-7 lg:items-start">
+    <div class="max-w-5xl mx-auto px-4 py-6 relative z-10 settings-grid">
 
       <!-- Account -->
       <section>
@@ -103,7 +103,7 @@
         </div>
       </section>
 
-      <p class="text-center text-white/30 text-xs lg:col-span-2">Kondani v1.0 · Made in Malawi 🇲🇼</p>
+      <p class="text-center text-white/30 text-xs settings-foot">Kondani v1.0 · Made in Malawi 🇲🇼</p>
     </div>
   </div>
 </template>
@@ -175,4 +175,13 @@ const confirmDelete = () => {
 
 <style scoped>
 .settings { overflow-x: hidden; }
+
+/* Sections pack into balanced columns on desktop (no ragged row gaps). */
+.settings-grid > * { margin-bottom: 1.75rem; }
+.settings-grid > *:last-child { margin-bottom: 0; }
+@media (min-width: 1024px) {
+  .settings-grid { column-count: 2; column-gap: 1.75rem; }
+  .settings-grid > * { break-inside: avoid; }
+  .settings-foot { column-span: all; }
+}
 </style>
