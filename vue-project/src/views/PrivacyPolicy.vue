@@ -1,25 +1,23 @@
 <template>
-  <div class="min-h-screen bg-deep-950 text-white relative overflow-hidden">
+  <div class="min-h-screen k-page text-white relative overflow-hidden">
     <!-- Background -->
     <div class="fixed inset-0 pointer-events-none">
-      <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-emerald-900/20 rounded-full blur-[120px] animate-pulse-slow"></div>
+      <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px]" style="background:radial-gradient(circle,rgba(244,183,64,.1),transparent 70%)"></div>
     </div>
 
     <!-- Header -->
-    <nav class="relative z-10 bg-deep-950/80 backdrop-blur-xl border-b border-white/5 p-4">
-      <div class="max-w-7xl mx-auto">
+    <nav class="relative z-10 bg-night-950/80 backdrop-blur-xl border-b border-white/5 p-4">
+      <div class="max-w-3xl mx-auto">
         <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity w-fit">
-          <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-            <span class="text-xl">❤️</span>
-          </div>
-          <span class="text-2xl font-bold font-display">Kondani</span>
+          <KondaniMark :size="38" />
+          <span class="k-serif text-2xl">Kondani</span>
         </router-link>
       </div>
     </nav>
 
     <!-- Content -->
-    <div class="relative z-10 max-w-7xl mx-auto px-4 py-16">
-      <h1 class="text-4xl md:text-5xl font-bold font-display mb-4">Privacy Policy</h1>
+    <div class="relative z-10 max-w-3xl mx-auto px-4 py-16">
+      <h1 class="k-serif text-4xl md:text-5xl mb-4">Privacy Policy</h1>
       <p class="text-white/60 mb-8">Last updated: December 2024</p>
 
       <div class="space-y-8 text-white/80 leading-relaxed">
@@ -64,7 +62,7 @@
         <section class="glass-card p-8">
           <h2 class="text-2xl font-bold text-white mb-4">5. Contact Us</h2>
           <p class="mb-2">For privacy concerns or data requests:</p>
-          <p class="text-emerald-400">Email: privacy@kondani.mw</p>
+          <p class="text-gold-300">Email: privacy@kondani.mw</p>
           <p class="text-white/60 text-sm mt-4">We respond to all requests within 7 business days.</p>
         </section>
       </div>
@@ -73,5 +71,5 @@
 </template>
 
 <script setup>
-// Privacy Policy page
+import KondaniMark from '@/components/ui/KondaniMark.vue'
 </script>
