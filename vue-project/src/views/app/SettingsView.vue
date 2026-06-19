@@ -166,9 +166,14 @@ const toggleVisibility = async () => {
 const handleLogout = async () => {
   if (confirm('Sign out of Kondani?')) { await authStore.logout(); router.push('/login') }
 }
-const confirmDelete = () => {
-  if (confirm('Delete your account permanently? This cannot be undone.')) {
-    toastError('Account deletion is coming soon — contact support to delete now.')
+const confirmDelete = async () => {
+  if (!confirm('Delete your account permanently? This cannot be undone.')) return
+  if (!confirm('Last chance — this erases your profile, matches and chats for good. Continue?')) return
+  try {
+    await authStore.deleteAccount()
+    router.push('/login')
+  } catch (e) {
+    toastError('Could not delete your account. Please try again.')
   }
 }
 </script>

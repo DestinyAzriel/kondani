@@ -75,6 +75,12 @@ export const authService = {
     return response.data
   },
 
+  // Permanently delete the current account
+  async deleteAccount() {
+    const response = await api.delete('/auth/profile')
+    return response.data
+  },
+
   // Update user profile with support for file uploads
   async updateProfile(profileData) {
     // Check if we have file data that needs special handling

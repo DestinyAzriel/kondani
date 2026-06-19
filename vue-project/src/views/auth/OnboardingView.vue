@@ -132,7 +132,7 @@
               <option v-for="d in districts" :key="d.name" :value="d.name">{{ d.name }}</option>
             </select>
 
-            <p v-if="form.district" class="flex items-center gap-1.5 text-sm text-lagoon-300"><MapPinIcon :size="14" /> {{ form.district }}</p>
+            <p v-if="form.district" class="flex items-center gap-1.5 text-sm text-gold-300"><MapPinIcon :size="14" /> {{ form.district }}</p>
             <p v-if="locationError" class="text-sm text-[#ff7a6b]">{{ locationError }}</p>
             <p v-if="errorMsg" class="text-sm text-[#ff7a6b]">{{ errorMsg }}</p>
 
@@ -296,7 +296,7 @@ const finish = async () => {
 .steps-list li.done { color: rgba(255,255,255,.7); }
 .steps-list .dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); flex-shrink: 0; }
 .steps-list li.on .dot { background: linear-gradient(90deg,#f4b740,#ffd98a); color: #050d12; border: none; }
-.steps-list li.done .dot { background: #2dd4bf; color: #050d12; border: none; }
+.steps-list li.done .dot { background: #f4b740; color: #050d12; border: none; }
 
 /* right main */
 .ob-main { flex: 1; position: relative; display: flex; flex-direction: column; min-width: 0; }
@@ -316,13 +316,13 @@ const finish = async () => {
 
 .lbl { @apply block text-xs font-semibold text-white/60 mb-2; }
 .field { @apply w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/35 outline-none transition-all; }
-.field:focus { border-color: #2dd4bf; box-shadow: 0 0 0 1px #2dd4bf; }
+.field:focus { border-color: #f4b740; box-shadow: 0 0 0 1px #f4b740; }
 .opt { @apply p-3.5 rounded-xl border bg-white/5 border-white/10 text-white/60 font-medium transition-all; }
 .opt-on { background: rgba(244,183,64,.15); border-color: #f4b740; color: #fff; }
 .btn-gold { display:flex;align-items:center;justify-content:center;gap:8px;padding:.9rem 1rem;border-radius:9999px;font-weight:700;color:#1a1205;border:none;cursor:pointer;background:linear-gradient(95deg,#f4b740,#ffd98a);box-shadow:0 10px 26px rgba(244,183,64,.4);transition:transform .15s; }
 .btn-gold:hover:not(:disabled){transform:translateY(-2px);} .btn-gold:disabled{opacity:.5;cursor:not-allowed;}
 .btn-ghost{padding:.9rem 1rem;border-radius:9999px;font-weight:600;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);cursor:pointer;}
-.btn-lagoon{display:flex;align-items:center;justify-content:center;gap:8px;padding:.9rem 1rem;border-radius:9999px;font-weight:700;color:#08161d;border:none;cursor:pointer;background:linear-gradient(90deg,#14b8a6,#2dd4bf);}
+.btn-lagoon{display:flex;align-items:center;justify-content:center;gap:8px;padding:.9rem 1rem;border-radius:9999px;font-weight:600;color:#ffd98a;border:1px solid rgba(244,183,64,.4);cursor:pointer;background:rgba(244,183,64,.1);}
 .btn-lagoon:disabled{opacity:.6;}
 .spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(8,22,29,.35);border-top-color:#08161d;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}

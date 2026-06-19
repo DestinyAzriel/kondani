@@ -22,10 +22,11 @@ export default {
           900: '#0a1820',
           800: '#0f2a33',
         },
+        // "lagoon" remapped to gold tones — brand is gold-only, no green/teal.
         lagoon: {
-          300: '#5eead4',
-          400: '#2dd4bf', // accent: online, links, unread
-          500: '#14b8a6',
+          300: '#ffd98a',
+          400: '#f4b740',
+          500: '#f59e0b',
         },
         gold: {
           300: '#ffd27d', // starlight (light)

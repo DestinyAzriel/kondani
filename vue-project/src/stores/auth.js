@@ -102,6 +102,12 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    // Permanently delete the account, then clear local session
+    async deleteAccount() {
+      await authService.deleteAccount()
+      await this.logout()
+    },
+
     // Enhanced Logout with best practices
     async logout() {
       try {

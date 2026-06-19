@@ -174,6 +174,32 @@ exports.getProfile = async (req, res) => {
     }
 };
 
+// Permanently delete the current user's account + related data
+exports.deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Remove this user from everyone else's likes/passes/matches/dailyPicks
+        await User.updateMany(
+            { $or: [{ likes: userId }, { passes: userId }, { matches: userId }, { dailyPicks: userId }] },
+            { $pull: { likes: userId, passes: userId, matches: userId, dailyPicks: userId } }
+        );
+
+        // Best-effort cleanup of related collections (ignore if a model/field differs)
+        try { const Message = require('../models/Message'); await Message.deleteMany({ $or: [{ sender: userId }, { recipient: userId }, { from: userId }, { to: userId }] }); } catch (e) {}
+        try { const Intent = require('../models/Intent'); await Intent.deleteMany({ user: userId }); } catch (e) {}
+        try { const IDVerification = require('../models/IDVerification'); await IDVerification.deleteMany({ userId }); } catch (e) {}
+        try { const Report = require('../models/Report'); await Report.deleteMany({ $or: [{ reporter: userId }, { reported: userId }] }); } catch (e) {}
+        try { const Block = require('../models/Block'); await Block.deleteMany({ $or: [{ blocker: userId }, { blocked: userId }] }); } catch (e) {}
+
+        await User.findByIdAndDelete(userId);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Delete account error:', err);
+        res.status(500).json({ error: 'Could not delete account. Please try again.' });
+    }
+};
+
 // Update user profile with support for file uploads
 exports.updateProfile = async (req, res) => {
     try {

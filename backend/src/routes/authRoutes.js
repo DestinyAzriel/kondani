@@ -27,6 +27,8 @@ router.post('/verify-otp', authController.login);
 router.get('/profile', authMiddleware, authController.getProfile);
 // Add the profile update route with file upload support
 router.put('/profile', authMiddleware, upload.array('photos', 6), authController.updateProfile);
+// Permanently delete the account
+router.delete('/profile', authMiddleware, authController.deleteAccount);
 // Health check endpoint (no authentication required)
 router.get('/health', (req, res) => {
   res.json({

@@ -155,21 +155,21 @@ const verifyOTP = async () => {
 .space > * + * { margin-top: 18px; }
 .lbl { display: block; font-size: 12px; font-weight: 600; color: rgba(241,248,246,.6); margin-bottom: 8px; }
 .phone-field { display: flex; align-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; background: rgba(255,255,255,.05); overflow: hidden; }
-.phone-field:focus-within { border-color: #2dd4bf; box-shadow: 0 0 0 1px #2dd4bf; }
+.phone-field:focus-within { border-color: #f4b740; box-shadow: 0 0 0 1px #f4b740; }
 .phone-field .cc { padding: 0 14px; font-weight: 600; border-right: 1px solid rgba(255,255,255,.1); white-space: nowrap; }
 .phone-field input { flex: 1; min-width: 0; padding: 14px; background: transparent; border: none; outline: none; color: #fff; letter-spacing: 1px; }
 .otp-input { width: 100%; padding: 16px; text-align: center; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 24px; letter-spacing: .4em; border-radius: 12px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: #fff; outline: none; }
-.otp-input:focus { border-color: #2dd4bf; box-shadow: 0 0 0 1px #2dd4bf; }
+.otp-input:focus { border-color: #f4b740; box-shadow: 0 0 0 1px #f4b740; }
 .btn-gold { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; font-weight: 700; color: #1a1205; border: none; cursor: pointer; background: linear-gradient(95deg, #f4b740, #ffd98a); box-shadow: 0 10px 26px rgba(244,183,64,.4); transition: transform .15s; }
 .btn-gold:hover:not(:disabled) { transform: translateY(-2px); }
 .btn-gold:disabled { opacity: .5; cursor: not-allowed; }
 .err { color: #ff9d8f; font-size: 13px; background: rgba(255,94,94,.1); border: 1px solid rgba(255,94,94,.25); padding: 10px 12px; border-radius: 10px; }
-.note { display: flex; gap: 11px; align-items: flex-start; border: 1px solid rgba(45,212,191,.25); background: rgba(45,212,191,.06); border-radius: 12px; padding: 13px; }
-.note .hl { color: #5eead4; font-weight: 600; }
+.note { display: flex; gap: 11px; align-items: flex-start; border: 1px solid rgba(244,183,64,.25); background: rgba(244,183,64,.06); border-radius: 12px; padding: 13px; }
+.note .hl { color: #ffd98a; font-weight: 600; }
 .note p { font-size: 12.5px; color: rgba(241,248,246,.6); line-height: 1.5; }
 .row-between { display: flex; justify-content: space-between; }
 .textlink { background: none; border: none; color: rgba(241,248,246,.5); font-size: 13px; cursor: pointer; }
-.textlink:hover { color: #5eead4; }
+.textlink:hover { color: #ffd98a; }
 .terms { text-align: center; font-size: 11px; color: rgba(241,248,246,.35); margin-top: 26px; }
 .terms a { color: rgba(241,248,246,.55); }
 
@@ -182,7 +182,7 @@ const verifyOTP = async () => {
 .switch { text-align: center; font-size: 13px; color: rgba(241,248,246,.5); }
 .switch a { color: #ffd98a; font-weight: 600; text-decoration: none; }
 .switch a:hover { text-decoration: underline; }
-.note svg { color: #5eead4; flex-shrink: 0; margin-top: 1px; }
+.note svg { color: #ffd98a; flex-shrink: 0; margin-top: 1px; }
 
 @media (min-width: 1024px) {
   .photo-side { display: block; }

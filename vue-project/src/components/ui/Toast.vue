@@ -53,13 +53,13 @@ const toastClass = (type) => {
   
   switch (type) {
     case 'success':
-      return `${baseClasses} bg-lagoon-400/10 border-lagoon-400/30 text-lagoon-300`
+      return `${baseClasses} bg-gold-500/10 border-gold-400/40 text-gold-300`
     case 'error':
-      return `${baseClasses} bg-red-500/10 border-red-500/30 text-red-400`
+      return `${baseClasses} bg-[#ff7a6b]/10 border-[#ff7a6b]/40 text-[#ff9d8f]`
     case 'warning':
-      return `${baseClasses} bg-yellow-500/10 border-yellow-500/30 text-yellow-400`
+      return `${baseClasses} bg-amber-500/10 border-amber-400/30 text-amber-300`
     default:
-      return `${baseClasses} bg-blue-500/10 border-blue-500/30 text-blue-400`
+      return `${baseClasses} bg-white/[0.06] border-white/15 text-white/90`
   }
 }
 </script>
