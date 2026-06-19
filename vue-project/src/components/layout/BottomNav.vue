@@ -1,9 +1,10 @@
 <template>
-  <nav
-    class="fixed bottom-0 left-0 right-0 bg-night-950/85 backdrop-blur-xl border-t border-white/10 pb-safe md:hidden z-50"
-    role="navigation"
-    aria-label="Main navigation"
-  >
+  <Teleport to="body">
+    <nav
+      class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-night-950/85 backdrop-blur-xl border-t border-white/10 pb-safe md:hidden z-50"
+      role="navigation"
+      aria-label="Main navigation"
+    >
     <div class="flex justify-around items-center h-16 px-2">
       <button
         v-for="item in navItems"
@@ -30,7 +31,8 @@
         </span>
       </button>
     </div>
-  </nav>
+    </nav>
+  </Teleport>
 </template>
 
 <script setup>

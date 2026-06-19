@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
   <div v-if="show" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" @click.self="$emit('close')">
     <div class="w-full md:max-w-lg md:rounded-2xl rounded-t-3xl border-t md:border border-white/10 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up" style="background:var(--k-card)">
 
@@ -136,7 +137,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="p-4 border-t border-white/10 flex gap-3">
+      <div class="p-4 border-t border-white/10 flex gap-3" style="padding-bottom:calc(1rem + env(safe-area-inset-bottom))">
         <button
           @click="resetFilters"
           class="flex-1 px-6 py-3 bg-white/5 text-white rounded-full font-bold hover:bg-white/10 transition-colors"
@@ -153,6 +154,7 @@
 
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup>
