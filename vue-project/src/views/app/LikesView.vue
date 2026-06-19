@@ -18,7 +18,7 @@
             <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(244,183,64,.14);color:var(--k-gold)"><Crown :size="18" /></div>
             <div>
               <h3 class="font-semibold" style="color:var(--k-gold-l)">Kondani Gold</h3>
-              <p class="text-white/60 text-sm">See everyone who likes you instantly</p>
+              <p class="text-white/60 text-sm">{{ likesCount > 0 ? `${likesCount} ${likesCount === 1 ? 'person likes' : 'people like'} you — see who instantly` : 'See everyone who likes you instantly' }}</p>
             </div>
           </div>
           <button @click="router.push('/premium')" class="k-btn k-btn-gold whitespace-nowrap" style="padding:9px 18px;font-size:13px">Upgrade</button>
@@ -47,6 +47,14 @@
           <SkeletonLoader v-for="i in 4" :key="i" type="profile" />
         </div>
 
+        <!-- Free members: blurred locked tiles showing how many like them -->
+        <div v-else-if="activeTab === 'new' && !isPremium && likesCount > 0" key="locked" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <button v-for="n in Math.min(likesCount, 9)" :key="n" class="locked-like" @click="router.push('/premium')">
+            <Lock :size="22" />
+            <span>Likes you</span>
+          </button>
+        </div>
+
         <div v-else-if="likes.length > 0" :key="activeTab" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <LikeCard v-for="like in likes" :key="like.id" :like="like" :isPremium="isPremium"
                     @sayHi="handleSayHi" @upgrade="router.push('/premium')" />
@@ -68,12 +76,12 @@ import { useAuthStore } from '@/stores/auth'
 import LikeCard from '@/components/feature/LikeCard.vue'
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { Crown } from 'lucide-vue-next'
+import { Crown, Lock } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { likes, activeTab, unreadCount, isLoading, setActiveTab } = useLikes()
+const { likes, activeTab, unreadCount, isLoading, setActiveTab, likesCount } = useLikes()
 
 const isPremium = computed(() => !!authStore.user?.isPremium)
 
@@ -87,4 +95,9 @@ const handleSayHi = (like) => {
 <style scoped>
 .fade-enter-active,.fade-leave-active{transition:opacity .2s ease}
 .fade-enter-from,.fade-leave-to{opacity:0}
+.locked-like{aspect-ratio:1;border-radius:16px;border:1px solid rgba(244,183,64,.25);cursor:pointer;
+  background:linear-gradient(135deg,rgba(244,183,64,.22),rgba(14,31,41,.65));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  color:var(--k-gold-l);font-size:11px;font-weight:600;transition:transform .15s;}
+.locked-like:hover{transform:translateY(-2px);}
 </style>

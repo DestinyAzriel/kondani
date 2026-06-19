@@ -2,6 +2,9 @@ const User = require('../models/User');
 const Intent = require('../models/Intent');
 const Block = require('../models/Block');
 
+// Free members get this many likes per day. Gold = unlimited.
+const FREE_DAILY_LIKES = 20;
+
 // Great-circle distance (km) between two lat/lon points — free, no maps API.
 function haversineKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -185,13 +188,33 @@ exports.likeIntent = async (req, res) => {
         const currentUserId = req.user.id;
         const targetUserId = req.params.id;
 
+        const me = await User.findById(currentUserId);
+        if (!me) return res.status(404).json({ error: 'User not found' });
+
         let userIntent = await Intent.findOne({ user: currentUserId });
         if (!userIntent) {
             userIntent = await Intent.create({ user: currentUserId });
         }
 
+        const alreadyLiked = userIntent.likes.some(id => String(id) === String(targetUserId));
+
+        // Enforce the free daily like cap — only counts brand-new likes.
+        if (!alreadyLiked && !me.isPremium) {
+            const today = new Date().toISOString().slice(0, 10);
+            if (me.likesTodayDate !== today) { me.likesToday = 0; me.likesTodayDate = today; }
+            if (me.likesToday >= FREE_DAILY_LIKES) {
+                return res.status(429).json({
+                    limitReached: true,
+                    likesRemaining: 0,
+                    message: `You've used your ${FREE_DAILY_LIKES} free likes for today. They reset tomorrow — or go Gold for unlimited likes.`
+                });
+            }
+            me.likesToday += 1;
+            await me.save();
+        }
+
         // Add to likes if not already there
-        if (!userIntent.likes.includes(targetUserId)) {
+        if (!alreadyLiked) {
             userIntent.likes.push(targetUserId);
             await userIntent.save();
         }
@@ -222,7 +245,8 @@ exports.likeIntent = async (req, res) => {
             };
         }
 
-        res.json({ isMatch, matchData });
+        const likesRemaining = me.isPremium ? null : Math.max(0, FREE_DAILY_LIKES - me.likesToday);
+        res.json({ isMatch, matchData, likesRemaining });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });

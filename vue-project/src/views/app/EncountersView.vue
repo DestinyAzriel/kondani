@@ -64,6 +64,11 @@
             <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="30" class="fill-current" /></button>
             <button class="b" @click="handleBoost" title="Boost"><Zap :size="20" /></button>
           </div>
+
+          <p v-if="likesLeft !== null" class="text-center text-xs text-white/45 mt-4">
+            {{ likesLeft }} {{ likesLeft === 1 ? 'like' : 'likes' }} left today ·
+            <span class="cursor-pointer" style="color:var(--k-gold-l)" @click="router.push('/premium')">Go unlimited</span>
+          </p>
         </div>
 
         <!-- Desktop detail panel -->
@@ -143,9 +148,11 @@ import KondaniMark from '@/components/ui/KondaniMark.vue'
 import { analyticsService } from '@/services/analyticsService'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 
 const { info, error: toastError } = useToast()
 const authStore = useAuthStore()
+const router = useRouter()
 
 const showMatchCelebration = ref(false)
 const showFilterModal = ref(false)
@@ -154,6 +161,7 @@ const profiles = ref([])
 const isLoading = ref(true)
 const lastSwiped = ref(null)
 const cardRefs = ref([])
+const likesLeft = ref(null) // free-tier likes remaining today (null = premium / not yet known)
 
 const topProfile = computed(() => profiles.value[0] || null)
 const currentUserPhoto = computed(() => authStore.user?.photos?.[0] || '')
@@ -214,6 +222,7 @@ const handleSwipe = async (direction, index) => {
   try {
     if (direction === 'right' || direction === 'up') {
       const result = await intentService.likeIntent(profile.id)
+      if (result?.likesRemaining != null) likesLeft.value = result.likesRemaining
       if (result?.isMatch) {
         analyticsService.trackMatch?.(result.matchData?.id, profile.id, profile.name)
         currentMatch.value = result.matchData || profile
@@ -223,7 +232,12 @@ const handleSwipe = async (direction, index) => {
       await intentService.passIntent(profile.id)
     }
   } catch (err) {
-    console.error('Swipe action failed:', err)
+    if (err.response?.data?.limitReached) {
+      likesLeft.value = 0
+      info(err.response.data.message || "You're out of likes for today — go Gold for unlimited.")
+    } else {
+      console.error('Swipe action failed:', err)
+    }
   }
 }
 

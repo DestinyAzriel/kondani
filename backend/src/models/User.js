@@ -109,7 +109,11 @@ const userSchema = new mongoose.Schema({
         verifiedOnly: { type: Boolean, default: false }
     },
 
-    lastActive: Date
+    lastActive: Date,
+
+    // Free-tier daily like cap (Gold members are unlimited)
+    likesToday: { type: Number, default: 0 },
+    likesTodayDate: { type: String, default: '' } // YYYY-MM-DD
 }, { timestamps: true });
 
 userSchema.index({ location: '2dsphere' });
