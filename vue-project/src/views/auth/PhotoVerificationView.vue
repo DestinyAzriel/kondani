@@ -75,15 +75,10 @@ import { ArrowLeft as ArrowLeftIcon, ShieldCheck as ShieldCheckIcon, Check as Ch
 const router = useRouter()
 const authStore = useAuthStore()
 
-const FACEAPI_SRC = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js'
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
-import { mediaUrl } from '@/utils/media'
-const mediaSrc = (u) => mediaUrl(u)
-
 const poses = ['Look straight at the camera', 'Turn your head slightly left', 'Turn your head slightly right', 'Give a small smile']
 const step = ref('instructions')
 const pose = ref(poses[0])
-const loadingModels = ref(false)
+const loadingModels = ref(false) // reused as "camera initialising"
 const busy = ref(false)
 const errorMsg = ref('')
 const resultVerified = ref(false)
@@ -92,57 +87,19 @@ const resultMessage = ref('')
 const video = ref(null)
 const canvas = ref(null)
 let stream = null
-let faceapi = null
-let referenceDescriptor = null
-let modelsReady = false
-
-const loadScript = (src) => new Promise((resolve, reject) => {
-  if (window.faceapi) return resolve()
-  const s = document.createElement('script')
-  s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('script load failed'))
-  document.head.appendChild(s)
-})
-
-const ensureModels = async () => {
-  if (modelsReady) return true
-  try {
-    await loadScript(FACEAPI_SRC)
-    faceapi = window.faceapi
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
-    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-    modelsReady = true
-    // Pre-compute reference descriptor from the profile's main photo
-    const photo = authStore.user?.photos?.[0]
-    if (photo) {
-      try {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.src = mediaSrc(photo)
-        await img.decode()
-        const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor()
-        if (det) referenceDescriptor = det.descriptor
-      } catch (e) { console.warn('Reference photo descriptor failed', e) }
-    }
-    return true
-  } catch (e) {
-    console.warn('face-api unavailable, falling back to manual review', e)
-    return false
-  }
-}
 
 const startCamera = async () => {
   step.value = 'camera'
   pose.value = poses[Math.floor(Math.random() * poses.length)]
   errorMsg.value = ''
   loadingModels.value = true
-  // Kick off model loading in parallel with camera
-  ensureModels().finally(() => { loadingModels.value = false })
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
     if (video.value) video.value.srcObject = stream
   } catch (e) {
     errorMsg.value = 'Could not access your camera. Please allow camera access.'
+  } finally {
+    loadingModels.value = false
   }
 }
 
@@ -161,31 +118,12 @@ const capture = async () => {
     c.height = v.videoHeight || 480
     c.getContext('2d').drawImage(v, 0, 0, c.width, c.height)
 
-    let score = 0
-    let liveness = true
-
-    if (modelsReady && faceapi) {
-      const det = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor()
-      if (!det) {
-        errorMsg.value = 'No face detected — make sure your face is centered and well lit.'
-        busy.value = false
-        return
-      }
-      if (referenceDescriptor) {
-        const distance = faceapi.euclideanDistance(referenceDescriptor, det.descriptor)
-        score = Math.round(Math.max(0, 1 - distance) * 100)
-      }
-    }
-
+    // Server (AWS Rekognition) does the real face match — selfie just gets sent up.
     const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9))
-    const result = await authService.submitSelfie(blob, {
-      faceMatchScore: score,
-      poseChallenge: pose.value,
-      livenessPassed: liveness
-    })
+    const result = await authService.submitSelfie(blob, { poseChallenge: pose.value })
 
     resultVerified.value = !!result.verified
-    resultMessage.value = result.message || (result.verified ? 'Your gold badge is active.' : 'We will review it shortly.')
+    resultMessage.value = result.message || (result.verified ? 'Your gold badge is active.' : 'Please try again.')
     if (result.verified) {
       authStore.user = { ...authStore.user, isVerified: true }
     }
@@ -193,7 +131,7 @@ const capture = async () => {
     step.value = 'result'
   } catch (e) {
     console.error('Verification failed', e)
-    errorMsg.value = 'Something went wrong. Please try again.'
+    errorMsg.value = e.response?.data?.message || 'Something went wrong. Please try again.'
   } finally {
     busy.value = false
   }

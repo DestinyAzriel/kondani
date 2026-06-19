@@ -1,11 +1,11 @@
 const IDVerification = require('../models/IDVerification');
 const User = require('../models/User');
 const { storeUpload } = require('../services/cloudinaryService');
+const faceVerify = require('../services/faceVerificationService');
 
-// Auto-approve when the browser-side face-api.js similarity is at least this %.
-// Score = round((1 - euclideanDistance) * 100); a distance < ~0.5 (a solid
-// same-person match) maps to >= 50. Borderline cases fall to manual review.
-const AUTO_APPROVE_THRESHOLD = 50;
+// Auto-approve when AWS Rekognition similarity (computed server-side, can't be
+// faked) is at least this %. Same-person matches typically score 95-99.
+const AUTO_APPROVE_SIMILARITY = 88;
 
 /**
  * Submit a selfie for verification.
@@ -15,7 +15,7 @@ const AUTO_APPROVE_THRESHOLD = 50;
 exports.submitPhotoVerification = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { faceMatchScore, poseChallenge, livenessPassed } = req.body;
+        const { poseChallenge } = req.body;
 
         if (!req.file) {
             return res.status(400).json({
@@ -35,18 +35,48 @@ exports.submitPhotoVerification = async (req, res) => {
             });
         }
 
+        // Keep the raw selfie bytes for the face match, and store a copy for records.
+        const selfieBuffer = req.file.buffer;
         const selfieUrl = await storeUpload(req.file, 'selfies', 'image');
-        const score = Number(faceMatchScore) || 0;
-        const live = livenessPassed === 'true' || livenessPassed === true;
-        const passed = score >= AUTO_APPROVE_THRESHOLD && live;
-        const status = passed ? 'approved' : 'pending';
+
+        // Resolve the profile photo to a fetchable absolute URL.
+        let profilePhoto = user.photos[0];
+        if (profilePhoto && !/^https?:/i.test(profilePhoto)) {
+            const origin = (process.env.API_PUBLIC_URL || '').replace(/\/$/, '');
+            profilePhoto = origin + (profilePhoto.startsWith('/') ? '' : '/') + profilePhoto;
+        }
+
+        let similarity = 0;
+        let passed = false;
+        let status = 'pending';
+        let message = '';
+
+        if (faceVerify.isConfigured()) {
+            try {
+                const result = await faceVerify.compareFaces(profilePhoto, selfieBuffer);
+                similarity = Math.round(result.similarity);
+                passed = result.matched && similarity >= AUTO_APPROVE_SIMILARITY;
+                status = passed ? 'approved' : 'rejected';
+                message = passed
+                    ? 'You are verified! 🎉'
+                    : 'That selfie didn\'t clearly match your profile photo. Face the camera in good lighting and try again.';
+            } catch (err) {
+                console.error('Rekognition compare failed:', err?.name || err?.message);
+                status = 'rejected';
+                message = 'We couldn\'t read a clear face. Make sure your face — and your main profile photo — are clearly visible, then try again.';
+            }
+        } else {
+            // Verification not configured yet — leave pending, don't auto-decide.
+            status = 'pending';
+            message = 'Selfie received — verification is being set up. Please check back soon.';
+        }
 
         const data = {
             userId,
             selfieUrl,
             poseChallenge,
-            faceMatchScore: score,
-            livenessPassed: live,
+            faceMatchScore: similarity,
+            livenessPassed: true,
             status,
             metadata: { ipAddress: req.ip, userAgent: req.headers['user-agent'] }
         };
@@ -54,7 +84,7 @@ exports.submitPhotoVerification = async (req, res) => {
         let verification = await IDVerification.findOne({ userId });
         if (verification) {
             Object.assign(verification, data);
-            if (passed) verification.reviewedAt = new Date();
+            verification.reviewedAt = passed ? new Date() : undefined;
             await verification.save();
         } else {
             verification = await IDVerification.create({
@@ -63,24 +93,19 @@ exports.submitPhotoVerification = async (req, res) => {
             });
         }
 
-        // Reflect on the user (admin counts verification.id.verified)
+        // Reflect on the user
         user.verification.id.status = status;
         user.verification.id.submittedAt = new Date();
+        user.verification.id.verified = passed;
         if (passed) {
-            user.verification.id.verified = true;
             user.verification.id.reviewedAt = new Date();
             user.isVerified = true;
+        } else {
+            user.isVerified = false;
         }
         await user.save();
 
-        res.json({
-            status,
-            verified: passed,
-            faceMatchScore: score,
-            message: passed
-                ? 'You are verified! 🎉'
-                : 'Selfie submitted — we will review it shortly.'
-        });
+        res.json({ status, verified: passed, faceMatchScore: similarity, message });
     } catch (error) {
         console.error('submitPhotoVerification error:', error);
         res.status(500).json({

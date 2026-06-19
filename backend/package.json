@@ -9,6 +9,7 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.679.0",
     "axios": "^1.7.7",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.5",
