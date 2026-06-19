@@ -18,7 +18,8 @@ exports.getLikes = async (req, res) => {
                 id: intent.user._id,
                 name: intent.user.name,
                 photo: intent.user.photos[0] || '',
-                isVerified: intent.user.isVerified
+                isVerified: intent.user.isVerified,
+                isSuper: (intent.superLikes || []).some(id => String(id) === String(currentUserId))
             }))
             : [];
 

@@ -17,6 +17,11 @@ const intentSchema = new mongoose.Schema({
     matches: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    }],
+    // Targets this user Super Liked (subset of likes — for the star + "stood out")
+    superLikes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }]
 }, { timestamps: true });
 

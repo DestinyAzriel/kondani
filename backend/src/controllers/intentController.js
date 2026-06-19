@@ -4,6 +4,9 @@ const Block = require('../models/Block');
 
 // Free members get this many likes per day. Gold = unlimited.
 const FREE_DAILY_LIKES = 20;
+// Super Likes per day.
+const FREE_DAILY_SUPERLIKES = 1;
+const GOLD_DAILY_SUPERLIKES = 5;
 
 // Great-circle distance (km) between two lat/lon points — free, no maps API.
 function haversineKm(lat1, lon1, lat2, lon2) {
@@ -249,6 +252,63 @@ exports.likeIntent = async (req, res) => {
         res.json({ isMatch, matchData, likesRemaining });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+exports.superLikeIntent = async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+        const targetUserId = req.params.id;
+
+        const me = await User.findById(currentUserId);
+        if (!me) return res.status(404).json({ error: 'User not found' });
+
+        let userIntent = await Intent.findOne({ user: currentUserId });
+        if (!userIntent) userIntent = await Intent.create({ user: currentUserId });
+        if (!userIntent.superLikes) userIntent.superLikes = [];
+
+        const cap = me.isPremium ? GOLD_DAILY_SUPERLIKES : FREE_DAILY_SUPERLIKES;
+        const alreadySuper = userIntent.superLikes.some(id => String(id) === String(targetUserId));
+
+        if (!alreadySuper) {
+            const today = new Date().toISOString().slice(0, 10);
+            if (me.superLikesTodayDate !== today) { me.superLikesToday = 0; me.superLikesTodayDate = today; }
+            if (me.superLikesToday >= cap) {
+                return res.status(429).json({
+                    limitReached: true,
+                    superLikesRemaining: 0,
+                    message: me.isPremium
+                        ? `You've used all ${cap} Super Likes today — more tomorrow!`
+                        : `Free members get ${FREE_DAILY_SUPERLIKES} Super Like a day. Go Gold for ${GOLD_DAILY_SUPERLIKES} a day.`
+                });
+            }
+            me.superLikesToday += 1;
+            await me.save();
+            userIntent.superLikes.push(targetUserId);
+        }
+
+        // A Super Like also counts as a like (so it can match)
+        if (!userIntent.likes.some(id => String(id) === String(targetUserId))) {
+            userIntent.likes.push(targetUserId);
+        }
+        await userIntent.save();
+
+        let targetIntent = await Intent.findOne({ user: targetUserId });
+        let isMatch = false;
+        let matchData = null;
+        if (targetIntent && targetIntent.likes.some(id => String(id) === String(currentUserId))) {
+            isMatch = true;
+            if (!userIntent.matches.some(id => String(id) === String(targetUserId))) { userIntent.matches.push(targetUserId); await userIntent.save(); }
+            if (!targetIntent.matches.some(id => String(id) === String(currentUserId))) { targetIntent.matches.push(currentUserId); await targetIntent.save(); }
+            const targetUser = await User.findById(targetUserId);
+            matchData = { id: targetUser._id, name: targetUser.name, avatar: targetUser.photos[0] || '' };
+        }
+
+        const superLikesRemaining = Math.max(0, cap - me.superLikesToday);
+        res.json({ isMatch, matchData, superLikesRemaining });
+    } catch (err) {
+        console.error('superLikeIntent error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 };

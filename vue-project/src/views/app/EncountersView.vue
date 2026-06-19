@@ -162,6 +162,7 @@ const isLoading = ref(true)
 const lastSwiped = ref(null)
 const cardRefs = ref([])
 const likesLeft = ref(null) // free-tier likes remaining today (null = premium / not yet known)
+const superLikesLeft = ref(null)
 
 const topProfile = computed(() => profiles.value[0] || null)
 const currentUserPhoto = computed(() => authStore.user?.photos?.[0] || '')
@@ -219,22 +220,32 @@ const handleSwipe = async (direction, index) => {
 
   setTimeout(() => { profiles.value.splice(index, 1) }, 200)
 
+  const celebrate = (result) => {
+    if (result?.isMatch) {
+      analyticsService.trackMatch?.(result.matchData?.id, profile.id, profile.name)
+      currentMatch.value = result.matchData || profile
+      showMatchCelebration.value = true
+    }
+  }
+
   try {
-    if (direction === 'right' || direction === 'up') {
+    if (direction === 'up') {
+      const result = await intentService.superLikeIntent(profile.id)
+      if (result?.superLikesRemaining != null) superLikesLeft.value = result.superLikesRemaining
+      celebrate(result)
+    } else if (direction === 'right') {
       const result = await intentService.likeIntent(profile.id)
       if (result?.likesRemaining != null) likesLeft.value = result.likesRemaining
-      if (result?.isMatch) {
-        analyticsService.trackMatch?.(result.matchData?.id, profile.id, profile.name)
-        currentMatch.value = result.matchData || profile
-        showMatchCelebration.value = true
-      }
+      celebrate(result)
     } else {
       await intentService.passIntent(profile.id)
     }
   } catch (err) {
-    if (err.response?.data?.limitReached) {
-      likesLeft.value = 0
-      info(err.response.data.message || "You're out of likes for today — go Gold for unlimited.")
+    const data = err.response?.data
+    if (data?.limitReached) {
+      if (data.superLikesRemaining != null) superLikesLeft.value = 0
+      else likesLeft.value = 0
+      info(data.message || "You've hit today's limit — go Gold for more.")
     } else {
       console.error('Swipe action failed:', err)
     }

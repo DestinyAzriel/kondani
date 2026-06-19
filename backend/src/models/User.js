@@ -113,7 +113,10 @@ const userSchema = new mongoose.Schema({
 
     // Free-tier daily like cap (Gold members are unlimited)
     likesToday: { type: Number, default: 0 },
-    likesTodayDate: { type: String, default: '' } // YYYY-MM-DD
+    likesTodayDate: { type: String, default: '' }, // YYYY-MM-DD
+    // Super Likes per day (Free 1 / Gold 5)
+    superLikesToday: { type: Number, default: 0 },
+    superLikesTodayDate: { type: String, default: '' }
 }, { timestamps: true });
 
 userSchema.index({ location: '2dsphere' });

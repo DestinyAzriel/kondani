@@ -13,7 +13,13 @@ export const intentService = {
   // Like an intent
   async likeIntent(intentId) {
     const response = await api.post(`/intents/${intentId}/like`)
-    return response.data // { isMatch, matchData }
+    return response.data // { isMatch, matchData, likesRemaining }
+  },
+
+  // Super Like an intent
+  async superLikeIntent(intentId) {
+    const response = await api.post(`/intents/${intentId}/superlike`)
+    return response.data // { isMatch, matchData, superLikesRemaining }
   },
 
   // Pass an intent
