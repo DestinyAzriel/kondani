@@ -48,7 +48,7 @@
         </div>
 
         <!-- Free members: blurred locked tiles showing how many like them -->
-        <div v-else-if="activeTab === 'new' && !isPremium && likesCount > 0" key="locked" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div v-else-if="activeTab === 'new' && !isPremium && likesCount > 0" key="locked" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <button v-for="n in Math.min(likesCount, 9)" :key="n" class="locked-like" @click="router.push('/premium')">
             <Lock :size="22" />
             <span>Likes you</span>

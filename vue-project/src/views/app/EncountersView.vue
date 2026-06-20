@@ -65,9 +65,9 @@
             <button class="b" @click="handleBoost" title="Boost"><Zap :size="20" /></button>
           </div>
 
-          <p v-if="likesLeft !== null" class="text-center text-xs text-white/45 mt-4">
-            {{ likesLeft }} {{ likesLeft === 1 ? 'like' : 'likes' }} left today ·
-            <span class="cursor-pointer" style="color:var(--k-gold-l)" @click="router.push('/premium')">Go unlimited</span>
+          <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-4">
+            {{ likesLeft === 0 ? 'No more likes today' : `Only ${likesLeft} ${likesLeft === 1 ? 'like' : 'likes'} left today` }} ·
+            <span class="cursor-pointer" style="color:var(--k-gold-l)" @click="router.push('/premium')">Get unlimited</span>
           </p>
         </div>
 
