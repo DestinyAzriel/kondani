@@ -27,6 +27,18 @@ export const intentService = {
     await api.post(`/intents/${intentId}/pass`)
   },
 
+  // Rewind (undo) a swipe — Gold only
+  async rewindIntent(intentId) {
+    const response = await api.post(`/intents/${intentId}/rewind`)
+    return response.data
+  },
+
+  // Boost yourself for 30 minutes — Gold only
+  async boost() {
+    const response = await api.post('/intents/boost')
+    return response.data // { boostUntil, boostsRemaining, alreadyActive? }
+  },
+
   // Create new intent
   async createIntent(intentData) {
     const response = await api.post('/intents', intentData)

@@ -263,19 +263,37 @@ const triggerSwipe = (direction) => {
   handleSwipe(direction, 0)
 }
 
-const handleRewind = () => {
+const handleRewind = async () => {
   if (!authStore.user?.isPremium) {
-    info('Rewind is a Kondani Gold feature')
+    info('Rewind is a Kondani Gold feature — undo your last swipe.')
     return
   }
-  if (lastSwiped.value?.profile) {
-    profiles.value.unshift(lastSwiped.value.profile)
+  const last = lastSwiped.value?.profile
+  if (!last) { info('Nothing to rewind yet.'); return }
+  try {
+    await intentService.rewindIntent(last.id)
+    if (!profiles.value.some(p => p.id === last.id)) profiles.value.unshift(last)
     lastSwiped.value = null
+  } catch (e) {
+    if (e.response?.data?.premiumRequired) info('Rewind is a Kondani Gold feature.')
+    else console.error('Rewind failed', e)
   }
 }
 
-const handleBoost = () => {
-  info(authStore.user?.isPremium ? 'Boosting your profile for 30 minutes' : 'Boost is a Kondani Gold feature')
+const handleBoost = async () => {
+  if (!authStore.user?.isPremium) {
+    info('Boost is a Kondani Gold feature — be shown first for 30 minutes.')
+    return
+  }
+  try {
+    const res = await intentService.boost()
+    info(res?.alreadyActive ? "You're already boosted right now." : "Boost on — you'll be shown first for 30 minutes.")
+  } catch (e) {
+    const data = e.response?.data
+    if (data?.limitReached) info(data.message)
+    else if (data?.premiumRequired) info('Boost is a Kondani Gold feature.')
+    else console.error('Boost failed', e)
+  }
 }
 
 const cardStyle = (index) => {

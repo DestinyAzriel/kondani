@@ -7,6 +7,9 @@ const FREE_DAILY_LIKES = 20;
 // Super Likes per day.
 const FREE_DAILY_SUPERLIKES = 1;
 const GOLD_DAILY_SUPERLIKES = 5;
+// Boost — Gold members get 1 per month, lasts 30 minutes.
+const MONTHLY_BOOSTS = 1;
+const BOOST_MINUTES = 30;
 
 // Great-circle distance (km) between two lat/lon points — free, no maps API.
 function haversineKm(lat1, lon1, lat2, lon2) {
@@ -136,6 +139,7 @@ exports.getIntents = async (req, res) => {
         const hasMyLocation = myLat !== 0 || myLon !== 0;
         const maxKm = prefs.distance || 100;
 
+        const nowMs = Date.now();
         const scored = [];
         for (const user of candidates) {
             const [lon, lat] = user.location?.coordinates || [0, 0];
@@ -148,12 +152,14 @@ exports.getIntents = async (req, res) => {
             scored.push({
                 user,
                 matchScore: calculateOverallMatchScore(currentUser, user),
-                distanceKm
+                distanceKm,
+                boosted: !!(user.boostUntil && new Date(user.boostUntil).getTime() > nowMs)
             });
         }
 
-        // Closest first when distance is known, otherwise best match first.
+        // Boosted profiles first, then closest, then best match.
         scored.sort((a, b) => {
+            if (a.boosted !== b.boosted) return a.boosted ? -1 : 1;
             if (a.distanceKm != null && b.distanceKm != null) {
                 return a.distanceKm - b.distanceKm || b.matchScore - a.matchScore;
             }
@@ -309,6 +315,92 @@ exports.superLikeIntent = async (req, res) => {
         res.json({ isMatch, matchData, superLikesRemaining });
     } catch (err) {
         console.error('superLikeIntent error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Rewind — undo the last swipe (Gold only). Removes the target from
+// likes/passes/superLikes (and any match), and refunds a Super Like if used.
+exports.rewindIntent = async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+        const targetUserId = req.params.id;
+
+        const me = await User.findById(currentUserId);
+        if (!me) return res.status(404).json({ error: 'User not found' });
+        if (!me.isPremium) {
+            return res.status(403).json({ premiumRequired: true, message: 'Rewind is a Kondani Gold feature.' });
+        }
+
+        const userIntent = await Intent.findOne({ user: currentUserId });
+        if (!userIntent) return res.json({ success: true });
+
+        const wasSuper = (userIntent.superLikes || []).some(id => String(id) === String(targetUserId));
+
+        userIntent.likes = userIntent.likes.filter(id => String(id) !== String(targetUserId));
+        userIntent.passes = userIntent.passes.filter(id => String(id) !== String(targetUserId));
+        userIntent.superLikes = (userIntent.superLikes || []).filter(id => String(id) !== String(targetUserId));
+        userIntent.matches = userIntent.matches.filter(id => String(id) !== String(targetUserId));
+        await userIntent.save();
+
+        // Undo the match on the other side too, if there was one
+        const targetIntent = await Intent.findOne({ user: targetUserId });
+        if (targetIntent) {
+            targetIntent.matches = targetIntent.matches.filter(id => String(id) !== String(currentUserId));
+            await targetIntent.save();
+        }
+
+        if (wasSuper && me.superLikesToday > 0) {
+            me.superLikesToday -= 1;
+            await me.save();
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('rewindIntent error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Boost — float to the top of others' discovery for 30 min (Gold, 1/month).
+exports.boostMe = async (req, res) => {
+    try {
+        const me = await User.findById(req.user.id);
+        if (!me) return res.status(404).json({ error: 'User not found' });
+        if (!me.isPremium) {
+            return res.status(403).json({ premiumRequired: true, message: 'Boost is a Kondani Gold feature.' });
+        }
+
+        const now = Date.now();
+        const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+        if (me.boostMonth !== month) { me.boostsThisMonth = 0; me.boostMonth = month; }
+
+        // Already boosted right now — don't burn another one.
+        if (me.boostUntil && new Date(me.boostUntil).getTime() > now) {
+            return res.json({
+                boostUntil: me.boostUntil,
+                alreadyActive: true,
+                boostsRemaining: Math.max(0, MONTHLY_BOOSTS - me.boostsThisMonth)
+            });
+        }
+
+        if (me.boostsThisMonth >= MONTHLY_BOOSTS) {
+            return res.status(429).json({
+                limitReached: true,
+                message: "You've used your Boost this month — your next one unlocks next month."
+            });
+        }
+
+        me.boostsThisMonth += 1;
+        me.boostUntil = new Date(now + BOOST_MINUTES * 60 * 1000);
+        await me.save();
+
+        res.json({
+            boostUntil: me.boostUntil,
+            boostsRemaining: Math.max(0, MONTHLY_BOOSTS - me.boostsThisMonth)
+        });
+    } catch (err) {
+        console.error('boostMe error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 };

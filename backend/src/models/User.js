@@ -116,7 +116,11 @@ const userSchema = new mongoose.Schema({
     likesTodayDate: { type: String, default: '' }, // YYYY-MM-DD
     // Super Likes per day (Free 1 / Gold 5)
     superLikesToday: { type: Number, default: 0 },
-    superLikesTodayDate: { type: String, default: '' }
+    superLikesTodayDate: { type: String, default: '' },
+    // Boost — shown first in discovery for 30 min (Gold, 1/month)
+    boostUntil: { type: Date, default: null },
+    boostsThisMonth: { type: Number, default: 0 },
+    boostMonth: { type: String, default: '' } // YYYY-MM
 }, { timestamps: true });
 
 userSchema.index({ location: '2dsphere' });
