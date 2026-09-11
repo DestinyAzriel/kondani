@@ -51,4 +51,38 @@ const router = createRouter({
   }
 })
 
+const publicRoutes = ['/', '/login', '/register', '/privacy', '/safety-center', '/support', '/test']
+
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+
+  // Rehydrate user from backend if we have a token but no user object
+  if (authStore.isAuthenticated && !authStore.user) {
+    try {
+      await authStore.fetchUser()
+    } catch (e) {
+      console.warn('Could not restore user profile:', e)
+    }
+  }
+
+  const isPublic = publicRoutes.includes(to.path)
+
+  // Unauthenticated user trying to access a protected route
+  if (!authStore.isAuthenticated && !isPublic) {
+    return next('/login')
+  }
+
+  if (authStore.isAuthenticated) {
+    // Redirect away from login/register if already logged in
+    if (to.path === '/login' || to.path === '/register') {
+      // Send to onboarding only if profile is incomplete, otherwise to the app
+      return next(authStore.user?.isProfileComplete ? '/encounters' : '/onboarding')
+    }
+    // Don't bounce the user away from /profile or other app routes
+    // even if isProfileComplete is false — let them continue editing
+  }
+
+  next()
+})
+
 export default router
