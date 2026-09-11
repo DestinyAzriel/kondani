@@ -36,23 +36,34 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Flame, Sparkles, Star, MessageCircle, User } from 'lucide-vue-next'
+import { Flame, Sparkles, Star, MessageCircle, User, Heart } from 'lucide-vue-next'
+import { intentService } from '@/services/intentService'
 
 const router = useRouter()
 const route = useRoute()
+const likesCount = ref(0)
 
-// Swipe-first: Discover (swipe) is home. Plans = intents feed. Picks = daily picks.
-const navItems = [
+const navItems = computed(() => [
   { name: 'discover', route: '/encounters', label: 'Discover', icon: Flame },
+  { name: 'likes', route: '/likes', label: 'Likes', icon: Heart, badge: likesCount.value },
   { name: 'plans', route: '/feed', label: 'Plans', icon: Sparkles },
-  { name: 'picks', route: '/daily-picks', label: 'Picks', icon: Star },
   { name: 'chats', route: '/chats', label: 'Chats', icon: MessageCircle },
   { name: 'you', route: '/profile', label: 'You', icon: User }
-]
+])
 
 const isActive = (routePath) => route.path === routePath || route.path.startsWith(routePath + '/')
 const navigate = (routePath) => router.push(routePath)
+
+onMounted(async () => {
+  try {
+    const l = await intentService.getLikes()
+    likesCount.value = l?.likesCount || 0
+  } catch (e) {
+    likesCount.value = 0
+  }
+})
 </script>
 
 <style scoped>
