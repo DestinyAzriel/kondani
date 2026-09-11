@@ -10,7 +10,7 @@ const showOnboarding = ref(false)
 onMounted(() => {
   // Show onboarding if authenticated and not completed before
   const completed = localStorage.getItem('onboarding_completed')
-  if (authStore.isAuthenticated && !completed) {
+  if (authStore.isAuthenticated && !completed && !authStore.user?.isProfileComplete) {
     showOnboarding.value = true
   }
 })
