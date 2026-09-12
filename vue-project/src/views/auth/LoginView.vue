@@ -105,7 +105,12 @@ const phone = ref('')
 const otp = ref('')
 const step = ref(1)
 
-const cleanedPhone = computed(() => phone.value.replace(/\D/g, ''))
+const cleanedPhone = computed(() => {
+  let val = phone.value.replace(/\D/g, '')
+  if (val.startsWith('265')) val = val.slice(3)
+  if (val.startsWith('0')) val = val.slice(1)
+  return val
+})
 const isValidPhone = computed(() => cleanedPhone.value.length === 9 && /^[89]/.test(cleanedPhone.value))
 
 const sendOTP = async () => {

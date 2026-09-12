@@ -2,9 +2,17 @@
 import { defineStore } from 'pinia'
 import { authService } from '@/services/auth'
 
+let initialUser = null
+try {
+  const cached = localStorage.getItem('kondani_user')
+  if (cached) initialUser = JSON.parse(cached)
+} catch (e) {
+  initialUser = null
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null,
+    user: initialUser,
     token: localStorage.getItem('kondani_token') || null,
     loading: false,
     error: null
@@ -21,9 +29,13 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        const { token } = await authService.verifyOTP(phone, otp)
+        const { token, user } = await authService.verifyOTP(phone, otp)
         this.token = token
         localStorage.setItem('kondani_token', token)
+        if (user) {
+          this.user = user
+          try { localStorage.setItem('kondani_user', JSON.stringify(user)) } catch (e) {}
+        }
         await this.fetchUser()
       } catch (err) {
         this.error = err.response?.data?.error || err.response?.data?.message || err.message
@@ -51,7 +63,10 @@ export const useAuthStore = defineStore('auth', {
     async fetchUser() {
       if (!this.token) return
       try {
-        this.user = await authService.getProfile()
+        const profile = await authService.getProfile()
+        this.user = profile
+        try { localStorage.setItem('kondani_user', JSON.stringify(profile)) } catch (e) {}
+        return profile
       } catch (err) {
         console.error('Failed to fetch user:', err)
         // If token is invalid, logout
@@ -70,6 +85,7 @@ export const useAuthStore = defineStore('auth', {
         const updatedUser = await authService.updateProfile(profileData)
         // Update the user in the store
         this.user = { ...this.user, ...updatedUser }
+        try { localStorage.setItem('kondani_user', JSON.stringify(this.user)) } catch (e) {}
         return this.user
       } catch (err) {
         console.error('Failed to update profile:', err)
@@ -85,6 +101,7 @@ export const useAuthStore = defineStore('auth', {
         const result = await authService.uploadID(idFile, documentType)
         console.log('ID verification result:', result)
         this.user = { ...this.user, idVerified: result.idVerified }
+        try { localStorage.setItem('kondani_user', JSON.stringify(this.user)) } catch (e) {}
         return result
       } catch (err) {
         console.error('ID verification error:', err)
@@ -115,29 +132,26 @@ export const useAuthStore = defineStore('auth', {
         this.user = null
         this.token = null
         
-        // Remove token from localStorage
+        // Remove token and user from localStorage
         localStorage.removeItem('kondani_token')
+        localStorage.removeItem('kondani_user')
         
         // Clear all auth-related data from sessionStorage
         sessionStorage.clear()
         
         // Clear any cookies if they exist (optional)
-        // This would be used if you store tokens in cookies
         document.cookie.split(";").forEach(cookie => {
           const eqPos = cookie.indexOf("=");
           const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
           document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
         });
         
-        // Optional: Notify backend to invalidate token (if you implement this)
-        // await api.post('/auth/logout')
-        
       } catch (error) {
         console.error('Logout error:', error)
-        // Even if there's an error, still clear local data
         this.user = null
         this.token = null
         localStorage.removeItem('kondani_token')
+        localStorage.removeItem('kondani_user')
       }
     }
   }
