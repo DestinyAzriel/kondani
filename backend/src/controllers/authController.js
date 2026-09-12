@@ -201,6 +201,7 @@ exports.getProfile = async (req, res) => {
         // Auto-check premium expiry
         if (user.isPremium && user.premiumUntil && new Date(user.premiumUntil) < new Date()) {
             user.isPremium = false;
+            user.subscriptionTier = 'free';
             await user.save();
         }
 

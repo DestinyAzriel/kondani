@@ -4,16 +4,19 @@ const User = require('../models/User');
 exports.getLikes = async (req, res) => {
     try {
         const currentUserId = req.user.id;
-        const me = await User.findById(currentUserId).select('isPremium');
-        const isPremium = !!me?.isPremium;
+        const me = await User.findById(currentUserId).select('isPremium subscriptionTier premiumUntil');
+        const isPremium = Boolean(me?.isPremium && (!me.premiumUntil || new Date(me.premiumUntil) > new Date()));
+        const tier = me?.subscriptionTier || (isPremium ? 'gold' : 'free');
+
+        // Identities are unlocked for GOLD and PLATINUM tiers. Free and Plus get the count.
+        const canSeeIdentities = isPremium && (tier === 'gold' || tier === 'platinum');
 
         // People who liked the current user
         const likedByIntents = await Intent.find({ likes: currentUserId }).populate('user');
         const validLikers = likedByIntents.filter(i => i.user);
         const likesCount = validLikers.length;
 
-        // Identities are a GOLD feature — free members only get the count.
-        const newLikes = isPremium
+        const newLikes = canSeeIdentities
             ? validLikers.map(intent => ({
                 id: intent.user._id,
                 name: intent.user.name,

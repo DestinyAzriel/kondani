@@ -2,14 +2,31 @@ const User = require('../models/User');
 const Intent = require('../models/Intent');
 const Block = require('../models/Block');
 
-// Free members get this many likes per day. Gold = unlimited.
+// Free members get this many likes per day. Plus/Gold/Platinum = unlimited.
 const FREE_DAILY_LIKES = 20;
-// Super Likes per day.
-const FREE_DAILY_SUPERLIKES = 1;
-const GOLD_DAILY_SUPERLIKES = 5;
-// Boost — Gold members get 1 per month, lasts 30 minutes.
-const MONTHLY_BOOSTS = 1;
+
+// Super Likes per day by tier
+const SUPERLIKES_CAP = {
+    free: 1,
+    plus: 2,
+    gold: 5,
+    platinum: 10
+};
+
+// Boosts per month by tier (lasts 30 minutes)
+const MONTHLY_BOOSTS_BY_TIER = {
+    free: 0,
+    plus: 0,
+    gold: 1,
+    platinum: 3
+};
 const BOOST_MINUTES = 30;
+
+function getUserTier(user) {
+    const isPremium = Boolean(user?.isPremium && (!user.premiumUntil || new Date(user.premiumUntil) > new Date()));
+    if (!isPremium) return 'free';
+    return user.subscriptionTier || 'gold';
+}
 
 // Great-circle distance (km) between two lat/lon points — free, no maps API.
 function haversineKm(lat1, lon1, lat2, lon2) {
@@ -134,6 +151,11 @@ exports.getIntents = async (req, res) => {
         // Pull a generous batch, then score + filter by real distance, then paginate.
         const candidates = await User.find(query).limit(300);
 
+        // Check if any candidates already liked current user and hold Platinum tier (Priority Likes)
+        const candidateIds = candidates.map(c => c._id);
+        const likerIntents = await Intent.find({ user: { $in: candidateIds }, likes: currentUserId }).select('user');
+        const likerSet = new Set(likerIntents.map(i => String(i.user)));
+
         const myCoords = currentUser.location?.coordinates || [0, 0];
         const [myLon, myLat] = myCoords;
         const hasMyLocation = myLat !== 0 || myLon !== 0;
@@ -149,17 +171,23 @@ exports.getIntents = async (req, res) => {
                 distanceKm = haversineKm(myLat, myLon, lat, lon);
                 if (distanceKm > maxKm) continue; // outside the user's radius
             }
+
+            const candidateTier = getUserTier(user);
+            const isPriorityLike = likerSet.has(String(user._id)) && candidateTier === 'platinum';
+
             scored.push({
                 user,
                 matchScore: calculateOverallMatchScore(currentUser, user),
                 distanceKm,
-                boosted: !!(user.boostUntil && new Date(user.boostUntil).getTime() > nowMs)
+                boosted: !!(user.boostUntil && new Date(user.boostUntil).getTime() > nowMs),
+                priorityLike: isPriorityLike
             });
         }
 
-        // Boosted profiles first, then closest, then best match.
+        // Sorting: Active boosts first, then Platinum Priority Likes, then closest / best match.
         scored.sort((a, b) => {
             if (a.boosted !== b.boosted) return a.boosted ? -1 : 1;
+            if (a.priorityLike !== b.priorityLike) return a.priorityLike ? -1 : 1;
             if (a.distanceKm != null && b.distanceKm != null) {
                 return a.distanceKm - b.distanceKm || b.matchScore - a.matchScore;
             }
@@ -274,7 +302,8 @@ exports.superLikeIntent = async (req, res) => {
         if (!userIntent) userIntent = await Intent.create({ user: currentUserId });
         if (!userIntent.superLikes) userIntent.superLikes = [];
 
-        const cap = me.isPremium ? GOLD_DAILY_SUPERLIKES : FREE_DAILY_SUPERLIKES;
+        const tier = getUserTier(me);
+        const cap = SUPERLIKES_CAP[tier] || SUPERLIKES_CAP.free;
         const alreadySuper = userIntent.superLikes.some(id => String(id) === String(targetUserId));
 
         if (!alreadySuper) {
@@ -284,9 +313,9 @@ exports.superLikeIntent = async (req, res) => {
                 return res.status(429).json({
                     limitReached: true,
                     superLikesRemaining: 0,
-                    message: me.isPremium
+                    message: tier !== 'free'
                         ? `You've used all ${cap} Super Likes today — more tomorrow!`
-                        : `Free members get ${FREE_DAILY_SUPERLIKES} Super Like a day. Go Gold for ${GOLD_DAILY_SUPERLIKES} a day.`
+                        : `Free members get 1 Super Like a day. Upgrade to Plus (2), Gold (5), or VIP Platinum (10) for more.`
                 });
             }
             me.superLikesToday += 1;
@@ -319,8 +348,7 @@ exports.superLikeIntent = async (req, res) => {
     }
 };
 
-// Rewind — undo the last swipe (Gold only). Removes the target from
-// likes/passes/superLikes (and any match), and refunds a Super Like if used.
+// Rewind — undo the last swipe (available to Plus, Gold, and Platinum).
 exports.rewindIntent = async (req, res) => {
     try {
         const currentUserId = req.user.id;
@@ -328,8 +356,9 @@ exports.rewindIntent = async (req, res) => {
 
         const me = await User.findById(currentUserId);
         if (!me) return res.status(404).json({ error: 'User not found' });
-        if (!me.isPremium) {
-            return res.status(403).json({ premiumRequired: true, message: 'Rewind is a Kondani Gold feature.' });
+        const tier = getUserTier(me);
+        if (tier === 'free') {
+            return res.status(403).json({ premiumRequired: true, message: 'Rewind is available on Kondani Plus, Gold, and VIP.' });
         }
 
         const userIntent = await Intent.findOne({ user: currentUserId });
@@ -362,13 +391,18 @@ exports.rewindIntent = async (req, res) => {
     }
 };
 
-// Boost — float to the top of others' discovery for 30 min (Gold, 1/month).
+// Boost — float to the top of others' discovery for 30 min (Gold gets 1/mo, Platinum gets 3/mo).
 exports.boostMe = async (req, res) => {
     try {
         const me = await User.findById(req.user.id);
         if (!me) return res.status(404).json({ error: 'User not found' });
-        if (!me.isPremium) {
-            return res.status(403).json({ premiumRequired: true, message: 'Boost is a Kondani Gold feature.' });
+        const tier = getUserTier(me);
+        const maxBoosts = MONTHLY_BOOSTS_BY_TIER[tier] || 0;
+        if (maxBoosts <= 0) {
+            return res.status(403).json({
+                premiumRequired: true,
+                message: 'Profile Boost is available for Gold (1/month) and VIP Platinum (3/month) members.'
+            });
         }
 
         const now = Date.now();
@@ -380,14 +414,14 @@ exports.boostMe = async (req, res) => {
             return res.json({
                 boostUntil: me.boostUntil,
                 alreadyActive: true,
-                boostsRemaining: Math.max(0, MONTHLY_BOOSTS - me.boostsThisMonth)
+                boostsRemaining: Math.max(0, maxBoosts - me.boostsThisMonth)
             });
         }
 
-        if (me.boostsThisMonth >= MONTHLY_BOOSTS) {
+        if (me.boostsThisMonth >= maxBoosts) {
             return res.status(429).json({
                 limitReached: true,
-                message: "You've used your Boost this month — your next one unlocks next month."
+                message: `You've used your ${maxBoosts} Boost${maxBoosts > 1 ? 's' : ''} this month — unlocks next month!`
             });
         }
 
@@ -397,7 +431,7 @@ exports.boostMe = async (req, res) => {
 
         res.json({
             boostUntil: me.boostUntil,
-            boostsRemaining: Math.max(0, MONTHLY_BOOSTS - me.boostsThisMonth)
+            boostsRemaining: Math.max(0, maxBoosts - me.boostsThisMonth)
         });
     } catch (err) {
         console.error('boostMe error:', err);

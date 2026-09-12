@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    subscriptionTier: {
+        type: String,
+        enum: ['free', 'plus', 'gold', 'platinum'],
+        default: 'free'
+    },
     premiumUntil: Date,
     isBanned: {
         type: Boolean,

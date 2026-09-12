@@ -8,8 +8,13 @@ const subscriptionSchema = new mongoose.Schema({
     },
     plan: {
         type: String,
-        enum: ['1_month', '3_months', '6_months', '12_months'],
+        enum: ['1_week', '1_month', '1_year', '3_months', '6_months', '12_months'],
         required: true
+    },
+    tier: {
+        type: String,
+        enum: ['plus', 'gold', 'platinum'],
+        default: 'gold'
     },
     status: {
         type: String,
