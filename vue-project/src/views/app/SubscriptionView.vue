@@ -176,7 +176,107 @@
 
     </div>
 
-    <!-- Verification / Status Modal -->
+    <!-- Elegant PayChangu Checkout Transition Modal -->
+    <div v-if="showCheckoutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4 animate-in fade-in duration-200">
+      <div class="bg-neutral-900 border border-white/15 p-6 sm:p-7 rounded-3xl max-w-md w-full text-center shadow-2xl relative overflow-hidden">
+        <!-- Decorative background ambient glow -->
+        <div
+          class="absolute top-[-50px] left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none"
+          :style="{ background: currentPlanData.accentColor }"
+        ></div>
+
+        <!-- Close button -->
+        <button
+          type="button"
+          @click="showCheckoutModal = false"
+          class="absolute top-4 right-4 text-white/50 hover:text-white p-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+        >
+          <X :size="18" />
+        </button>
+
+        <!-- Security Shield Icon -->
+        <div
+          class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center border shadow-lg relative"
+          :style="{
+            background: `${currentPlanData.accentColor}20`,
+            borderColor: `${currentPlanData.accentColor}55`,
+            color: currentPlanData.accentColor
+          }"
+        >
+          <ShieldCheck :size="32" />
+          <span class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :style="{ background: currentPlanData.accentColor }"></span>
+            <span class="relative inline-flex rounded-full h-3.5 w-3.5" :style="{ background: currentPlanData.accentColor }"></span>
+          </span>
+        </div>
+
+        <div
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2"
+          :style="{ background: `${currentPlanData.accentColor}18`, color: currentPlanData.accentColor }"
+        >
+          <span>{{ currentPlanData.name }} {{ currentPlanData.subtitle }}</span>
+        </div>
+
+        <h3 class="text-xl font-bold text-white mb-1 font-display">Checkout Ready</h3>
+        <p class="text-xs text-white/60 mb-5">
+          You are connecting to PayChangu's secure gateway to complete your payment.
+        </p>
+
+        <!-- Order Summary Box -->
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-left mb-5 space-y-2.5">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-white/60">Selected Plan</span>
+            <span class="font-semibold text-white">{{ currentPlanData.name }} ({{ currentPlanData.subtitle }})</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-white/60">Duration</span>
+            <span class="text-white font-medium">{{ currentPlanData.duration }} Days</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-white/60">Supported Methods</span>
+            <span class="text-white/90 font-medium">Airtel Money, TNM, Cards</span>
+          </div>
+          <div class="border-t border-white/10 pt-2.5 flex justify-between items-center">
+            <span class="text-xs font-bold text-white/80">Total Amount</span>
+            <span class="text-lg font-bold font-display" :style="{ color: currentPlanData.accentColor }">
+              MWK {{ currentPlanData.price.toLocaleString() }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Instructions Callout -->
+        <div class="bg-amber-400/10 border border-amber-400/20 rounded-xl p-3 text-left mb-5 text-[11px] text-amber-200/90 leading-relaxed flex items-start gap-2.5">
+          <Lock :size="14" class="text-amber-400 shrink-0 mt-0.5" />
+          <span>Enter your mobile money number or card on PayChangu. Once you authorize the prompt on your phone, your membership unlocks immediately!</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="space-y-2.5">
+          <button
+            type="button"
+            @click="proceedToCheckout"
+            class="k-btn w-full py-3.5 font-bold flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+            :style="{
+              background: currentPlanData.btnGradient,
+              color: '#050d12'
+            }"
+          >
+            <span>Proceed to Payment</span>
+            <ArrowRight :size="16" />
+          </button>
+
+          <button
+            type="button"
+            @click="showCheckoutModal = false"
+            class="w-full py-2 text-xs text-white/50 hover:text-white cursor-pointer transition-colors"
+          >
+            Cancel and choose another plan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verification / Status Modal (when returning from PayChangu) -->
     <div v-if="verifying" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
       <div class="bg-neutral-900 border border-amber-400/40 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl">
         <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -197,7 +297,7 @@
         <p class="text-sm text-white/80 mb-6">
           Your payment was confirmed. Your perks are now unlocked instantly on your profile!
         </p>
-        <button @click="closeSuccessModal" class="k-btn k-btn-gold w-full py-3.5 font-semibold">
+        <button @click="closeSuccessModal" class="k-btn k-btn-gold w-full py-3.5 font-semibold cursor-pointer">
           Explore Matches Now
         </button>
       </div>
@@ -213,18 +313,20 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import subscriptionService from '@/services/subscriptionService'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
-import { X, Crown, Check, Minus, Lock, BadgeCheck, Sparkles } from 'lucide-vue-next'
+import { X, Crown, Check, Minus, Lock, BadgeCheck, Sparkles, ShieldCheck, ArrowRight } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const { error, info } = useToast()
+const { error } = useToast()
 
 const heroImg = 'https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=1400&q=80&fit=crop'
 
 const subscribing = ref(false)
 const verifying = ref(false)
+const showCheckoutModal = ref(false)
 const showSuccessModal = ref(false)
+const pendingCheckoutUrl = ref('')
 const activatedTierTitle = ref('Premium')
 const selectedPlan = ref('1_month') // Default to 1 Month Gold (most popular)
 
@@ -326,7 +428,7 @@ const compare = [
 ]
 
 /**
- * Handle checkout button click
+ * Handle checkout button click: calls API and presents the checkout modal
  */
 const handleSubscribe = async () => {
   if (subscribing.value) return
@@ -336,11 +438,11 @@ const handleSubscribe = async () => {
     const result = await subscriptionService.initiatePayment(selectedPlan.value)
 
     if (result.success && result.checkoutUrl) {
-      info('Opening PayChangu secure checkout...')
       if (result.referenceId) {
         sessionStorage.setItem('pending_payment_ref', result.referenceId)
       }
-      window.location.href = result.checkoutUrl
+      pendingCheckoutUrl.value = result.checkoutUrl
+      showCheckoutModal.value = true
     } else {
       error(result.error || 'Could not initiate payment. Please try again.')
     }
@@ -349,6 +451,15 @@ const handleSubscribe = async () => {
     error(err.response?.data?.error || err.message || 'Payment initiation failed')
   } finally {
     subscribing.value = false
+  }
+}
+
+/**
+ * User confirmed in modal: redirect to PayChangu
+ */
+const proceedToCheckout = () => {
+  if (pendingCheckoutUrl.value) {
+    window.location.href = pendingCheckoutUrl.value
   }
 }
 
