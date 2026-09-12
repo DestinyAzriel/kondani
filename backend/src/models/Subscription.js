@@ -8,7 +8,7 @@ const subscriptionSchema = new mongoose.Schema({
     },
     plan: {
         type: String,
-        enum: ['1_month', '6_months', '12_months'],
+        enum: ['1_month', '3_months', '6_months', '12_months'],
         required: true
     },
     status: {
@@ -28,8 +28,7 @@ const subscriptionSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['airtel_money', 'mpamba'],
-        required: true
+        default: 'paychangu'
     },
     transactionId: String,
     autoRenew: {

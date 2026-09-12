@@ -6,9 +6,10 @@ const crypto = require('crypto');
 
 // Pricing plans (in MWK)
 const PLANS = {
-    '1_month': { price: 3000, duration: 30 },
-    '6_months': { price: 15000, duration: 180 },
-    '12_months': { price: 24000, duration: 365 }
+    '1_month': { id: '1_month', name: '1 Month Gold', price: 600, duration: 30, savings: 0 },
+    '3_months': { id: '3_months', name: '3 Months Gold', price: 1500, duration: 90, savings: 17 },
+    '6_months': { id: '6_months', name: '6 Months Gold', price: 2800, duration: 180, savings: 22 },
+    '12_months': { id: '12_months', name: '1 Year Gold', price: 5000, duration: 365, savings: 30 }
 };
 
 /**
@@ -17,17 +18,15 @@ const PLANS = {
 exports.getPlans = async (req, res) => {
     try {
         res.json({
-            plans: [
-                { id: '1_month', name: '1 Month', price: 3000, duration: 30, savings: 0 },
-                { id: '6_months', name: '6 Months', price: 15000, duration: 180, savings: 17 },
-                { id: '12_months', name: '12 Months', price: 24000, duration: 365, savings: 33 }
-            ],
+            plans: Object.values(PLANS),
             currency: 'MWK',
             features: [
-                'See who likes you',
-                'Unlimited swipes',
-                'Global Passport (all regions)',
-                'Priority visibility'
+                'See who likes you before swiping',
+                'Unlimited likes every day',
+                '5 Super Likes every day',
+                'Monthly profile boost',
+                'Rewind last swipe',
+                'Exclusive Gold badge on profile'
             ]
         });
     } catch (error) {
@@ -37,43 +36,93 @@ exports.getPlans = async (req, res) => {
 };
 
 /**
- * Initiate subscription payment
+ * Initiate subscription payment session with PayChangu
  */
 exports.initiatePayment = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { plan, paymentMethod, phoneNumber } = req.body;
+        const { plan = '1_month' } = req.body;
 
         // Validate plan
-        if (!PLANS[plan]) {
-            return res.status(400).json({ error: 'Invalid plan' });
+        const selectedPlan = PLANS[plan];
+        if (!selectedPlan) {
+            return res.status(400).json({ error: 'Invalid plan selected' });
         }
 
-        // Validate payment method
-        if (!['airtel_money', 'mpamba'].includes(paymentMethod)) {
-            return res.status(400).json({ error: 'Invalid payment method' });
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
-        const amount = PLANS[plan].price;
-        const referenceId = `KON-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+        const amount = selectedPlan.price;
+        const referenceId = `KON-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
-        // Create pending subscription
+        // Determine client return URL and backend callback webhook URL
+        const originHeader = req.headers.origin || req.headers.referer;
+        let clientOrigin = 'http://localhost:5173';
+        if (originHeader) {
+            try {
+                const url = new URL(originHeader);
+                clientOrigin = `${url.protocol}//${url.host}`;
+            } catch (_) {}
+        } else if (process.env.CLIENT_ORIGIN) {
+            clientOrigin = process.env.CLIENT_ORIGIN.split(',')[0].trim();
+        }
+
+        // PayChangu browser redirect destinations:
+        // - callback_url: customer is redirected here on payment SUCCESS (PayChangu appends tx_ref query param)
+        // - return_url: customer is redirected here on payment CANCEL or FAILURE
+        const callbackUrl = `${clientOrigin}/premium?status=success`;
+        const returnUrl = `${clientOrigin}/premium?status=cancelled`;
+
+        // Split name into first and last if available
+        const nameParts = (user.name || 'Kondani Member').trim().split(/\s+/);
+        const firstName = nameParts[0] || 'Kondani';
+        const lastName = nameParts.slice(1).join(' ') || 'Member';
+
+        // Initiate checkout session on PayChangu
+        const paymentResult = await paymentService.createPaymentSession({
+            amount,
+            currency: 'MWK',
+            tx_ref: referenceId,
+            first_name: firstName,
+            last_name: lastName,
+            email: user.email || `${user.phoneNumber.replace(/[^0-9]/g, '')}@kondani.mw`,
+            callback_url: callbackUrl,
+            return_url: returnUrl,
+            title: `Kondani ${selectedPlan.name}`,
+            description: `Unlock Kondani Gold (${selectedPlan.name})`
+        });
+
+        if (!paymentResult.success || !paymentResult.checkoutUrl) {
+            return res.status(502).json({
+                error: paymentResult.message || 'Payment gateway initiation failed'
+            });
+        }
+
+        // Create pending subscription record
         const subscription = await Subscription.create({
             userId,
             plan,
             status: 'pending',
             amount,
-            paymentMethod
+            currency: 'MWK',
+            paymentMethod: 'paychangu',
+            transactionId: referenceId
         });
 
-        // Create payment record
-        const payment = await Payment.create({
+        // Create payment tracking record
+        await Payment.create({
             userId,
             subscriptionId: subscription._id,
             amount,
-            paymentMethod,
-            phoneNumber,
+            currency: 'MWK',
+            paymentMethod: 'paychangu',
+            phoneNumber: user.phoneNumber,
             referenceId,
+            checkoutUrl: paymentResult.checkoutUrl,
+            status: 'pending',
+            gatewayResponse: paymentResult.rawResponse,
             metadata: {
                 ipAddress: req.ip,
                 userAgent: req.headers['user-agent'],
@@ -81,48 +130,24 @@ exports.initiatePayment = async (req, res) => {
             }
         });
 
-        // Initiate payment with gateway
-        let paymentResult;
-        if (paymentMethod === 'airtel_money') {
-            paymentResult = await paymentService.initiateAirtelMoney(phoneNumber, amount, referenceId);
-        } else {
-            paymentResult = await paymentService.initiateMpamba(phoneNumber, amount, referenceId);
-        }
-
-        // Update payment with gateway response
-        payment.status = paymentResult.status;
-        payment.transactionId = paymentResult.transactionId;
-        payment.gatewayResponse = paymentResult.rawResponse;
-        if (!paymentResult.success) {
-            payment.failureReason = paymentResult.message;
-        }
-        await payment.save();
-
-        if (!paymentResult.success) {
-            subscription.status = 'cancelled';
-            await subscription.save();
-            return res.status(400).json({
-                error: paymentResult.message,
-                referenceId
-            });
-        }
-
         res.json({
-            message: 'Payment initiated. Please approve on your phone.',
+            success: true,
+            message: 'Payment session created',
+            checkoutUrl: paymentResult.checkoutUrl,
             referenceId,
-            transactionId: paymentResult.transactionId,
             amount,
-            paymentMethod
+            currency: 'MWK',
+            plan: selectedPlan
         });
 
     } catch (error) {
         console.error('Initiate payment error:', error);
-        res.status(500).json({ error: 'Failed to initiate payment' });
+        res.status(500).json({ error: 'Failed to initiate payment: ' + error.message });
     }
 };
 
 /**
- * Check payment status
+ * Check payment status and activate subscription if confirmed
  */
 exports.checkPaymentStatus = async (req, res) => {
     try {
@@ -130,70 +155,182 @@ exports.checkPaymentStatus = async (req, res) => {
 
         const payment = await Payment.findOne({ referenceId });
         if (!payment) {
-            return res.status(404).json({ error: 'Payment not found' });
+            return res.status(404).json({ error: 'Payment transaction not found' });
         }
 
-        // If already completed or failed, return current status
-        if (['completed', 'failed', 'cancelled'].includes(payment.status)) {
-            return res.json({ status: payment.status, payment });
+        // If already completed, return activated status immediately
+        if (payment.status === 'completed') {
+            const subscription = await Subscription.findById(payment.subscriptionId);
+            return res.json({
+                status: 'completed',
+                message: 'Payment verified and active',
+                subscription
+            });
         }
 
-        // Check status with gateway
-        let statusResult;
-        if (payment.paymentMethod === 'airtel_money') {
-            statusResult = await paymentService.checkAirtelStatus(payment.transactionId);
-        } else {
-            statusResult = await paymentService.checkMpambaStatus(referenceId);
-        }
+        // Check live status with PayChangu
+        const statusResult = await paymentService.verifyPayment(referenceId);
 
-        payment.status = statusResult.status;
-        payment.gatewayResponse = statusResult.rawResponse;
-
-        // If payment completed, activate subscription
         if (statusResult.status === 'completed') {
+            payment.status = 'completed';
+            payment.gatewayResponse = statusResult.rawResponse;
+            if (statusResult.reference) {
+                payment.transactionId = statusResult.reference;
+            }
+            if (!payment.metadata) payment.metadata = {};
             payment.metadata.completedAt = new Date();
             await payment.save();
 
+            // Activate subscription
             const subscription = await Subscription.findById(payment.subscriptionId);
-            subscription.status = 'active';
-            subscription.startDate = new Date();
-            subscription.endDate = new Date(Date.now() + PLANS[subscription.plan].duration * 24 * 60 * 60 * 1000);
-            subscription.transactionId = payment.transactionId;
-            await subscription.save();
+            if (subscription) {
+                subscription.status = 'active';
+                subscription.startDate = new Date();
+                const planConfig = PLANS[subscription.plan] || PLANS['1_month'];
+                subscription.endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
+                if (statusResult.reference) {
+                    subscription.transactionId = statusResult.reference;
+                }
+                await subscription.save();
+            }
 
             // Update user premium status
             const user = await User.findById(payment.userId);
-            user.isPremium = true;
-            user.premiumUntil = subscription.endDate;
-            await user.save();
+            if (user) {
+                user.isPremium = true;
+                user.premiumUntil = subscription ? subscription.endDate : new Date(Date.now() + 30 * 86400000);
+                await user.save();
+            }
+
+            // Notify real-time client if Socket.io is connected
+            const io = req.app.get('io');
+            if (io && payment.userId) {
+                io.to(payment.userId.toString()).emit('subscription_activated', {
+                    isPremium: true,
+                    premiumUntil: user ? user.premiumUntil : null
+                });
+            }
 
             return res.json({
                 status: 'completed',
-                message: 'Payment successful! Premium activated.',
+                message: 'Payment confirmed! Welcome to Kondani Gold.',
                 subscription
             });
         }
 
         if (statusResult.status === 'failed') {
-            payment.failureReason = 'Payment failed';
+            payment.status = 'failed';
+            payment.failureReason = statusResult.message || 'Payment failed';
+            payment.gatewayResponse = statusResult.rawResponse;
             await payment.save();
 
-            const subscription = await Subscription.findById(payment.subscriptionId);
-            subscription.status = 'cancelled';
-            await subscription.save();
+            await Subscription.findByIdAndUpdate(payment.subscriptionId, { status: 'cancelled' });
+
+            return res.json({
+                status: 'failed',
+                message: 'Payment was not completed.',
+                payment
+            });
         }
 
-        await payment.save();
-        res.json({ status: payment.status, payment });
+        // Still pending
+        return res.json({
+            status: 'pending',
+            message: 'Payment is pending customer confirmation.',
+            checkoutUrl: payment.checkoutUrl,
+            referenceId
+        });
 
     } catch (error) {
         console.error('Check payment status error:', error);
-        res.status(500).json({ error: 'Failed to check payment status' });
+        res.status(500).json({ error: 'Failed to check payment status: ' + error.message });
     }
 };
 
 /**
- * Get user's subscription status
+ * Handle PayChangu Webhook
+ */
+exports.handleWebhook = async (req, res) => {
+    try {
+        const signature = req.headers['signature'];
+        const rawBody = req.rawBody;
+
+        // Verify signature if provided
+        if (signature && rawBody) {
+            const isValid = paymentService.verifyWebhookSignature(rawBody, signature);
+            if (!isValid) {
+                console.warn('PayChangu webhook signature mismatch');
+                return res.status(403).json({ error: 'Invalid signature' });
+            }
+        }
+
+        const payload = req.body || {};
+        console.log('PayChangu Webhook received:', JSON.stringify(payload));
+
+        const txRef = payload.tx_ref || payload.data?.tx_ref || payload.reference;
+        if (!txRef) {
+            return res.status(400).json({ error: 'Missing tx_ref in webhook payload' });
+        }
+
+        const payment = await Payment.findOne({ referenceId: txRef });
+        if (!payment) {
+            console.warn(`Webhook received for unknown reference: ${txRef}`);
+            return res.status(200).json({ received: true, note: 'Payment record not found' });
+        }
+
+        // Verify directly with PayChangu to confirm legitimate status
+        const statusResult = await paymentService.verifyPayment(txRef);
+
+        if (statusResult.status === 'completed' && payment.status !== 'completed') {
+            payment.status = 'completed';
+            payment.gatewayResponse = statusResult.rawResponse;
+            if (statusResult.reference) {
+                payment.transactionId = statusResult.reference;
+            }
+            if (!payment.metadata) payment.metadata = {};
+            payment.metadata.completedAt = new Date();
+            await payment.save();
+
+            const subscription = await Subscription.findById(payment.subscriptionId);
+            if (subscription) {
+                subscription.status = 'active';
+                subscription.startDate = new Date();
+                const planConfig = PLANS[subscription.plan] || PLANS['1_month'];
+                subscription.endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
+                if (statusResult.reference) {
+                    subscription.transactionId = statusResult.reference;
+                }
+                await subscription.save();
+            }
+
+            const user = await User.findById(payment.userId);
+            if (user) {
+                user.isPremium = true;
+                user.premiumUntil = subscription ? subscription.endDate : new Date(Date.now() + 30 * 86400000);
+                await user.save();
+            }
+
+            const io = req.app.get('io');
+            if (io && payment.userId) {
+                io.to(payment.userId.toString()).emit('subscription_activated', {
+                    isPremium: true,
+                    premiumUntil: user ? user.premiumUntil : null
+                });
+            }
+
+            console.log(`Successfully activated Gold subscription for user ${payment.userId} via webhook`);
+        }
+
+        res.status(200).json({ success: true });
+
+    } catch (error) {
+        console.error('PayChangu webhook error:', error);
+        res.status(500).json({ error: 'Webhook processing error' });
+    }
+};
+
+/**
+ * Get user's current subscription status
  */
 exports.getSubscriptionStatus = async (req, res) => {
     try {
@@ -207,8 +344,8 @@ exports.getSubscriptionStatus = async (req, res) => {
         const user = await User.findById(userId).select('isPremium premiumUntil');
 
         res.json({
-            isPremium: user.isPremium,
-            premiumUntil: user.premiumUntil,
+            isPremium: Boolean(user?.isPremium && (!user.premiumUntil || new Date(user.premiumUntil) > new Date())),
+            premiumUntil: user?.premiumUntil || null,
             subscription: subscription || null
         });
 
@@ -244,4 +381,13 @@ exports.cancelSubscription = async (req, res) => {
         console.error('Cancel subscription error:', error);
         res.status(500).json({ error: 'Failed to cancel subscription' });
     }
+};
+
+/**
+ * Handle GET redirect if PayChangu redirects the browser to /api/subscription/webhook
+ */
+exports.handleWebhookRedirect = (req, res) => {
+    const txRef = req.query.tx_ref || req.query.ref || '';
+    const origin = process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',')[0].trim() : 'http://localhost:5173';
+    return res.redirect(`${origin}/premium?status=success&tx_ref=${encodeURIComponent(txRef)}`);
 };

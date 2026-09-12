@@ -20,12 +20,14 @@ const paymentSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['airtel_money', 'mpamba'],
-        required: true
+        default: 'paychangu'
     },
     phoneNumber: {
         type: String,
-        required: true
+        required: false
+    },
+    checkoutUrl: {
+        type: String
     },
     status: {
         type: String,

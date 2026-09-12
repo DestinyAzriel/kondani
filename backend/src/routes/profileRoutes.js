@@ -3,14 +3,27 @@ const router = express.Router();
 const multer = require('multer');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const { storeUpload } = require('../services/cloudinaryService');
 
-// Configure multer for voice file uploads
 const storage = multer.memoryStorage();
-const upload = multer({
+
+// Multer instance for photo uploads (images up to 5MB)
+const photoUpload = multer({
     storage,
-    limits: {
-        fileSize: 2 * 1024 * 1024, // 2MB limit for voice files
-    },
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    }
+});
+
+// Multer instance for voice uploads (audio up to 2MB)
+const voiceUpload = multer({
+    storage,
+    limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('audio/')) {
             cb(null, true);
@@ -65,31 +78,83 @@ router.post('/prompts', auth, async (req, res) => {
 });
 
 /**
- * @route   POST /api/profile/voice
- * @desc    Upload voice intro
+ * @route   POST /api/profile/photos
+ * @desc    Upload a profile photo via backend → Cloudinary
  * @access  Private
  */
-router.post('/voice', auth, upload.single('voice'), async (req, res) => {
+router.post('/photos', auth, photoUpload.single('photo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No photo file provided' });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if ((user.photos || []).length >= 6) {
+            return res.status(400).json({ error: 'Maximum 6 photos allowed' });
+        }
+
+        const photoUrl = await storeUpload(req.file, 'profiles', 'image');
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            { $push: { photos: photoUrl } },
+            { new: true }
+        ).select('-password');
+
+        res.json({ photoUrl, photos: updatedUser.photos });
+    } catch (error) {
+        console.error('Photo upload error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * @route   DELETE /api/profile/photos/:index
+ * @desc    Remove a profile photo by its index in the photos array
+ * @access  Private
+ */
+router.delete('/photos/:index', auth, async (req, res) => {
+    try {
+        const index = parseInt(req.params.index, 10);
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (isNaN(index) || index < 0 || index >= (user.photos || []).length) {
+            return res.status(400).json({ error: 'Invalid photo index' });
+        }
+
+        user.photos.splice(index, 1);
+        await user.save();
+
+        res.json({ photos: user.photos });
+    } catch (error) {
+        console.error('Photo delete error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * @route   POST /api/profile/voice
+ * @desc    Upload voice intro via backend → Cloudinary
+ * @access  Private
+ */
+router.post('/voice', auth, voiceUpload.single('voice'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No voice file provided' });
         }
 
-        // TODO: Upload to cloud storage (AWS S3, Cloudinary, etc.)
-        // For now, we'll store a placeholder URL
-        const voiceUrl = `https://kondani-voice.s3.amazonaws.com/${req.user.id}_${Date.now()}.webm`;
+        const voiceUrl = await storeUpload(req.file, 'voice', 'video'); // Cloudinary uses 'video' for audio
 
-        // Update user voice intro
         const user = await User.findByIdAndUpdate(
             req.user.id,
             { $set: { voiceIntro: voiceUrl } },
             { new: true, runValidators: true }
         ).select('-password');
 
-        res.json({
-            voiceUrl,
-            user
-        });
+        res.json({ voiceUrl, user });
     } catch (error) {
         console.error('Voice upload error:', error);
         res.status(500).json({ error: 'Server error' });

@@ -1,203 +1,190 @@
 const axios = require('axios');
+const crypto = require('crypto');
 
 class PaymentService {
     constructor() {
-        this.airtelMoneyConfig = {
-            apiKey: process.env.AIRTEL_MONEY_API_KEY,
-            secret: process.env.AIRTEL_MONEY_SECRET,
-            baseUrl: process.env.AIRTEL_MONEY_BASE_URL || 'https://openapiuat.airtel.africa',
-            merchantId: process.env.AIRTEL_MONEY_MERCHANT_ID
-        };
+        this.baseUrl = process.env.PAYCHANGU_BASE_URL || 'https://api.paychangu.com';
+        this.secretKey = process.env.PAYCHANGU_SECRET_KEY;
+        this.publicKey = process.env.PAYCHANGU_PUBLIC_KEY;
+    }
 
-        this.mpambaConfig = {
-            apiKey: process.env.MPAMBA_API_KEY,
-            secret: process.env.MPAMBA_SECRET,
-            baseUrl: process.env.MPAMBA_BASE_URL || 'https://api.mpamba.mw',
-            merchantId: process.env.MPAMBA_MERCHANT_ID
+    /**
+     * Get request headers for PayChangu API
+     */
+    getHeaders() {
+        return {
+            'Authorization': `Bearer ${this.secretKey}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
         };
     }
 
     /**
-     * Initiate Airtel Money payment
+     * Create a hosted payment checkout session
+     * @param {Object} data
+     * @param {number} data.amount
+     * @param {string} data.currency - 'MWK'
+     * @param {string} data.tx_ref - Unique reference
+     * @param {string} data.first_name
+     * @param {string} [data.last_name]
+     * @param {string} [data.email]
+     * @param {string} data.callback_url - Webhook/IPN URL
+     * @param {string} data.return_url - Frontend return URL after payment
+     * @param {string} [data.title] - Customization title
+     * @param {string} [data.description] - Customization description
      */
-    async initiateAirtelMoney(phoneNumber, amount, referenceId) {
+    async createPaymentSession({
+        amount,
+        currency = 'MWK',
+        tx_ref,
+        first_name,
+        last_name,
+        email,
+        callback_url,
+        return_url,
+        title = 'Kondani Gold Subscription',
+        description = 'Premium subscription on Kondani'
+    }) {
         try {
-            // Format phone number (remove +265 if present)
-            const formattedPhone = phoneNumber.replace(/^\+?265/, '');
-
             const payload = {
-                reference: referenceId,
-                subscriber: {
-                    country: 'MW',
-                    currency: 'MWK',
-                    msisdn: formattedPhone
-                },
-                transaction: {
-                    amount: amount,
-                    country: 'MW',
-                    currency: 'MWK',
-                    id: referenceId
+                amount,
+                currency,
+                tx_ref,
+                first_name: first_name || 'Kondani',
+                last_name: last_name || 'Member',
+                email: email || 'user@kondani.mw',
+                callback_url,
+                return_url,
+                customization: {
+                    title,
+                    description
                 }
             };
 
             const response = await axios.post(
-                `${this.airtelMoneyConfig.baseUrl}/merchant/v1/payments/`,
+                `${this.baseUrl}/payment`,
                 payload,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Country': 'MW',
-                        'X-Currency': 'MWK',
-                        'Authorization': `Bearer ${await this.getAirtelToken()}`
-                    }
-                }
+                { headers: this.getHeaders() }
             );
 
+            if (response.data && response.data.status === 'success') {
+                return {
+                    success: true,
+                    checkoutUrl: response.data.data?.checkout_url,
+                    tx_ref: response.data.data?.data?.tx_ref || tx_ref,
+                    rawResponse: response.data
+                };
+            }
+
             return {
-                success: true,
-                transactionId: response.data.data?.transaction?.id,
-                status: response.data.status?.code === '200' ? 'processing' : 'failed',
-                message: response.data.status?.message,
+                success: false,
+                message: response.data?.message || 'Failed to generate payment session',
                 rawResponse: response.data
             };
 
         } catch (error) {
-            console.error('Airtel Money initiation error:', error.response?.data || error.message);
+            console.error('PayChangu session creation error:', error.response?.data || error.message);
             return {
                 success: false,
-                status: 'failed',
-                message: error.response?.data?.status?.message || 'Payment initiation failed',
+                message: error.response?.data?.message || error.message || 'Payment initiation failed',
                 rawResponse: error.response?.data
             };
         }
     }
 
     /**
-     * Get Airtel Money auth token
+     * Verify payment status using tx_ref
+     * @param {string} tx_ref
      */
-    async getAirtelToken() {
+    async verifyPayment(tx_ref) {
         try {
-            const response = await axios.post(
-                `${this.airtelMoneyConfig.baseUrl}/auth/oauth2/token`,
-                {
-                    client_id: this.airtelMoneyConfig.apiKey,
-                    client_secret: this.airtelMoneyConfig.secret,
-                    grant_type: 'client_credentials'
-                },
-                {
-                    headers: { 'Content-Type': 'application/json' }
-                }
+            const response = await axios.get(
+                `${this.baseUrl}/verify-payment/${encodeURIComponent(tx_ref)}`,
+                { headers: this.getHeaders() }
             );
 
-            return response.data.access_token;
-        } catch (error) {
-            console.error('Airtel token error:', error);
-            throw new Error('Failed to get Airtel Money token');
-        }
-    }
+            const resData = response.data;
+            if (resData && resData.status === 'success') {
+                const paymentData = resData.data;
+                const isPaid = paymentData?.status === 'success';
 
-    /**
-     * Initiate TNM Mpamba payment
-     */
-    async initiateMpamba(phoneNumber, amount, referenceId) {
-        try {
-            // Format phone number
-            const formattedPhone = phoneNumber.replace(/^\+?265/, '265');
+                return {
+                    success: isPaid,
+                    status: isPaid ? 'completed' : (paymentData?.status || 'processing'),
+                    amount: paymentData?.amount,
+                    currency: paymentData?.currency,
+                    reference: paymentData?.reference,
+                    channel: paymentData?.authorization?.channel,
+                    rawResponse: resData
+                };
+            }
 
-            const payload = {
-                amount: amount,
-                currency: 'MWK',
-                externalId: referenceId,
-                payer: {
-                    partyIdType: 'MSISDN',
-                    partyId: formattedPhone
-                },
-                payerMessage: 'Kondani Premium Subscription',
-                payeeNote: `Subscription payment - ${referenceId}`
-            };
-
-            const response = await axios.post(
-                `${this.mpambaConfig.baseUrl}/collection/v1_0/requesttopay`,
-                payload,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.mpambaConfig.apiKey}`,
-                        'X-Reference-Id': referenceId,
-                        'X-Target-Environment': process.env.NODE_ENV === 'production' ? 'live' : 'sandbox'
-                    }
-                }
-            );
-
-            return {
-                success: true,
-                transactionId: referenceId,
-                status: 'processing',
-                message: 'Payment initiated successfully',
-                rawResponse: response.data
-            };
-
-        } catch (error) {
-            console.error('Mpamba initiation error:', error.response?.data || error.message);
             return {
                 success: false,
-                status: 'failed',
-                message: error.response?.data?.message || 'Payment initiation failed',
-                rawResponse: error.response?.data
+                status: resData?.data?.status || 'failed',
+                message: resData?.message || 'Verification failed',
+                rawResponse: resData
+            };
+
+        } catch (error) {
+            const errorData = error.response?.data;
+            // PayChangu returns 400 when session is created but customer hasn't completed payment yet
+            if (errorData?.data?.status === 'pending') {
+                return {
+                    success: false,
+                    status: 'pending',
+                    message: errorData.message || 'Payment pending on customer phone',
+                    rawResponse: errorData
+                };
+            }
+
+            console.error('PayChangu verify error:', errorData || error.message);
+            return {
+                success: false,
+                status: 'unknown',
+                message: errorData?.message || error.message,
+                rawResponse: errorData
             };
         }
     }
 
     /**
-     * Check Airtel Money payment status
+     * Verify webhook signature from PayChangu
+     * @param {string|Buffer} rawBody
+     * @param {string} signatureHeader
      */
-    async checkAirtelStatus(transactionId) {
+    verifyWebhookSignature(rawBody, signatureHeader) {
+        if (!signatureHeader || !rawBody) return false;
         try {
-            const response = await axios.get(
-                `${this.airtelMoneyConfig.baseUrl}/standard/v1/payments/${transactionId}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${await this.getAirtelToken()}`,
-                        'X-Country': 'MW',
-                        'X-Currency': 'MWK'
-                    }
-                }
-            );
+            const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : (typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody));
+            const computedSignature = crypto
+                .createHmac('sha256', this.secretKey)
+                .update(bodyStr)
+                .digest('hex');
 
-            const status = response.data.data?.transaction?.status;
-            return {
-                status: status === 'TS' ? 'completed' : status === 'TF' ? 'failed' : 'processing',
-                rawResponse: response.data
-            };
-        } catch (error) {
-            console.error('Airtel status check error:', error);
-            return { status: 'unknown', rawResponse: error.response?.data };
+            return crypto.timingSafeEqual(
+                Buffer.from(computedSignature, 'hex'),
+                Buffer.from(signatureHeader, 'hex')
+            );
+        } catch (err) {
+            console.error('Webhook signature verification error:', err.message);
+            return false;
         }
     }
 
     /**
-     * Check Mpamba payment status
+     * Get supported mobile money operators
      */
-    async checkMpambaStatus(referenceId) {
+    async getOperators() {
         try {
             const response = await axios.get(
-                `${this.mpambaConfig.baseUrl}/collection/v1_0/requesttopay/${referenceId}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.mpambaConfig.apiKey}`,
-                        'X-Target-Environment': process.env.NODE_ENV === 'production' ? 'live' : 'sandbox'
-                    }
-                }
+                `${this.baseUrl}/mobile-money/`,
+                { headers: this.getHeaders() }
             );
-
-            const status = response.data.status;
-            return {
-                status: status === 'SUCCESSFUL' ? 'completed' : status === 'FAILED' ? 'failed' : 'processing',
-                rawResponse: response.data
-            };
+            return response.data?.data || [];
         } catch (error) {
-            console.error('Mpamba status check error:', error);
-            return { status: 'unknown', rawResponse: error.response?.data };
+            console.error('Error fetching operators:', error.message);
+            return [];
         }
     }
 }

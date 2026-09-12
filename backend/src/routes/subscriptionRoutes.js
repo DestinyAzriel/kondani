@@ -12,6 +12,11 @@ router.post('/initiate', authMiddleware, subscriptionController.initiatePayment)
 // Check payment status
 router.get('/payment-status/:referenceId', authMiddleware, subscriptionController.checkPaymentStatus);
 
+// PayChangu Webhook (public endpoint for IPN notifications)
+router.post('/webhook', subscriptionController.handleWebhook);
+// Fallback if PayChangu redirects user browser to webhook URL
+router.get('/webhook', subscriptionController.handleWebhookRedirect);
+
 // Get user's subscription status
 router.get('/status', authMiddleware, subscriptionController.getSubscriptionStatus);
 
