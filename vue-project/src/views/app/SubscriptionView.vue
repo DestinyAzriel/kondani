@@ -139,9 +139,8 @@
           :disabled="subscribing || verifying"
           @click="handleSubscribe"
         >
-          <span v-if="subscribing" class="inline-block animate-spin w-5 h-5 border-2 border-black border-t-transparent rounded-full"></span>
-          <Crown v-else :size="18" />
-          <span>{{ subscribing ? 'Connecting to PayChangu...' : `Get ${currentPlanData.subtitle} — MWK ${currentPlanData.price.toLocaleString()}` }}</span>
+          <Crown :size="18" />
+          <span>Get {{ currentPlanData.subtitle }} — MWK {{ currentPlanData.price.toLocaleString() }}</span>
         </button>
 
         <!-- Payment badges -->
@@ -176,114 +175,94 @@
 
     </div>
 
-    <!-- Elegant PayChangu Checkout Transition Modal -->
-    <div v-if="showCheckoutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4 animate-in fade-in duration-200">
-      <div class="bg-neutral-900 border border-white/15 p-6 sm:p-7 rounded-3xl max-w-md w-full text-center shadow-2xl relative overflow-hidden">
-        <!-- Decorative background ambient glow -->
+    <!-- Elegant "Opening PayChangu Gateway" Modal (Replaces the blunt toast) -->
+    <div v-if="subscribing" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4 animate-in fade-in duration-200">
+      <div class="bg-neutral-900 border border-white/15 p-6 sm:p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl relative overflow-hidden">
+        <!-- Ambient decorative glow -->
         <div
-          class="absolute top-[-50px] left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none"
-          :style="{ background: currentPlanData.accentColor }"
+          class="absolute top-[-40px] left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-40 pointer-events-none"
+          :style="{ background: currentPlanData.accentColor || '#f59e0b' }"
         ></div>
 
-        <!-- Close button -->
-        <button
-          type="button"
-          @click="showCheckoutModal = false"
-          class="absolute top-4 right-4 text-white/50 hover:text-white p-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-        >
-          <X :size="18" />
-        </button>
-
-        <!-- Security Shield Icon -->
-        <div
-          class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center border shadow-lg relative"
-          :style="{
-            background: `${currentPlanData.accentColor}20`,
-            borderColor: `${currentPlanData.accentColor}55`,
-            color: currentPlanData.accentColor
-          }"
-        >
-          <ShieldCheck :size="32" />
-          <span class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :style="{ background: currentPlanData.accentColor }"></span>
-            <span class="relative inline-flex rounded-full h-3.5 w-3.5" :style="{ background: currentPlanData.accentColor }"></span>
-          </span>
+        <!-- Animated Gateway Ring & Shield -->
+        <div class="relative w-20 h-20 mx-auto mb-5 flex items-center justify-center">
+          <div
+            class="absolute inset-0 rounded-full border-3 border-t-transparent animate-spin"
+            :style="{ borderColor: `${currentPlanData.accentColor || '#f59e0b'} transparent ${currentPlanData.accentColor || '#f59e0b'} ${currentPlanData.accentColor || '#f59e0b'}` }"
+          ></div>
+          <div
+            class="w-13 h-13 rounded-full flex items-center justify-center border shadow-inner"
+            :style="{
+              background: `${currentPlanData.accentColor || '#f59e0b'}20`,
+              borderColor: `${currentPlanData.accentColor || '#f59e0b'}50`,
+              color: currentPlanData.accentColor || '#f59e0b'
+            }"
+          >
+            <ShieldCheck :size="26" />
+          </div>
         </div>
 
         <div
           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2"
-          :style="{ background: `${currentPlanData.accentColor}18`, color: currentPlanData.accentColor }"
+          :style="{ background: `${currentPlanData.accentColor || '#f59e0b'}20`, color: currentPlanData.accentColor || '#f59e0b' }"
         >
           <span>{{ currentPlanData.name }} {{ currentPlanData.subtitle }}</span>
         </div>
 
-        <h3 class="text-xl font-bold text-white mb-1 font-display">Checkout Ready</h3>
-        <p class="text-xs text-white/60 mb-5">
-          You are connecting to PayChangu's secure gateway to complete your payment.
+        <h3 class="text-xl font-bold text-white mb-1.5 font-display">Opening PayChangu</h3>
+        <p class="text-xs text-white/65 mb-5 leading-relaxed">
+          Securing your session... You'll be redirected to pay with Airtel Money, TNM Mpamba, or Card.
         </p>
 
-        <!-- Order Summary Box -->
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-left mb-5 space-y-2.5">
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-white/60">Selected Plan</span>
-            <span class="font-semibold text-white">{{ currentPlanData.name }} ({{ currentPlanData.subtitle }})</span>
+        <!-- Summary Pill -->
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5 mb-5 flex items-center justify-between">
+          <div class="text-left">
+            <div class="text-[11px] text-white/50">Total to Pay</div>
+            <div class="text-lg font-bold text-white font-display">MWK {{ currentPlanData.price.toLocaleString() }}</div>
           </div>
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-white/60">Duration</span>
-            <span class="text-white font-medium">{{ currentPlanData.duration }} Days</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-white/60">Supported Methods</span>
-            <span class="text-white/90 font-medium">Airtel Money, TNM, Cards</span>
-          </div>
-          <div class="border-t border-white/10 pt-2.5 flex justify-between items-center">
-            <span class="text-xs font-bold text-white/80">Total Amount</span>
-            <span class="text-lg font-bold font-display" :style="{ color: currentPlanData.accentColor }">
-              MWK {{ currentPlanData.price.toLocaleString() }}
-            </span>
+          <div class="text-right">
+            <div class="text-[11px] text-white/50">Access Period</div>
+            <div class="text-xs font-semibold text-white/80">{{ currentPlanData.duration }} Days</div>
           </div>
         </div>
 
-        <!-- Instructions Callout -->
-        <div class="bg-amber-400/10 border border-amber-400/20 rounded-xl p-3 text-left mb-5 text-[11px] text-amber-200/90 leading-relaxed flex items-start gap-2.5">
-          <Lock :size="14" class="text-amber-400 shrink-0 mt-0.5" />
-          <span>Enter your mobile money number or card on PayChangu. Once you authorize the prompt on your phone, your membership unlocks immediately!</span>
+        <!-- Payment Badges -->
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <span class="text-[10px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">Airtel Money</span>
+          <span class="text-[10px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">TNM Mpamba</span>
+          <span class="text-[10px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">Card</span>
         </div>
 
-        <!-- Actions -->
-        <div class="space-y-2.5">
-          <button
-            type="button"
-            @click="proceedToCheckout"
-            class="k-btn w-full py-3.5 font-bold flex items-center justify-center gap-2 cursor-pointer shadow-lg"
-            :style="{
-              background: currentPlanData.btnGradient,
-              color: '#050d12'
-            }"
-          >
-            <span>Proceed to Payment</span>
-            <ArrowRight :size="16" />
-          </button>
-
-          <button
-            type="button"
-            @click="showCheckoutModal = false"
-            class="w-full py-2 text-xs text-white/50 hover:text-white cursor-pointer transition-colors"
-          >
-            Cancel and choose another plan
-          </button>
+        <div class="flex items-center justify-center gap-2 text-xs text-white/40 mb-4">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Secured with 256-bit SSL</span>
         </div>
+
+        <button
+          type="button"
+          @click="subscribing = false"
+          class="text-xs text-white/45 hover:text-white/80 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
       </div>
     </div>
 
-    <!-- Verification / Status Modal (when returning from PayChangu) -->
-    <div v-if="verifying" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
-      <div class="bg-neutral-900 border border-amber-400/40 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl">
-        <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <!-- Verification / Status Modal (ONLY when user returns from PayChangu) -->
+    <div v-if="verifying" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4 animate-in fade-in duration-200">
+      <div class="bg-neutral-900 border border-amber-400/40 p-6 sm:p-7 rounded-3xl max-w-sm w-full text-center shadow-2xl">
+        <div class="w-14 h-14 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <h3 class="text-lg font-bold text-white mb-2">Verifying Payment</h3>
-        <p class="text-xs text-white/70">
+        <p class="text-xs text-white/70 leading-relaxed mb-4">
           Checking your transaction status with PayChangu... Please keep this page open.
         </p>
+        <button
+          type="button"
+          @click="cancelVerification"
+          class="text-xs text-white/40 hover:text-white/80 transition-colors cursor-pointer"
+        >
+          Close and return
+        </button>
       </div>
     </div>
 
@@ -313,20 +292,18 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import subscriptionService from '@/services/subscriptionService'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
-import { X, Crown, Check, Minus, Lock, BadgeCheck, Sparkles, ShieldCheck, ArrowRight } from 'lucide-vue-next'
+import { X, Crown, Check, Minus, Lock, BadgeCheck, Sparkles, ShieldCheck } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const { error } = useToast()
+const { error, info } = useToast()
 
 const heroImg = 'https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=1400&q=80&fit=crop'
 
 const subscribing = ref(false)
 const verifying = ref(false)
-const showCheckoutModal = ref(false)
 const showSuccessModal = ref(false)
-const pendingCheckoutUrl = ref('')
 const activatedTierTitle = ref('Premium')
 const selectedPlan = ref('1_month') // Default to 1 Month Gold (most popular)
 
@@ -428,7 +405,7 @@ const compare = [
 ]
 
 /**
- * Handle checkout button click: calls API and presents the checkout modal
+ * Handle checkout button click: triggers the beautiful gateway modal & redirects
  */
 const handleSubscribe = async () => {
   if (subscribing.value) return
@@ -441,26 +418,28 @@ const handleSubscribe = async () => {
       if (result.referenceId) {
         sessionStorage.setItem('pending_payment_ref', result.referenceId)
       }
-      pendingCheckoutUrl.value = result.checkoutUrl
-      showCheckoutModal.value = true
+      // Smooth brief pause so user sees the connecting modal before navigating
+      setTimeout(() => {
+        window.location.href = result.checkoutUrl
+      }, 700)
     } else {
+      subscribing.value = false
       error(result.error || 'Could not initiate payment. Please try again.')
     }
   } catch (err) {
+    subscribing.value = false
     console.error('Subscription initiate error:', err)
     error(err.response?.data?.error || err.message || 'Payment initiation failed')
-  } finally {
-    subscribing.value = false
   }
 }
 
 /**
- * User confirmed in modal: redirect to PayChangu
+ * Cancel verification modal
  */
-const proceedToCheckout = () => {
-  if (pendingCheckoutUrl.value) {
-    window.location.href = pendingCheckoutUrl.value
-  }
+const cancelVerification = () => {
+  verifying.value = false
+  sessionStorage.removeItem('pending_payment_ref')
+  router.replace({ path: route.path, query: {} })
 }
 
 /**
@@ -472,12 +451,20 @@ const closeSuccessModal = () => {
 }
 
 /**
- * On mount: check if returning from PayChangu with ?ref=...
+ * On mount: ONLY check if returning from PayChangu with ?tx_ref=... or ?status=...
  */
 onMounted(async () => {
-  const ref = route.query.tx_ref || route.query.ref || sessionStorage.getItem('pending_payment_ref')
-  const statusParam = route.query.status
+  // Check if we arrived from PayChangu redirect via query params
+  const hasGatewayQuery = Boolean(route.query.tx_ref || route.query.ref || route.query.status)
 
+  // If the user is just visiting the page normally, NEVER show "Verifying Payment"
+  if (!hasGatewayQuery) {
+    sessionStorage.removeItem('pending_payment_ref')
+    verifying.value = false
+    return
+  }
+
+  const statusParam = route.query.status
   if (statusParam === 'cancelled') {
     sessionStorage.removeItem('pending_payment_ref')
     error('Payment was cancelled.')
@@ -485,6 +472,7 @@ onMounted(async () => {
     return
   }
 
+  const ref = route.query.tx_ref || route.query.ref || sessionStorage.getItem('pending_payment_ref')
   if (ref) {
     verifying.value = true
     try {
