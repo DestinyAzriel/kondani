@@ -31,44 +31,42 @@
     <div class="relative z-10 max-w-3xl mx-auto px-5 sm:px-8 pt-6 pb-28">
 
       <!-- Plan Selector (3 Tiers: 1 Week, 1 Month, 1 Year) -->
-      <div class="grid grid-cols-3 gap-2.5 sm:gap-3.5 mb-6">
+      <div class="plan-grid mb-6">
         <button
           v-for="p in availablePlans"
           :key="p.id"
           type="button"
           @click="selectedPlan = p.id"
           :class="[
-            'p-3 sm:p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer',
+            'plan-card border text-left transition-all relative flex flex-col justify-between cursor-pointer',
             selectedPlan === p.id
-              ? 'border-amber-400 bg-amber-400/15 shadow-xl shadow-amber-400/10 scale-[1.02]'
+              ? 'selected'
               : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.08]'
           ]"
+          :style="selectedPlan === p.id ? { borderColor: p.accentColor + '99', background: p.accentColor + '18', boxShadow: `0 12px 40px ${p.accentColor}18` } : {}"
         >
           <!-- Badge -->
           <span
             v-if="p.badge"
-            :class="[
-              'absolute -top-2.5 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider',
-              p.id === '1_month' ? 'bg-amber-400 text-black shadow' : '',
-              p.id === '1_year' ? 'bg-purple-400 text-black shadow' : '',
-              p.id === '1_week' ? 'bg-sky-400 text-black shadow' : ''
-            ]"
+            class="plan-badge absolute -top-2.5 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider text-black"
+            :style="{ background: p.accentColor }"
           >
             {{ p.badge }}
           </span>
 
           <div>
-            <div class="flex items-center gap-1 text-xs font-semibold text-white/75">
-              <span>{{ p.name }}</span>
+            <div class="plan-emoji" :style="{ color: p.accentColor }">{{ p.emoji }}</div>
+            <div class="text-[11px] xs:text-xs font-semibold text-white/75 mt-1 leading-tight">
+              {{ p.name }}
             </div>
-            <div class="text-xs font-bold uppercase tracking-wider mt-0.5" :style="{ color: p.accentColor }">
+            <div class="text-[10px] font-bold uppercase tracking-wider" :style="{ color: p.accentColor }">
               {{ p.subtitle }}
             </div>
-            <div class="text-base sm:text-xl font-bold text-white mt-1.5 font-display">
+            <div class="plan-price font-bold text-white font-display">
               MWK {{ p.price.toLocaleString() }}
             </div>
           </div>
-          <div class="text-[11px] text-white/50 mt-2 font-medium">
+          <div class="text-[10px] text-white/50 mt-1.5 font-medium leading-tight">
             {{ p.unitLabel }}
           </div>
         </button>
@@ -155,21 +153,23 @@
       </div>
 
       <!-- Feature Comparison Table -->
-      <p class="k-label mt-12 mb-4">Compare All Tiers</p>
-      <div class="cmp">
-        <div class="cmp-row cmp-head">
-          <span>Feature</span>
-          <span>Free</span>
-          <span class="text-sky-300">Plus</span>
-          <span class="text-amber-300 font-bold">Gold</span>
-          <span class="text-purple-300 font-bold">VIP</span>
-        </div>
-        <div v-for="(r, i) in compare" :key="i" class="cmp-row">
-          <span class="cmp-label">{{ r.label }}</span>
-          <span class="cmp-val text-white/40">{{ r.free }}</span>
-          <span class="cmp-val text-sky-200">{{ r.plus }}</span>
-          <span class="cmp-val text-amber-300 font-semibold">{{ r.gold }}</span>
-          <span class="cmp-val text-purple-300 font-semibold">{{ r.plat }}</span>
+      <p class="k-label mt-12 mb-3">Compare All Tiers</p>
+      <div class="cmp-wrap">
+        <div class="cmp">
+          <div class="cmp-row cmp-head">
+            <span class="cmp-label-col">Feature</span>
+            <span>Free</span>
+            <span class="text-sky-300">✦ Plus</span>
+            <span class="text-amber-300 font-bold">★ Gold</span>
+            <span class="text-purple-300 font-bold">💎 VIP</span>
+          </div>
+          <div v-for="(r, i) in compare" :key="i" class="cmp-row">
+            <span class="cmp-label cmp-label-col">{{ r.label }}</span>
+            <span class="cmp-val text-white/40">{{ r.free }}</span>
+            <span class="cmp-val text-sky-200">{{ r.plus }}</span>
+            <span class="cmp-val text-amber-300 font-semibold">{{ r.gold }}</span>
+            <span class="cmp-val text-purple-300 font-semibold">{{ r.plat }}</span>
+          </div>
         </div>
       </div>
 
@@ -314,9 +314,10 @@ const availablePlans = [
     tier: 'plus',
     name: '1 Week',
     subtitle: 'Plus',
+    emoji: '✦',
     price: 600,
     duration: 7,
-    unitLabel: 'MWK 600 / wk',
+    unitLabel: 'MWK 86/day',
     badge: 'Starter',
     accentColor: '#38bdf8', // sky cyan
     btnGradient: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
@@ -325,7 +326,7 @@ const availablePlans = [
       { text: 'Unlimited likes every day', included: true, highlight: true },
       { text: 'Rewind accidental left-swipes', included: true },
       { text: '2 Super Likes every day', included: true },
-      { text: 'See how many people liked you', included: true },
+      { text: 'See how many people liked you (count)', included: true },
       { text: 'Unlock full profiles of who likes you', included: false },
       { text: 'Monthly profile boosts', included: false },
       { text: 'Priority Likes in swipe decks', included: false }
@@ -336,20 +337,21 @@ const availablePlans = [
     tier: 'gold',
     name: '1 Month',
     subtitle: 'Gold',
+    emoji: '★',
     price: 2400,
     duration: 30,
-    unitLabel: 'MWK 80 / day',
+    unitLabel: 'MWK 80/day',
     badge: 'Popular',
     accentColor: '#f59e0b', // warm gold
     btnGradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
     headline: 'Our #1 choice: See who likes you, 5 Super Likes, and 1 monthly Boost.',
     features: [
-      { text: 'See who likes you & match instantly', included: true, highlight: true },
+      { text: 'See who likes you — full profiles revealed', included: true, highlight: true },
       { text: 'Unlimited likes every day', included: true },
       { text: '5 Super Likes every day', included: true },
       { text: '1 Monthly Profile Boost (10x views)', included: true },
       { text: 'Rewind accidental left-swipes', included: true },
-      { text: 'Verified Gold Crown on your profile', included: true },
+      { text: 'Verified Gold Crown badge on profile', included: true },
       { text: 'Priority Likes in swipe decks', included: false }
     ]
   },
@@ -357,7 +359,8 @@ const availablePlans = [
     id: '1_year',
     tier: 'platinum',
     name: '1 Year',
-    subtitle: 'VIP Platinum',
+    subtitle: 'VIP',
+    emoji: '💎',
     price: 6000,
     duration: 365,
     unitLabel: 'Save > 75%',
@@ -366,13 +369,13 @@ const availablePlans = [
     btnGradient: 'linear-gradient(135deg, #c084fc, #9333ea)',
     headline: 'Maximum advantage: Priority matching, 3 boosts, and 10 Super Likes a day.',
     features: [
-      { text: 'Priority Likes (your likes seen first)', included: true, highlight: true },
-      { text: 'See who likes you & match instantly', included: true },
+      { text: 'Priority Likes — your profile seen first', included: true, highlight: true },
+      { text: 'See who likes you — full profiles revealed', included: true },
       { text: 'Unlimited likes every day', included: true },
       { text: '10 Super Likes every day', included: true },
       { text: '3 Monthly Profile Boosts (10x views)', included: true },
       { text: 'Rewind accidental left-swipes', included: true },
-      { text: 'Exclusive VIP Platinum Diamond badge', included: true }
+      { text: 'Exclusive 💎 VIP Platinum Diamond badge', included: true }
     ]
   }
 ]
@@ -504,39 +507,50 @@ onMounted(async () => {
 .sub { overflow-x: hidden; }
 
 /* hero */
-.hero { position: relative; height: 280px; overflow: hidden; margin-top: -64px; }
+.hero { position: relative; height: 240px; overflow: hidden; margin-top: -64px; }
 .hero img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
 .hero-scrim { position: absolute; inset: 0; background:
   radial-gradient(circle at 50% 30%, rgba(244,183,64,.28), transparent 60%),
   linear-gradient(180deg, rgba(5,13,18,.55) 0%, rgba(5,13,18,.5) 35%, var(--k-night) 96%); }
-.hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; text-align: center; padding: 0 24px 28px; }
-.hero-content h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.08; }
-.hero-content p { color: rgba(255,255,255,.75); margin-top: 10px; max-width: 520px; font-size: 14px; }
-.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--k-gold-l); background: rgba(5,13,18,.5); border: 1px solid rgba(244,183,64,.4); padding: 6px 13px; border-radius: 99px; backdrop-filter: blur(6px); }
+.hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; text-align: center; padding: 0 20px 24px; }
+.hero-content h1 { font-size: clamp(1.55rem, 5vw, 2.8rem); line-height: 1.1; }
+.hero-content p { color: rgba(255,255,255,.75); margin-top: 8px; max-width: 520px; font-size: 13px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--k-gold-l); background: rgba(5,13,18,.5); border: 1px solid rgba(244,183,64,.4); padding: 5px 12px; border-radius: 99px; backdrop-filter: blur(6px); }
+
+/* plan grid */
+.plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.plan-card { padding: 12px 10px 10px; border-radius: 18px; border: 1px solid; transition: transform .15s, box-shadow .15s; }
+.plan-card.selected { transform: scale(1.025); }
+.plan-emoji { font-size: 18px; line-height: 1; }
+.plan-price { font-size: 1rem; font-weight: 800; margin-top: 6px; }
 
 /* price card */
-.price-card { position: relative; padding: 24px; border-radius: 20px; border: 1px solid rgba(244,183,64,.45);
+.price-card { position: relative; padding: 20px; border-radius: 20px; border: 1px solid rgba(244,183,64,.45);
   background: linear-gradient(160deg, rgba(255,255,255,.05), var(--k-card) 60%); }
-.price { font-family: 'Fraunces', serif; font-weight: 600; font-size: 2.3rem; line-height: 1; }
-.incl { list-style: none; margin: 18px 0; padding: 18px 0; border-top: 1px solid var(--k-line); border-bottom: 1px solid var(--k-line); display: flex; flex-direction: column; gap: 11px; }
-.incl li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.price { font-family: 'Fraunces', serif; font-weight: 600; font-size: 2.1rem; line-height: 1; }
+.incl { list-style: none; margin: 14px 0; padding: 14px 0; border-top: 1px solid var(--k-line); border-bottom: 1px solid var(--k-line); display: flex; flex-direction: column; gap: 10px; }
+.incl li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
 
-/* comparison table */
-.cmp { border: 1px solid var(--k-line); border-radius: 16px; overflow: hidden; background: var(--k-card); }
-.cmp-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.1fr 1.1fr; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--k-line); font-size: 13px; }
+/* comparison table — scrollable container on mobile */
+.cmp-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--k-line); border-radius: 16px; }
+.cmp { min-width: 480px; background: var(--k-card); }
+.cmp-row { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.1fr 1.1fr; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--k-line); font-size: 12.5px; }
 .cmp-row:last-child { border-bottom: none; }
 .cmp-head { background: rgba(255,255,255,.04); }
 .cmp-head span { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--k-mut2); text-align: center; }
-.cmp-head span:first-child { text-align: left; }
-.cmp-label { font-size: 13px; color: var(--k-txt); }
+.cmp-head .cmp-label-col { text-align: left; }
+.cmp-label-col { position: sticky; left: 0; background: var(--k-card); z-index: 2; padding-right: 8px; }
+.cmp-head .cmp-label-col { background: rgba(255,255,255,.04); }
+.cmp-label { font-size: 12.5px; color: var(--k-txt); }
 .cmp-val { font-size: 12px; text-align: center; display: flex; align-items: center; justify-content: center; }
 
-@media (max-width: 640px) {
-  .price { font-size: 1.9rem; }
-  .cmp-row { padding: 10px 8px; font-size: 11px; grid-template-columns: 1.3fr 0.9fr 0.9fr 1fr 1.1fr; }
-  .cmp-head span { font-size: 9px; }
-  .cmp-label { font-size: 11px; }
-  .cmp-val { font-size: 10.5px; }
+@media (max-width: 420px) {
+  .hero { height: 210px; }
+  .plan-price { font-size: 0.9rem; }
+  .plan-card { padding: 10px 8px 8px; border-radius: 14px; }
+  .plan-emoji { font-size: 16px; }
+  .price { font-size: 1.8rem; }
+  .incl li { font-size: 13px; }
 }
 </style>
