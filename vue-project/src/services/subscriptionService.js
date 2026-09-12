@@ -7,12 +7,10 @@ class SubscriptionService {
         return response.data;
     }
 
-    // Initiate payment
-    async initiatePayment(plan, paymentMethod, phoneNumber) {
+    // Initiate PayChangu checkout session
+    async initiatePayment(plan = '1_month') {
         const response = await api.post('/subscription/initiate', {
-            plan,
-            paymentMethod,
-            phoneNumber
+            plan
         });
         return response.data;
     }
@@ -35,19 +33,22 @@ class SubscriptionService {
         return response.data;
     }
 
-    // Poll payment status
-    async pollPaymentStatus(referenceId, maxAttempts = 60, interval = 3000) {
+    // Poll payment status with friendly timeout
+    async pollPaymentStatus(referenceId, maxAttempts = 20, interval = 3000) {
         for (let i = 0; i < maxAttempts; i++) {
-            const result = await this.checkPaymentStatus(referenceId);
-
-            if (result.status === 'completed' || result.status === 'failed') {
-                return result;
+            try {
+                const result = await this.checkPaymentStatus(referenceId);
+                if (result.status === 'completed' || result.status === 'failed') {
+                    return result;
+                }
+            } catch (err) {
+                console.warn('Poll attempt error:', err.message);
             }
 
             await new Promise(resolve => setTimeout(resolve, interval));
         }
 
-        throw new Error('Payment status check timeout');
+        return { status: 'pending', message: 'Payment confirmation is still processing.' };
     }
 }
 
