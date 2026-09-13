@@ -73,32 +73,33 @@
         </div>
       </div>
 
-      <!-- Host View: Applicants List & Gold Teaser -->
-      <div v-if="plan.isOwner && plan.applicants && plan.applicants.length > 0" class="mt-4 pt-3 border-t border-white/5">
-        <p class="text-[11px] font-bold text-white/60 uppercase tracking-wider mb-2">
-          Interested People ({{ plan.interestedCount }})
+      <!-- Host View: Interested Matches & Gold Teaser -->
+      <div v-if="plan.isOwner && (plan.applicants?.length > 0 || plan.interested?.length > 0)" class="mt-4 pt-3 border-t border-white/5">
+        <p class="text-[11px] font-bold text-gold-300/90 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <Heart :size="12" class="fill-current text-gold-400" />
+          <span>Wants to go with you ({{ plan.interestedCount }})</span>
         </p>
 
         <!-- Avatar preview row -->
         <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <div
-            v-for="(applicant, i) in plan.applicants"
-            :key="applicant.id"
+            v-for="(person, i) in (plan.applicants || plan.interested)"
+            :key="person.id"
             class="relative shrink-0 cursor-pointer group"
-            @click="applicant.isLocked ? $emit('upgrade') : $emit('openChatWithApplicant', applicant)"
-            :title="applicant.isLocked ? 'Upgrade to Gold to view' : applicant.name"
+            @click="person.isLocked ? $emit('upgrade') : $emit('openChatWithApplicant', person)"
+            :title="person.isLocked ? 'Upgrade to Gold to see who' : `Chat with ${person.name}`"
           >
-            <div class="relative w-10 h-10 rounded-full overflow-hidden border-2" :class="applicant.isLocked ? 'border-gold-400/50' : 'border-white/20 group-hover:border-gold-400'">
+            <div class="relative w-10 h-10 rounded-full overflow-hidden border-2 transition-all" :class="person.isLocked ? 'border-gold-400/50 shadow-sm' : 'border-white/20 group-hover:border-gold-400 group-hover:scale-105'">
               <img
-                :src="applicant.photo ? mediaSrc(applicant.photo) : 'https://via.placeholder.com/150'"
+                :src="person.photo ? mediaSrc(person.photo) : 'https://via.placeholder.com/150'"
                 class="w-full h-full object-cover"
-                :class="{ 'blur-md': applicant.isLocked }"
+                :class="{ 'blur-md': person.isLocked }"
               />
-              <div v-if="applicant.isLocked" class="absolute inset-0 bg-night-950/60 flex items-center justify-center">
+              <div v-if="person.isLocked" class="absolute inset-0 bg-night-950/60 flex items-center justify-center">
                 <Lock :size="13" class="text-gold-400" />
               </div>
             </div>
-            <span v-if="!applicant.isLocked" class="text-[10px] text-white/80 truncate block text-center max-w-[44px] mt-0.5">{{ applicant.name.split(' ')[0] }}</span>
+            <span v-if="!person.isLocked" class="text-[10px] text-white/80 truncate block text-center max-w-[44px] mt-0.5">{{ person.name.split(' ')[0] }}</span>
           </div>
         </div>
 
@@ -111,11 +112,11 @@
           <div class="flex items-center gap-2">
             <Crown :size="14" class="text-gold-400 shrink-0" />
             <span class="text-xs font-semibold text-gold-300">
-              {{ plan.lockedCount }} more {{ plan.lockedCount === 1 ? 'person wants' : 'people want' }} to join!
+              {{ plan.lockedCount }} more {{ plan.lockedCount === 1 ? 'person is down' : 'people are down' }} to go with you!
             </span>
           </div>
-          <span class="text-[10px] font-bold text-night-950 bg-gradient-to-r from-gold-400 to-gold-500 px-2.5 py-1 rounded-lg shrink-0">
-            Unlock
+          <span class="text-[10px] font-bold text-night-950 bg-gradient-to-r from-gold-400 to-gold-500 px-2.5 py-1 rounded-lg shrink-0 shadow">
+            See Who
           </span>
         </div>
       </div>
