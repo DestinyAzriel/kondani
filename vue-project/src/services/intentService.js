@@ -45,6 +45,12 @@ export const intentService = {
     return response.data
   },
 
+  // Get curated Daily Picks
+  async getDailyPicks() {
+    const response = await api.get('/profile/daily-picks')
+    return response.data // { picks: [...] }
+  },
+
   // Get user's likes
   async getLikes() {
     const response = await api.get('/likes')

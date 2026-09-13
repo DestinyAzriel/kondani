@@ -189,112 +189,103 @@ router.delete('/voice', auth, async (req, res) => {
 router.get('/daily-picks', auth, async (req, res) => {
     try {
         const currentUser = await User.findById(req.user.id);
+        if (!currentUser) return res.status(404).json({ error: 'User not found' });
 
-        // Check if picks were already generated today
-        const today = new Date().setHours(0, 0, 0, 0);
-        const lastPicksDate = currentUser.lastPicksDate ?
-            new Date(currentUser.lastPicksDate).setHours(0, 0, 0, 0) : 0;
+        // Exclude self and blocked users
+        const Block = require('../models/Block');
+        const blocks = await Block.find({
+            $or: [{ blockerId: req.user.id }, { blockedUserId: req.user.id }]
+        });
+        const blockedIds = blocks.map(b =>
+            String(b.blockerId) === String(req.user.id) ? b.blockedUserId : b.blockerId
+        );
 
-        let picks = currentUser.dailyPicks || [];
+        const excludedIds = [currentUser._id, ...blockedIds];
 
-        // Generate new picks if needed
-        if (lastPicksDate < today || picks.length === 0) {
-            picks = await generateDailyPicks(currentUser);
+        // Preference filter
+        const query = {
+            _id: { $nin: excludedIds },
+            isBanned: { $ne: true },
+            name: { $exists: true, $ne: '' }
+        };
 
-            await User.findByIdAndUpdate(req.user.id, {
-                $set: {
-                    dailyPicks: picks,
-                    lastPicksDate: new Date()
-                }
-            });
+        if (currentUser.preferences?.gender && currentUser.preferences.gender !== 'Everyone') {
+            query.gender = currentUser.preferences.gender;
         }
 
-        // Populate user details
-        const populatedPicks = await User.find({
-            _id: { $in: picks }
-        }).select('-password').limit(currentUser.isPremium ? 10 : 5);
+        let candidates = await User.find(query)
+            .select('_id name age birthdate gender bio district location photos interests isVerified createdAt')
+            .limit(50)
+            .lean();
 
-        res.json(populatedPicks);
+        // If gender filter produced 0 candidates, fallback to all valid users
+        if (candidates.length === 0) {
+            delete query.gender;
+            candidates = await User.find(query)
+                .select('_id name age birthdate gender bio district location photos interests isVerified createdAt')
+                .limit(50)
+                .lean();
+        }
+
+        // Calculate AI Compatibility Score for each candidate
+        const scoredPicks = candidates.map(candidate => {
+            let score = 70; // Base compatibility
+
+            // Shared interests (+10 per shared interest, max 20)
+            const myInterests = currentUser.interests || [];
+            const theirInterests = candidate.interests || [];
+            const shared = myInterests.filter(i => theirInterests.includes(i));
+            score += Math.min(20, shared.length * 10);
+
+            // Verified badge bonus (+8)
+            if (candidate.isVerified) score += 8;
+
+            // Multiple photos bonus (+5)
+            if (candidate.photos && candidate.photos.length >= 2) score += 5;
+
+            // Bio bonus (+4)
+            if (candidate.bio && candidate.bio.trim().length > 15) score += 4;
+
+            // Stable pseudo-random variation per candidate per day (0-6)
+            const dayNum = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+            const charSum = String(candidate._id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+            score += (charSum + dayNum) % 7;
+
+            // Calculate age safely
+            let age = (candidate.age && candidate.age >= 18 && candidate.age <= 100) ? candidate.age : null;
+            if (!age && candidate.birthdate) {
+                const ageDiff = Date.now() - new Date(candidate.birthdate).getTime();
+                const calcAge = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970);
+                if (calcAge >= 18 && calcAge <= 100) age = calcAge;
+            }
+
+            return {
+                id: candidate._id,
+                _id: candidate._id,
+                name: candidate.name || 'Member',
+                age,
+                gender: candidate.gender,
+                bio: candidate.bio || '',
+                district: candidate.district || '',
+                photos: (candidate.photos && candidate.photos.length) ? candidate.photos : [],
+                interests: theirInterests,
+                isVerified: Boolean(candidate.isVerified),
+                matchScore: Math.min(98, score),
+                distance: candidate.district ? candidate.district : 'Nearby'
+            };
+        });
+
+        // Sort by highest match score
+        scoredPicks.sort((a, b) => b.matchScore - a.matchScore);
+
+        const limit = currentUser.isPremium ? 10 : 6;
+        const topPicks = scoredPicks.slice(0, limit);
+
+        res.json({ picks: topPicks });
     } catch (error) {
         console.error('Daily picks error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
-
-/**
- * Generate AI-curated daily picks
- * @param {Object} user - Current user
- * @returns {Array} - Array of user IDs
- */
-async function generateDailyPicks(user) {
-    try {
-        // Build matching criteria
-        const criteria = {
-            _id: { $ne: user._id }, // Exclude self
-            isVisible: true,
-            // Exclude already liked/passed users
-            _id: {
-                $nin: [
-                    ...(user.likes || []),
-                    ...(user.passes || []),
-                    ...(user.matches || [])
-                ]
-            }
-        };
-
-        // Gender preference
-        if (user.preferences?.gender && user.preferences.gender !== 'Everyone') {
-            criteria.gender = user.preferences.gender;
-        }
-
-        // Age range
-        if (user.preferences?.ageMin && user.preferences?.ageMax) {
-            criteria.age = {
-                $gte: user.preferences.ageMin,
-                $lte: user.preferences.ageMax
-            };
-        }
-
-        // Find potential matches
-        let potentialMatches = await User.find(criteria)
-            .select('_id interests location photos isVerified')
-            .limit(50);
-
-        // Calculate compatibility scores
-        const scoredMatches = potentialMatches.map(match => {
-            let score = 0;
-
-            // Shared interests (highest weight)
-            const sharedInterests = (user.interests || []).filter(interest =>
-                (match.interests || []).includes(interest)
-            );
-            score += sharedInterests.length * 20;
-
-            // Verification bonus
-            if (match.isVerified) score += 10;
-
-            // Photo completeness
-            if (match.photos && match.photos.length >= 3) score += 10;
-
-            // Location proximity (if available)
-            // TODO: Implement geolocation scoring
-
-            return {
-                userId: match._id,
-                score,
-                sharedInterests
-            };
-        });
-
-        // Sort by score and take top picks
-        scoredMatches.sort((a, b) => b.score - a.score);
-        const topPicks = scoredMatches.slice(0, user.isPremium ? 10 : 5);
-
-        return topPicks.map(pick => pick.userId);
-    } catch (error) {
-        console.error('Generate daily picks error:', error);
-        return [];
-    }
-}
 
 module.exports = router;

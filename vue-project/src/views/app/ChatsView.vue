@@ -6,77 +6,15 @@
            style="background: radial-gradient(circle, rgba(244,183,64,.11), transparent 70%)"></div>
     </div>
 
-    <!-- ====== DESKTOP: Two-panel WhatsApp Web style ====== -->
-    <div v-if="isDesktop" class="desktop-two-panel">
-
-      <!-- LEFT: Conversation list -->
-      <div class="chat-list-panel flex flex-col overflow-hidden border-r border-white/8">
-        <div class="px-5 py-5 border-b border-white/8 shrink-0">
-          <h1 class="k-title" style="font-size:1.5rem">Messages</h1>
+    <!-- ====== DESKTOP: Single clean chat panel (DesktopNav on left already handles list) ====== -->
+    <div v-if="isDesktop" class="h-full flex flex-col overflow-hidden">
+      <ChatPanel v-if="activeChatId" :key="activeChatId" :chatId="activeChatId" :embedded="true" class="h-full" />
+      <div v-else class="flex-1 flex flex-col items-center justify-center text-center px-8">
+        <div class="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
+          <MessageCircleIcon :size="36" :stroke-width="1.2" class="text-white/20" />
         </div>
-
-        <!-- New matches strip -->
-        <div v-if="newMatches.length > 0" class="px-4 pt-4 pb-3 border-b border-white/5 shrink-0">
-          <p class="k-label mb-3" style="color:var(--k-gold)">New matches</p>
-          <div class="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-            <div v-for="match in newMatches" :key="match.id"
-                 class="flex-shrink-0 w-[58px] text-center cursor-pointer group"
-                 @click="selectChat(match.id)">
-              <div class="relative w-14 h-14 mx-auto mb-1" @click.stop="openProfilePreview(match)" title="View profile">
-                <img :src="mediaUrl(match.photo)" class="w-full h-full rounded-full object-cover border-2 border-gold-400 p-0.5 group-hover:scale-105 transition-transform" />
-              </div>
-              <span class="text-[10px] font-medium text-white/75 truncate block">{{ match.name }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Chat list -->
-        <div class="flex-1 overflow-y-auto scrollbar-hide">
-          <div v-if="isLoading" class="p-4 space-y-3">
-            <SkeletonLoader v-for="i in 5" :key="i" type="chat" />
-          </div>
-          <div v-else-if="chats.length > 0" class="divide-y divide-white/5">
-            <button v-for="chat in chats" :key="chat.id"
-                    class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 transition-all text-left"
-                    :class="activeChatId === String(chat.id) ? 'bg-white/[0.07] border-r-2 border-r-gold-400' : ''"
-                    @click="selectChat(chat.id)">
-              <div class="relative shrink-0" @click.stop="openProfilePreview(chat)" title="View profile">
-                <img :src="mediaUrl(chat.photo)" class="w-12 h-12 rounded-2xl object-cover ring-2 ring-transparent hover:ring-gold-400/50 transition-all" />
-                <div v-if="chat.online" class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-night-950" style="background:var(--k-lagoon)"></div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-baseline mb-0.5">
-                  <span class="font-semibold truncate text-sm flex items-center gap-1">
-                    {{ chat.name }}
-                    <BadgeCheck v-if="chat.isVerified" :size="12" style="color:var(--k-gold)" />
-                  </span>
-                  <span class="text-[10px] text-white/35 ml-2 whitespace-nowrap">{{ formatTime(chat.lastMessageTime) }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <p class="text-xs truncate" :class="chat.unread ? 'text-white font-medium' : 'text-white/50'">{{ chat.lastMessage || 'Say hello!' }}</p>
-                  <span v-if="chat.unread" class="ml-auto w-4 h-4 rounded-full bg-lagoon-400 text-night-950 text-[9px] font-bold flex items-center justify-center flex-shrink-0">•</span>
-                </div>
-              </div>
-            </button>
-          </div>
-          <div v-else class="flex flex-col items-center justify-center py-20 px-6 text-center">
-            <MessageCircleIcon :size="32" :stroke-width="1.5" class="text-white/20 mb-3" />
-            <p class="text-white/40 text-sm">No conversations yet.</p>
-            <button @click="router.push('/encounters')" class="k-btn k-btn-gold mt-4 px-5 py-2.5 text-sm">Discover people</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT: Active chat or empty prompt -->
-      <div class="chat-content-panel flex flex-col overflow-hidden">
-        <ChatPanel v-if="activeChatId" :key="activeChatId" :chatId="activeChatId" :embedded="true" class="h-full" />
-        <div v-else class="flex-1 flex flex-col items-center justify-center text-center px-8">
-          <div class="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
-            <MessageCircleIcon :size="36" :stroke-width="1.2" class="text-white/20" />
-          </div>
-          <h2 class="k-serif text-xl text-white/60 mb-2">Select a conversation</h2>
-          <p class="text-white/35 text-sm max-w-xs">Choose a chat from the left to start messaging.</p>
-        </div>
+        <h2 class="k-serif text-xl text-white/60 mb-2">Select a conversation</h2>
+        <p class="text-white/35 text-sm max-w-xs">Choose a match or message from the left sidebar to start chatting.</p>
       </div>
     </div>
 

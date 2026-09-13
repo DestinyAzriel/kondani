@@ -34,40 +34,41 @@
       </div>
 
       <div v-else-if="picks.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div v-for="pick in picks" :key="pick.id" class="pick-card k-card overflow-hidden">
-          <div class="relative h-52">
-            <img v-if="photoOf(pick)" :src="photoOf(pick)" class="w-full h-full object-cover" alt="" />
+        <div v-for="pick in picks" :key="pick.id" class="pick-card k-card overflow-hidden group cursor-pointer" @click="openProfile(pick)">
+          <div class="relative h-64 overflow-hidden">
+            <img v-if="photoOf(pick)" :src="photoOf(pick)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="" />
             <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-white/25" style="background:linear-gradient(160deg,#0e1f29,#081016)"><ImageIcon :size="40" :stroke-width="1.5" /><span class="text-xs">No photo yet</span></div>
             <div class="absolute inset-0" style="background:linear-gradient(to top,var(--k-night),transparent 60%)"></div>
 
-            <div class="absolute top-2 right-2 w-12 h-12 rounded-full flex items-center justify-center"
+            <div class="absolute top-2.5 right-2.5 w-12 h-12 rounded-full flex items-center justify-center"
                  :style="ringStyle(pick.matchScore)">
               <div class="w-9 h-9 rounded-full flex flex-col items-center justify-center" style="background:var(--k-night)">
-                <b class="text-[11px] k-serif leading-none" style="color:var(--k-gold-l)">{{ pick.matchScore || 0 }}%</b>
+                <b class="text-[11px] k-serif leading-none" style="color:var(--k-gold-l)">{{ pick.matchScore || 85 }}%</b>
               </div>
             </div>
-            <span v-if="pick.isVerified" class="k-ver absolute top-2 left-2"><BadgeCheck :size="12" /> Verified</span>
+            <span v-if="pick.isVerified" class="k-ver absolute top-2.5 left-2.5"><BadgeCheck :size="12" /> Verified</span>
 
-            <div class="absolute bottom-0 left-0 right-0 p-3">
+            <div class="absolute bottom-0 left-0 right-0 p-4">
               <div class="flex items-baseline gap-2">
-                <h2 class="k-serif text-xl">{{ pick.name }}</h2>
-                <span v-if="pick.age" class="text-white/70">{{ pick.age }}</span>
+                <h2 class="k-serif text-xl font-bold text-white">{{ pick.name }}</h2>
+                <span v-if="pick.age" class="text-white/80 font-semibold">{{ pick.age }}</span>
               </div>
-              <div v-if="pick.distance" class="flex items-center gap-1 text-xs mt-0.5" style="color:var(--k-lagoon)">
-                <MapPinIcon :size="12" /><span>{{ pick.distance }}</span>
+              <div v-if="pick.distance || pick.district" class="flex items-center gap-1 text-xs mt-0.5" style="color:var(--k-lagoon)">
+                <MapPinIcon :size="12" /><span>{{ pick.distance || pick.district }}</span>
               </div>
             </div>
           </div>
 
-          <div class="p-3">
-            <div v-if="pick.interests && pick.interests.length" class="mb-3">
+          <div class="p-4">
+            <p v-if="pick.bio" class="text-xs text-white/60 line-clamp-2 mb-3">{{ pick.bio }}</p>
+            <div v-if="pick.interests && pick.interests.length" class="mb-4">
               <div class="flex flex-wrap gap-1.5">
                 <span v-for="interest in pick.interests.slice(0,3)" :key="interest" class="k-chip" style="font-size:11px;padding:4px 9px">{{ interest }}</span>
               </div>
             </div>
-            <div class="flex gap-2.5">
-              <button @click="handlePass(pick)" class="k-btn k-btn-ghost flex-1" style="padding:9px;font-size:13px">Pass</button>
-              <button @click="handleLike(pick)" class="k-btn k-btn-gold flex-1" style="padding:9px;font-size:13px"><Heart :size="14" class="fill-current" /> Like</button>
+            <div class="flex gap-2.5" @click.stop>
+              <button @click="handlePass(pick)" class="k-btn k-btn-ghost flex-1 py-2.5 text-xs font-semibold hover:bg-white/10 transition-colors">Pass</button>
+              <button @click="handleLike(pick)" class="k-btn k-btn-gold flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-gold-500/20"><Heart :size="14" class="fill-current" /> Like</button>
             </div>
           </div>
         </div>
@@ -77,6 +78,13 @@
         message="Check back later for fresh matches curated for you."
         action-text="Explore discover" @action="router.push('/encounters')" />
     </div>
+
+    <!-- Profile Preview Modal -->
+    <ProfilePreviewModal
+      :show="showProfilePreview"
+      :user="previewUser"
+      @close="showProfilePreview = false"
+    />
   </div>
 </template>
 
@@ -87,6 +95,7 @@ import { useToast } from '@/composables/useToast'
 import { intentService } from '@/services/intentService'
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.vue'
 import { BadgeCheck, MapPin as MapPinIcon, Clock as ClockIcon, Star, Heart, Image as ImageIcon } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -94,6 +103,14 @@ const { success, info } = useToast()
 
 const picks = ref([])
 const isLoading = ref(true)
+
+const showProfilePreview = ref(false)
+const previewUser = ref({})
+
+const openProfile = (pick) => {
+  previewUser.value = pick
+  showProfilePreview.value = true
+}
 
 import { mediaUrl } from '@/utils/media'
 const photoOf = (p) => mediaUrl(p.photos?.[0])
@@ -111,9 +128,12 @@ const timeUntilRefresh = computed(() => {
 onMounted(async () => {
   isLoading.value = true
   try {
-    const data = await intentService.getIntents(1, 10)
-    // Highest match score first = the curated picks
-    picks.value = (data?.intents || []).slice().sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
+    const data = await intentService.getDailyPicks()
+    const list = Array.isArray(data) ? data : (data?.picks || [])
+    picks.value = list.map(p => ({
+      ...p,
+      id: p.id || p._id
+    }))
   } catch (e) {
     console.error('Failed to load picks', e)
     picks.value = []
