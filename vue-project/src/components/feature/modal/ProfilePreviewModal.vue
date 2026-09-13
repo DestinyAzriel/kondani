@@ -81,17 +81,27 @@
                   <ChevronRight :size="20" />
                 </button>
 
-                <!-- Mobile Invisible Tap Zones -->
-                <div @click="prevPhoto" class="sm:hidden absolute left-0 inset-y-0 w-1/3 z-20 cursor-pointer"></div>
-                <div @click="nextPhoto" class="sm:hidden absolute right-0 inset-y-0 w-1/3 z-20 cursor-pointer"></div>
+                <!-- Photo Navigation Tap/Click Zones (Tinder-style: tap/click left half for previous, right half for next) -->
+                <div
+                  v-if="allPhotos.length > 1"
+                  @click.stop="prevPhoto"
+                  class="absolute left-0 inset-y-0 w-1/2 z-20 cursor-pointer"
+                  title="Previous photo"
+                ></div>
+                <div
+                  v-if="allPhotos.length > 1"
+                  @click.stop="nextPhoto"
+                  class="absolute right-0 inset-y-0 w-1/2 z-20 cursor-pointer"
+                  title="Next photo"
+                ></div>
 
                 <!-- Photo counter pill -->
-                <div v-if="allPhotos.length > 1" class="absolute bottom-4 right-4 z-20 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/80">
+                <div v-if="allPhotos.length > 1" class="absolute bottom-4 right-4 z-20 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/80 pointer-events-none">
                   {{ activePhotoIndex + 1 }} / {{ allPhotos.length }}
                 </div>
 
-                <!-- Bottom Photo Overlay on Mobile only -->
-                <div class="sm:hidden absolute bottom-3 inset-x-4 z-20">
+                <!-- Bottom Photo Overlay on Mobile only (Tinder-style: Name, Age, Bio) -->
+                <div class="sm:hidden absolute bottom-3 inset-x-4 z-20 pointer-events-none">
                   <div class="flex items-center gap-2">
                     <h2 class="text-2xl font-bold font-display text-white drop-shadow-md">
                       {{ user.name || 'Member' }}<span v-if="userAge">, {{ userAge }}</span>
@@ -99,8 +109,12 @@
                     <BadgeCheck v-if="user.isVerified" :size="22" class="text-gold-400 drop-shadow" />
                   </div>
 
-                  <p v-if="userLocation" class="flex items-center gap-1.5 text-white/85 text-xs mt-1">
-                    <MapPin :size="14" class="text-lagoon-400 shrink-0" />
+                  <p v-if="user.bio" class="text-white/95 text-sm mt-1 drop-shadow leading-snug line-clamp-3 font-normal">
+                    {{ user.bio }}
+                  </p>
+
+                  <p v-if="userLocation" class="flex items-center gap-1.5 text-white/85 text-xs mt-1.5 drop-shadow">
+                    <MapPin :size="13" class="text-lagoon-400 shrink-0" />
                     <span>{{ userLocation }}</span>
                   </p>
                 </div>
@@ -136,6 +150,13 @@
                 <!-- Scrollable Body Content -->
                 <div class="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-5 text-white/90">
 
+                  <!-- Biography directly displayed without 'About Me' header or box border -->
+                  <div v-if="user.bio" class="pt-0.5">
+                    <p class="text-[15px] leading-relaxed text-white/90 whitespace-pre-line font-normal">
+                      {{ user.bio }}
+                    </p>
+                  </div>
+
                   <!-- Relationship Intent Card -->
                   <div v-if="user.relationshipIntent || user.intent" class="p-4 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center gap-3.5">
                     <div class="p-2.5 rounded-xl bg-gold-400/10 text-gold-400 border border-gold-400/20 shrink-0">
@@ -145,14 +166,6 @@
                       <span class="text-[10px] font-semibold tracking-wider text-white/40 uppercase block">Looking for</span>
                       <p class="text-sm font-bold text-white">{{ user.relationshipIntent || user.intent }}</p>
                     </div>
-                  </div>
-
-                  <!-- About Me / Bio -->
-                  <div v-if="user.bio">
-                    <h3 class="text-[11px] font-semibold uppercase tracking-wider text-white/40 mb-2">About Me</h3>
-                    <p class="text-sm leading-relaxed text-white/80 whitespace-pre-line bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-                      {{ user.bio }}
-                    </p>
                   </div>
 
                   <!-- Passions / Interests -->
