@@ -38,8 +38,18 @@ const planSchema = new mongoose.Schema({
         maxlength: [60, 'When cannot exceed 60 characters']
     },
     interestedUsers: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        note: {
+            type: String,
+            default: ''
+        },
+        joinedAt: {
+            type: Date,
+            default: Date.now
+        }
     }],
     isActive: {
         type: Boolean,

@@ -79,6 +79,8 @@
           @join="handleJoinPlan"
           @delete="handleDeletePlan"
           @openChat="handleOpenChat"
+          @openChatWithApplicant="handleOpenApplicantChat"
+          @upgrade="router.push('/premium')"
         />
       </div>
 
@@ -115,13 +117,89 @@
       @close="showComposer = false"
       @created="handlePlanCreated"
     />
+
+    <!-- Quota Limit Upgrade Modal (Mechanism 1) -->
+    <Teleport to="body">
+      <div
+        v-if="showUpgradeModal"
+        class="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in"
+        @click.self="showUpgradeModal = false"
+      >
+        <div class="bg-night-900 border border-gold-400/30 rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl relative overflow-hidden">
+          <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gold-400/20 blur-2xl pointer-events-none"></div>
+
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-400/20 to-gold-500/10 border border-gold-400/40 flex items-center justify-center mx-auto mb-4 text-gold-400">
+            <Crown :size="32" />
+          </div>
+
+          <h3 class="k-serif text-xl font-bold text-white mb-2">Daily Join Limit Reached</h3>
+          <p class="text-sm text-white/70 leading-relaxed mb-6">
+            Free members can join <strong class="text-white">1 plan per day</strong>. Upgrade to Kondani Gold for unlimited plan joins, instant messaging, and seeing everyone who likes you!
+          </p>
+
+          <div class="space-y-2.5">
+            <button
+              @click="router.push('/premium')"
+              class="w-full py-3.5 rounded-xl font-bold text-sm text-night-950 shadow-lg flex items-center justify-center gap-2"
+              style="background: linear-gradient(135deg, var(--k-gold, #f4b740), var(--k-gold-l, #fcd34d))"
+            >
+              <Crown :size="16" />
+              <span>Upgrade to Gold (MWK 2,400)</span>
+            </button>
+            <button
+              @click="showUpgradeModal = false"
+              class="w-full py-2.5 text-xs text-white/50 hover:text-white transition-colors"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Selfie Verification Required Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showVerificationModal"
+        class="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in"
+        @click.self="showVerificationModal = false"
+      >
+        <div class="bg-night-900 border border-white/10 rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl relative overflow-hidden">
+          <div class="w-16 h-16 rounded-2xl bg-lagoon-400/15 border border-lagoon-400/30 flex items-center justify-center mx-auto mb-4 text-lagoon-300">
+            <ShieldCheck :size="32" />
+          </div>
+
+          <h3 class="k-serif text-xl font-bold text-white mb-2">Selfie Verification Required</h3>
+          <p class="text-sm text-white/70 leading-relaxed mb-6">
+            To keep Kondani authentic and free from catfishes or fake meetups, all plan creators must be photo-verified. It takes less than 10 seconds!
+          </p>
+
+          <div class="space-y-2.5">
+            <button
+              @click="router.push('/verify-photo')"
+              class="w-full py-3.5 rounded-xl font-bold text-sm text-night-950 shadow-lg flex items-center justify-center gap-2"
+              style="background: linear-gradient(135deg, var(--k-gold, #f4b740), var(--k-gold-l, #fcd34d))"
+            >
+              <ShieldCheck :size="16" />
+              <span>Verify My Selfie Now</span>
+            </button>
+            <button
+              @click="showVerificationModal = false"
+              class="w-full py-2.5 text-xs text-white/50 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Sparkles } from 'lucide-vue-next'
+import { Plus, Sparkles, Crown, ShieldCheck } from 'lucide-vue-next'
 import { planService } from '@/services/planService'
 import { useToast } from '@/composables/useToast'
 import PlanCard from '@/components/feature/PlanCard.vue'
@@ -135,6 +213,8 @@ const plans = ref([])
 const loading = ref(true)
 const joiningId = ref(null)
 const showComposer = ref(false)
+const showUpgradeModal = ref(false)
+const showVerificationModal = ref(false)
 const activeCategory = ref('all')
 
 const categoryFilters = [
@@ -180,8 +260,18 @@ const handlePlanCreated = async (formData) => {
       toast.success('Your plan is live! Nearby members can now see it and join.')
     }
   } catch (err) {
+    const code = err.response?.data?.code
     const msg = err.response?.data?.error || err.message || 'Could not post plan.'
-    toast.error(msg)
+
+    if (code === 'VERIFICATION_REQUIRED') {
+      showComposer.value = false
+      showVerificationModal.value = true
+    } else if (code === 'PLAN_LIMIT_REACHED') {
+      showComposer.value = false
+      showUpgradeModal.value = true
+    } else {
+      toast.error(msg)
+    }
   }
 }
 
@@ -193,7 +283,6 @@ const handleJoinPlan = async (plan) => {
       plan.hasJoined = true
       plan.interestedCount = (plan.interestedCount || 0) + 1
       toast.success(`You joined ${plan.author?.name}'s plan! Chat conversation started.`)
-      // If user wants to open the conversation directly:
       if (res.chatId) {
         setTimeout(() => {
           router.push(`/chats/${res.chatId}`)
@@ -201,8 +290,14 @@ const handleJoinPlan = async (plan) => {
       }
     }
   } catch (err) {
+    const code = err.response?.data?.code
     const msg = err.response?.data?.error || 'Failed to join plan.'
-    toast.error(msg)
+
+    if (code === 'DAILY_JOIN_LIMIT_REACHED' || code === 'PLUS_JOIN_LIMIT_REACHED') {
+      showUpgradeModal.value = true
+    } else {
+      toast.error(msg)
+    }
   } finally {
     joiningId.value = null
   }
@@ -220,10 +315,15 @@ const handleDeletePlan = async (plan) => {
 }
 
 const handleOpenChat = (plan) => {
-  // If user already joined, navigate to chat
   const authorId = plan.author?.id
   if (authorId) {
     router.push(`/chats/${authorId}`)
+  }
+}
+
+const handleOpenApplicantChat = (applicant) => {
+  if (applicant?.id && !applicant.isLocked) {
+    router.push(`/chats/${applicant.id}`)
   }
 }
 

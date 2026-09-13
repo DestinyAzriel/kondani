@@ -103,6 +103,8 @@ const userSchema = new mongoose.Schema({
     },
     dailyPicks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     lastPicksDate: Date,
+    dailyPlanJoinsCount: { type: Number, default: 0 },
+    lastPlanJoinDate: Date,
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     passes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     matches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

@@ -23,6 +23,7 @@
             <span
               v-if="plan.author?.isVerified"
               class="absolute -bottom-1 -right-1 bg-gradient-to-r from-gold-400 to-gold-500 text-night-950 rounded-full p-0.5 border border-night-950 shadow"
+              title="Verified Malawian Member"
             >
               <BadgeCheck :size="12" class="stroke-[3]" />
             </span>
@@ -71,6 +72,53 @@
           <span>{{ plan.interestedCount }} interested</span>
         </div>
       </div>
+
+      <!-- Host View: Applicants List & Gold Teaser -->
+      <div v-if="plan.isOwner && plan.applicants && plan.applicants.length > 0" class="mt-4 pt-3 border-t border-white/5">
+        <p class="text-[11px] font-bold text-white/60 uppercase tracking-wider mb-2">
+          Interested People ({{ plan.interestedCount }})
+        </p>
+
+        <!-- Avatar preview row -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div
+            v-for="(applicant, i) in plan.applicants"
+            :key="applicant.id"
+            class="relative shrink-0 cursor-pointer group"
+            @click="applicant.isLocked ? $emit('upgrade') : $emit('openChatWithApplicant', applicant)"
+            :title="applicant.isLocked ? 'Upgrade to Gold to view' : applicant.name"
+          >
+            <div class="relative w-10 h-10 rounded-full overflow-hidden border-2" :class="applicant.isLocked ? 'border-gold-400/50' : 'border-white/20 group-hover:border-gold-400'">
+              <img
+                :src="applicant.photo ? mediaSrc(applicant.photo) : 'https://via.placeholder.com/150'"
+                class="w-full h-full object-cover"
+                :class="{ 'blur-md': applicant.isLocked }"
+              />
+              <div v-if="applicant.isLocked" class="absolute inset-0 bg-night-950/60 flex items-center justify-center">
+                <Lock :size="13" class="text-gold-400" />
+              </div>
+            </div>
+            <span v-if="!applicant.isLocked" class="text-[10px] text-white/80 truncate block text-center max-w-[44px] mt-0.5">{{ applicant.name.split(' ')[0] }}</span>
+          </div>
+        </div>
+
+        <!-- Gold Unlock Banner for Free Hosts -->
+        <div
+          v-if="plan.lockedCount > 0"
+          @click="$emit('upgrade')"
+          class="mt-2.5 p-2.5 rounded-xl bg-gradient-to-r from-gold-500/15 via-gold-400/10 to-transparent border border-gold-400/35 flex items-center justify-between cursor-pointer hover:border-gold-400 transition-all shadow"
+        >
+          <div class="flex items-center gap-2">
+            <Crown :size="14" class="text-gold-400 shrink-0" />
+            <span class="text-xs font-semibold text-gold-300">
+              {{ plan.lockedCount }} more {{ plan.lockedCount === 1 ? 'person wants' : 'people want' }} to join!
+            </span>
+          </div>
+          <span class="text-[10px] font-bold text-night-950 bg-gradient-to-r from-gold-400 to-gold-500 px-2.5 py-1 rounded-lg shrink-0">
+            Unlock
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Card Action Footer -->
@@ -117,7 +165,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { BadgeCheck, MapPin, Clock, Users, Sparkles, Check, MessageCircle, Heart } from 'lucide-vue-next'
+import { BadgeCheck, MapPin, Clock, Users, Sparkles, Check, MessageCircle, Heart, Lock, Crown } from 'lucide-vue-next'
 import { mediaUrl } from '@/utils/media'
 
 const props = defineProps({
@@ -125,7 +173,9 @@ const props = defineProps({
   isJoining: { type: Boolean, default: false }
 })
 
-defineEmits(['join', 'delete', 'openChat'])
+defineEmits(['join', 'delete', 'openChat', 'openChatWithApplicant', 'upgrade'])
+
+const mediaSrc = (u) => mediaUrl(u)
 
 const authorPhoto = computed(() => {
   if (props.plan.author?.photo) return mediaUrl(props.plan.author.photo)
@@ -196,3 +246,8 @@ const categoryStyle = computed(() => {
   return CATEGORY_STYLES[cat] || CATEGORY_STYLES.other
 })
 </script>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>

@@ -5,7 +5,6 @@ const Message = require('../models/Message');
 
 /**
  * Fallback seed plans for launch in Malawi
- * Shown if the community hasn't populated any plans yet
  */
 const SEED_PLANS = [
     {
@@ -16,6 +15,7 @@ const SEED_PLANS = [
         when: 'Today at 4:30 PM',
         mockName: 'Chifundo',
         mockAge: 24,
+        mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&auto=format&fit=crop&q=80',
         isVerified: true
     },
@@ -27,6 +27,7 @@ const SEED_PLANS = [
         when: 'This Saturday 8:00 AM',
         mockName: 'Thoko',
         mockAge: 27,
+        mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=400&auto=format&fit=crop&q=80',
         isVerified: true
     },
@@ -38,6 +39,7 @@ const SEED_PLANS = [
         when: 'This Friday ~ 8 PM',
         mockName: 'Yamikani',
         mockAge: 23,
+        mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=400&auto=format&fit=crop&q=80',
         isVerified: true
     },
@@ -49,6 +51,7 @@ const SEED_PLANS = [
         when: 'Sunday afternoon',
         mockName: 'Tadala',
         mockAge: 25,
+        mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
         isVerified: true
     },
@@ -60,25 +63,24 @@ const SEED_PLANS = [
         when: 'Tomorrow evening',
         mockName: 'Kondwani',
         mockAge: 28,
+        mockGender: 'Male',
         mockPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
         isVerified: true
     }
 ];
 
-// Helper to seed initial plans if none exist
+// Seed starter plans if none exist
 async function ensureSeedPlans(currentUserId) {
     try {
         const count = await Plan.countDocuments({ isActive: true, expiresAt: { $gt: new Date() } });
         if (count >= 3) return;
 
-        // Find real other users in the DB to associate seed plans with
         const otherUsers = await User.find({ _id: { $ne: currentUserId }, isBanned: { $ne: true } }).limit(5);
 
         for (let i = 0; i < SEED_PLANS.length; i++) {
             const seed = SEED_PLANS[i];
             const assignedUser = otherUsers[i % otherUsers.length];
 
-            // If we have an existing user in DB, use them; otherwise create plan with assigned user
             if (assignedUser) {
                 const existing = await Plan.findOne({ user: assignedUser._id, activity: seed.activity });
                 if (!existing) {
@@ -89,7 +91,7 @@ async function ensureSeedPlans(currentUserId) {
                         description: seed.description,
                         location: seed.location,
                         when: seed.when,
-                        expiresAt: new Date(Date.now() + 4 * 24 * 3600 * 1000) // 4 days
+                        expiresAt: new Date(Date.now() + 4 * 24 * 3600 * 1000)
                     });
                 }
             }
@@ -101,14 +103,18 @@ async function ensureSeedPlans(currentUserId) {
 
 /**
  * GET /api/plans
- * Fetch active community plans
+ * Fetch active community plans matching location and preferences
  */
 exports.getPlans = async (req, res) => {
     try {
         const currentUserId = req.user.id;
         const { category } = req.query;
 
-        // Ensure database has active plans for fresh launch
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         await ensureSeedPlans(currentUserId);
 
         const query = {
@@ -120,18 +126,86 @@ exports.getPlans = async (req, res) => {
             query.category = category.toLowerCase();
         }
 
+        // Fetch plans populated with author and applicants
         const plans = await Plan.find(query)
-            .populate('user', 'name age photos isVerified location district bio gender')
+            .populate('user', 'name age photos isVerified location district bio gender subscriptionTier isPremium')
+            .populate('interestedUsers.user', 'name age photos isVerified location district')
             .sort({ createdAt: -1 })
             .limit(50);
 
-        // Format for frontend
+        const hostTier = currentUser.subscriptionTier || (currentUser.isPremium ? 'gold' : 'free');
+        const isPremiumHost = hostTier === 'gold' || hostTier === 'platinum';
+
+        // Format plans and apply monetization view filters
         const formattedPlans = plans
-            .filter(p => p.user) // exclude deleted users
+            .filter(p => {
+                if (!p.user) return false;
+                // Exclude author's own blocked users or banned authors
+                if (p.user.isBanned) return false;
+
+                // Match gender preference if configured (unless viewing own plan)
+                if (String(p.user._id) !== String(currentUserId)) {
+                    const prefGender = currentUser.preferences?.gender;
+                    if (prefGender && prefGender !== 'Everyone' && p.user.gender) {
+                        if (p.user.gender !== prefGender) return false;
+                    }
+                }
+                return true;
+            })
             .map(plan => {
                 const author = plan.user;
                 const isOwner = String(author._id) === String(currentUserId);
-                const hasJoined = (plan.interestedUsers || []).some(id => String(id) === String(currentUserId));
+                const interested = plan.interestedUsers || [];
+                const hasJoined = interested.some(item => {
+                    const uId = item.user?._id || item.user;
+                    return String(uId) === String(currentUserId);
+                });
+
+                // Host applicants visibility (Mechanism 2):
+                // Free host: Sees 1st applicant clearly. Subsequent applicants are locked/blurred.
+                // Gold/VIP host: Sees ALL applicants clearly.
+                let applicantsList = [];
+                let lockedCount = 0;
+
+                if (isOwner) {
+                    if (isPremiumHost || interested.length <= 1) {
+                        applicantsList = interested.map(item => ({
+                            id: item.user?._id || item.user,
+                            name: item.user?.name || 'Kondani Member',
+                            age: item.user?.age || null,
+                            photo: item.user?.photos?.[0] || '',
+                            isVerified: !!item.user?.isVerified,
+                            joinedAt: item.joinedAt,
+                            isLocked: false
+                        }));
+                    } else {
+                        // Free host with multiple applicants:
+                        // 1st is visible, others are locked
+                        applicantsList = interested.map((item, idx) => {
+                            if (idx === 0) {
+                                return {
+                                    id: item.user?._id || item.user,
+                                    name: item.user?.name || 'Kondani Member',
+                                    age: item.user?.age || null,
+                                    photo: item.user?.photos?.[0] || '',
+                                    isVerified: !!item.user?.isVerified,
+                                    joinedAt: item.joinedAt,
+                                    isLocked: false
+                                };
+                            }
+                            return {
+                                id: 'locked_' + idx,
+                                name: 'Interested Member',
+                                age: null,
+                                photo: item.user?.photos?.[0] || '',
+                                isVerified: !!item.user?.isVerified,
+                                joinedAt: item.joinedAt,
+                                isLocked: true
+                            };
+                        });
+                        lockedCount = interested.length - 1;
+                    }
+                }
 
                 return {
                     id: plan._id,
@@ -142,7 +216,9 @@ exports.getPlans = async (req, res) => {
                     when: plan.when,
                     createdAt: plan.createdAt,
                     expiresAt: plan.expiresAt,
-                    interestedCount: (plan.interestedUsers || []).length,
+                    interestedCount: interested.length,
+                    lockedCount,
+                    applicants: applicantsList,
                     hasJoined,
                     isOwner,
                     author: {
@@ -151,7 +227,8 @@ exports.getPlans = async (req, res) => {
                         age: author.age || null,
                         photo: author.photos?.[0] || '',
                         isVerified: !!author.isVerified,
-                        location: author.location?.city || author.district || plan.location
+                        location: author.location?.city || author.district || plan.location,
+                        tier: author.subscriptionTier || (author.isPremium ? 'gold' : 'free')
                     }
                 };
             });
@@ -169,11 +246,24 @@ exports.getPlans = async (req, res) => {
 
 /**
  * POST /api/plans
- * Create a new date/activity plan
+ * Create a new plan with Selfie-Verification gate & Quotas
  */
 exports.createPlan = async (req, res) => {
     try {
         const currentUserId = req.user.id;
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // 1. Safety Gate: Only selfie-verified members can post public plans
+        if (!currentUser.isVerified) {
+            return res.status(403).json({
+                code: 'VERIFICATION_REQUIRED',
+                error: 'Selfie verification required. To keep Kondani real and safe, please complete photo verification before posting plans.'
+            });
+        }
+
         const { activity, category, description, location, when } = req.body;
 
         if (!activity || !activity.trim()) {
@@ -186,20 +276,26 @@ exports.createPlan = async (req, res) => {
             return res.status(400).json({ error: 'Please specify when (e.g. Tonight, Tomorrow)' });
         }
 
-        // Limit active plans to 3 per user to avoid spam
+        // 2. Active Plan Quota by Tier
+        const userTier = currentUser.subscriptionTier || (currentUser.isPremium ? 'gold' : 'free');
+        const maxPlans = userTier === 'platinum' || userTier === 'gold' ? 10 : (userTier === 'plus' ? 2 : 1);
+
         const userActiveCount = await Plan.countDocuments({
             user: currentUserId,
             isActive: true,
             expiresAt: { $gt: new Date() }
         });
 
-        if (userActiveCount >= 3) {
-            return res.status(400).json({
-                error: 'You already have 3 active plans. Complete or delete an existing one first!'
+        if (userActiveCount >= maxPlans) {
+            const upgradeMsg = userTier === 'free'
+                ? 'Free members can post 1 active plan at a time. Upgrade to Gold for unlimited plans!'
+                : 'You have reached your active plan limit.';
+            return res.status(403).json({
+                code: 'PLAN_LIMIT_REACHED',
+                error: upgradeMsg
             });
         }
 
-        // Expires in 48 hours by default
         const expiresAt = new Date(Date.now() + 48 * 3600 * 1000);
 
         const newPlan = await Plan.create({
@@ -228,6 +324,8 @@ exports.createPlan = async (req, res) => {
                 createdAt: populated.createdAt,
                 expiresAt: populated.expiresAt,
                 interestedCount: 0,
+                lockedCount: 0,
+                applicants: [],
                 hasJoined: false,
                 isOwner: true,
                 author: {
@@ -248,13 +346,17 @@ exports.createPlan = async (req, res) => {
 
 /**
  * POST /api/plans/:id/join
- * Join an activity plan -> creates match and sends instant icebreaker message
+ * Join an activity plan with Daily Quota Enforcement (Mechanism 1)
  */
 exports.joinPlan = async (req, res) => {
     try {
         const currentUserId = req.user.id;
-        const planId = req.params.id;
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
+        const planId = req.params.id;
         const plan = await Plan.findById(planId).populate('user', 'name photos isVerified');
         if (!plan || !plan.isActive) {
             return res.status(404).json({ error: 'Plan not found or has expired' });
@@ -262,17 +364,76 @@ exports.joinPlan = async (req, res) => {
 
         const hostId = plan.user._id.toString();
         if (hostId === String(currentUserId)) {
-            return res.status(400).json({ error: 'You are the host of this plan!' });
+            return res.status(400).json({ error: 'You are the creator of this plan!' });
         }
 
-        // Record interest if not already added
-        const alreadyJoined = (plan.interestedUsers || []).some(id => String(id) === String(currentUserId));
-        if (!alreadyJoined) {
-            plan.interestedUsers.push(currentUserId);
-            await plan.save();
+        const alreadyJoined = (plan.interestedUsers || []).some(item => {
+            const uId = item.user?._id || item.user;
+            return String(uId) === String(currentUserId);
+        });
+
+        if (alreadyJoined) {
+            const chatId = [String(currentUserId), String(hostId)].sort().join('_');
+            return res.json({
+                success: true,
+                alreadyJoined: true,
+                chatId,
+                hostName: plan.user.name,
+                message: 'You have already joined this plan!'
+            });
         }
 
-        // Automatically connect both users in chat (create match in Intent)
+        // Daily Join Quota Enforcement (Mechanism 1):
+        // Free: 1 join / day
+        // Plus: 3 joins / day
+        // Gold / Platinum: Unlimited
+        const userTier = currentUser.subscriptionTier || (currentUser.isPremium ? 'gold' : 'free');
+        const isUnlimited = userTier === 'gold' || userTier === 'platinum';
+
+        const now = new Date();
+        const lastJoin = currentUser.lastPlanJoinDate ? new Date(currentUser.lastPlanJoinDate) : null;
+        const isSameDay = lastJoin && (
+            lastJoin.getFullYear() === now.getFullYear() &&
+            lastJoin.getMonth() === now.getMonth() &&
+            lastJoin.getDate() === now.getDate()
+        );
+
+        const currentDailyCount = isSameDay ? (currentUser.dailyPlanJoinsCount || 0) : 0;
+
+        if (!isUnlimited) {
+            if (userTier === 'free' && currentDailyCount >= 1) {
+                return res.status(403).json({
+                    code: 'DAILY_JOIN_LIMIT_REACHED',
+                    error: 'You have used your 1 free plan join for today. Upgrade to Gold for unlimited joins & instant dating!',
+                    limit: 1,
+                    used: currentDailyCount
+                });
+            }
+            if (userTier === 'plus' && currentDailyCount >= 3) {
+                return res.status(403).json({
+                    code: 'PLUS_JOIN_LIMIT_REACHED',
+                    error: 'You have reached your 3 daily plan joins. Upgrade to Gold for unlimited joins!',
+                    limit: 3,
+                    used: currentDailyCount
+                });
+            }
+        }
+
+        // Increment daily quota count
+        currentUser.dailyPlanJoinsCount = currentDailyCount + 1;
+        currentUser.lastPlanJoinDate = now;
+        await currentUser.save();
+
+        // Record interest
+        const customNote = req.body.note?.trim() || '';
+        plan.interestedUsers.push({
+            user: currentUserId,
+            note: customNote,
+            joinedAt: now
+        });
+        await plan.save();
+
+        // Connect both users in chat (add to Intent matches)
         let myIntent = await Intent.findOne({ user: currentUserId });
         if (!myIntent) myIntent = await Intent.create({ user: currentUserId });
 
@@ -288,12 +449,11 @@ exports.joinPlan = async (req, res) => {
             await hostIntent.save();
         }
 
-        // Send icebreaker message into chat room
+        // Send icebreaker message into chat
         const chatId = [String(currentUserId), String(hostId)].sort().join('_');
-        const customNote = req.body.note?.trim();
         const content = customNote || `Hey ${plan.user.name}! I saw your plan: "${plan.activity}" and I'd love to join you! 👋✨`;
 
-        const msg = await Message.create({
+        await Message.create({
             chatId,
             sender: currentUserId,
             content,
@@ -306,7 +466,7 @@ exports.joinPlan = async (req, res) => {
             chatId,
             hostName: plan.user.name,
             hostPhoto: plan.user.photos?.[0] || '',
-            message: `You joined ${plan.user.name}'s plan! We started a chat for you.`
+            message: `You joined ${plan.user.name}'s plan! Chat started.`
         });
     } catch (err) {
         console.error('joinPlan error:', err);
