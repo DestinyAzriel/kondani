@@ -13,6 +13,7 @@ const verificationRoutes = require('./src/routes/verificationRoutes');
 const subscriptionRoutes = require('./src/routes/subscriptionRoutes');
 const moderationRoutes = require('./src/routes/moderationRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
+const planRoutes = require('./src/routes/planRoutes');
 // const oauthRoutes = require('./src/routes/oauthRoutes'); // Temporarily disabled
 
 // Allowed CORS origins: localhost (dev) + CLIENT_ORIGIN env (comma-separated)
@@ -75,6 +76,7 @@ app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/plans', planRoutes);
 
 // Test endpoint for diagnostics (no authentication required)
 app.get('/api/test-db', async (req, res) => {
