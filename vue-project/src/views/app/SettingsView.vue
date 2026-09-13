@@ -184,7 +184,7 @@ const confirmDelete = async () => {
 /* Sections pack into balanced columns on desktop (no ragged row gaps). */
 .settings-grid > * { margin-bottom: 1.75rem; }
 .settings-grid > *:last-child { margin-bottom: 0; }
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .settings-grid { column-count: 2; column-gap: 1.75rem; }
   .settings-grid > * { break-inside: avoid; }
   .settings-foot { column-span: all; }

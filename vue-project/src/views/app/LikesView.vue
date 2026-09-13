@@ -43,19 +43,19 @@
       </div>
 
       <Transition name="fade" mode="out-in">
-        <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SkeletonLoader v-for="i in 4" :key="i" type="profile" />
+        <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <SkeletonLoader v-for="i in 6" :key="i" type="profile" />
         </div>
 
         <!-- Free members: blurred locked tiles showing how many like them -->
-        <div v-else-if="activeTab === 'new' && !isPremium && likesCount > 0" key="locked" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          <button v-for="n in Math.min(likesCount, 9)" :key="n" class="locked-like" @click="router.push('/premium')">
+        <div v-else-if="activeTab === 'new' && !isPremium && likesCount > 0" key="locked" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <button v-for="n in Math.min(likesCount, 10)" :key="n" class="locked-like" @click="router.push('/premium')">
             <Lock :size="22" />
             <span>Likes you</span>
           </button>
         </div>
 
-        <div v-else-if="likes.length > 0" :key="activeTab" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div v-else-if="likes.length > 0" :key="activeTab" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <LikeCard v-for="like in likes" :key="like.id" :like="like" :isPremium="isPremium"
                     @sayHi="handleSayHi" @upgrade="router.push('/premium')" />
         </div>

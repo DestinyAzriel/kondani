@@ -70,7 +70,7 @@ onUnmounted(() => {
         </router-view>
       </main>
 
-      <BottomNav class="md:hidden z-50 fixed bottom-0 left-0 right-0 max-w-md mx-auto" />
+      <BottomNav />
     </ResponsiveContainer>
 
     <!-- Incoming call ring -->

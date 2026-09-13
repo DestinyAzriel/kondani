@@ -30,7 +30,7 @@ onUnmounted(() => {
 <style scoped>
 .app-container {
   min-height: 100vh;
-  background: #0a0e1a; /* deep-950 */
+  background: #0a0e1a;
 }
 
 .main-wrapper {
@@ -46,31 +46,29 @@ onUnmounted(() => {
   flex: 1;
 }
 
-/* Desktop Styles - Expansive & Premium */
+/* Desktop: shift content right by exactly the sidebar width */
 @media (min-width: 768px) {
   .main-wrapper.desktop-active {
-    padding-left: 375px;
+    padding-left: 340px; /* matches DesktopNav w-[340px] exactly */
     background: radial-gradient(circle at top right, #0d121f, #05070a);
   }
 
+  /* Let each view control its own max-width — no global cap here */
   .content-area {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 40px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
 }
 
-/* Add nice fade in for content */
+/* Subtle fade-in for content transitions */
 .content-area {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.35s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 </style>
