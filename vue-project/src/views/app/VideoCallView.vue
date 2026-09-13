@@ -41,7 +41,7 @@
       <div class="bg-black/50 backdrop-blur-xl rounded-full px-6 py-4 border border-white/10 shadow-2xl flex items-center gap-5">
         <button @click="toggleMic"
                 :class="['p-4 rounded-full transition-all shadow-md', isMuted ? 'bg-white text-night-950' : 'bg-white/10 text-white hover:bg-white/20']"
-                :title="isMuted ? 'Unmute' : 'Mute'">
+                :title="isMuted ? 'Unmute microphone' : 'Mute microphone'">
           <MicOffIcon v-if="isMuted" size="22" /><MicIcon v-else size="22" />
         </button>
 
@@ -57,16 +57,36 @@
       </div>
     </div>
 
-    <p v-if="errorMsg" class="absolute top-6 left-1/2 -translate-x-1/2 z-40 bg-black/80 border border-red-500/30 px-5 py-2.5 rounded-full text-sm text-[#ff7a6b] font-medium shadow-lg backdrop-blur-md text-center max-w-[90%]">
-      {{ errorMsg }}
-    </p>
+    <!-- Interactive Media Permission / Status Banner -->
+    <div v-if="errorMsg" class="absolute top-6 left-1/2 -translate-x-1/2 z-40 bg-night-900/95 border border-amber-500/40 px-5 py-3.5 rounded-2xl text-sm text-white shadow-2xl backdrop-blur-xl text-center max-w-md w-[92%] flex flex-col items-center gap-2">
+      <div class="flex items-center gap-1.5 text-amber-300 font-semibold text-xs tracking-wider uppercase">
+        <LockIcon size="14" />
+        <span>Microphone / Audio Status</span>
+      </div>
+      <p class="text-xs text-white/85 leading-relaxed">{{ errorMsg }}</p>
+      <div class="flex items-center gap-2 mt-1">
+        <button v-if="permissionBlocked" @click="requestMicrophoneAccess" class="px-3.5 py-1.5 bg-lagoon-500 hover:bg-lagoon-400 text-night-950 font-bold text-xs rounded-lg transition-all shadow-md active:scale-95">
+          Allow Microphone
+        </button>
+        <button @click="errorMsg = ''" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs rounded-lg transition-all">
+          Dismiss
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Mic as MicIcon, MicOff as MicOffIcon, Video as VideoIcon, VideoOff as VideoOffIcon, PhoneOff as PhoneOffIcon } from 'lucide-vue-next'
+import {
+  Mic as MicIcon,
+  MicOff as MicOffIcon,
+  Video as VideoIcon,
+  VideoOff as VideoOffIcon,
+  PhoneOff as PhoneOffIcon,
+  Lock as LockIcon
+} from 'lucide-vue-next'
 import { socketService } from '@/services/socketService'
 import { mediaUrl } from '@/utils/media'
 import { useAuthStore } from '@/stores/auth'
@@ -94,6 +114,8 @@ const isCameraOn = ref(isVideo)
 const callStatus = ref(isInitiator ? 'calling' : 'connecting')
 const callDuration = ref('00:00')
 const errorMsg = ref('')
+const permissionBlocked = ref(false)
+let isRealMicActive = false
 let callStartTime = null
 let callTimer = null
 
@@ -159,31 +181,146 @@ const updateDuration = () => {
   callDuration.value = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const initMedia = async () => {
+function createSilentAudioTrack() {
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true })
-    if (isVideo && localVideo.value) {
-      localVideo.value.srcObject = localStream
+    const AudioContext = window.AudioContext || window.webkitAudioContext
+    if (!AudioContext) return null
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const dst = ctx.createMediaStreamDestination()
+    osc.connect(dst)
+    osc.start()
+    const track = dst.stream.getAudioTracks()[0]
+    track.enabled = false
+    return track
+  } catch (e) {
+    return null
+  }
+}
+
+function createDummyVideoTrack() {
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = 320
+    canvas.height = 240
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#0a0d14'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    const stream = canvas.captureStream ? canvas.captureStream(5) : null
+    return stream ? stream.getVideoTracks()[0] : null
+  } catch (e) {
+    return null
+  }
+}
+
+const handleMediaError = (err) => {
+  console.warn('Microphone/Camera error details:', err.name, err.message)
+  if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+    permissionBlocked.value = true
+    errorMsg.value = 'Microphone permission blocked in browser. Click the lock/tune icon (🔒) in your address bar and toggle Microphone to Allow.'
+  } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+    errorMsg.value = 'No microphone detected on your device. Joining call in listen-only mode.'
+  } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+    errorMsg.value = 'Microphone is currently in use by another application. Joining in listen-only mode.'
+  } else {
+    errorMsg.value = 'Microphone unavailable (' + (err.name || 'error') + '). Joining in listen-only mode.'
+  }
+}
+
+const initMedia = async () => {
+  localStream = new MediaStream()
+
+  if (isVideo) {
+    // 1. Try full video + audio
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      stream.getTracks().forEach(t => localStream.addTrack(t))
+      if (localVideo.value) localVideo.value.srcObject = localStream
+      isRealMicActive = true
+      isMuted.value = false
+      return true
+    } catch (err) {
+      console.warn('Full media access failed, trying separate camera and mic...', err)
     }
+
+    // 2. Try camera only
+    try {
+      const vStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      vStream.getVideoTracks().forEach(t => localStream.addTrack(t))
+      if (localVideo.value) localVideo.value.srcObject = localStream
+      isCameraOn.value = true
+    } catch (vErr) {
+      console.warn('Camera failed:', vErr)
+      isCameraOn.value = false
+      const dummyV = createDummyVideoTrack()
+      if (dummyV) localStream.addTrack(dummyV)
+    }
+
+    // 3. Try microphone only
+    try {
+      const aStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+      aStream.getAudioTracks().forEach(t => localStream.addTrack(t))
+      isRealMicActive = true
+      isMuted.value = false
+    } catch (aErr) {
+      console.warn('Mic failed:', aErr)
+      handleMediaError(aErr)
+      const silentAudio = createSilentAudioTrack()
+      if (silentAudio) localStream.addTrack(silentAudio)
+      isRealMicActive = false
+      isMuted.value = true
+    }
+
     return true
-  } catch (err) {
-    console.warn('Initial media access error:', err)
-    if (isVideo) {
-      // Gracefully fall back to audio-only if camera is unavailable or denied
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
-        isCameraOn.value = false
-        errorMsg.value = 'Camera unavailable; continuing with voice only.'
-        setTimeout(() => { errorMsg.value = '' }, 4000)
-        return true
-      } catch (err2) {
-        console.error('Audio fallback error:', err2)
-        errorMsg.value = 'Could not access microphone.'
-        return false
-      }
+  } else {
+    // Audio-only call
+    try {
+      const aStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      aStream.getAudioTracks().forEach(t => localStream.addTrack(t))
+      isRealMicActive = true
+      isMuted.value = false
+      return true
+    } catch (err) {
+      console.warn('Audio call mic failed:', err)
+      handleMediaError(err)
+      const silentAudio = createSilentAudioTrack()
+      if (silentAudio) localStream.addTrack(silentAudio)
+      isRealMicActive = false
+      isMuted.value = true
+      return true
     }
-    errorMsg.value = 'Could not access microphone.'
-    return false
+  }
+}
+
+const requestMicrophoneAccess = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const realAudioTrack = stream.getAudioTracks()[0]
+    if (realAudioTrack && localStream) {
+      const oldTracks = localStream.getAudioTracks()
+      oldTracks.forEach(t => {
+        localStream.removeTrack(t)
+        t.stop()
+      })
+      localStream.addTrack(realAudioTrack)
+
+      // Replace track on peer connection senders
+      if (pc) {
+        const senders = pc.getSenders()
+        const sender = senders.find(s => s.track && s.track.kind === 'audio')
+        if (sender) {
+          await sender.replaceTrack(realAudioTrack)
+        }
+      }
+
+      isRealMicActive = true
+      isMuted.value = false
+      permissionBlocked.value = false
+      errorMsg.value = ''
+    }
+  } catch (err) {
+    console.warn('Re-request microphone error:', err)
+    errorMsg.value = 'Still blocked. In Chrome/Edge, click the lock (🔒) or tune icon left of the website URL → switch Microphone to "Allow" → tap Allow Microphone again.'
   }
 }
 
@@ -329,6 +466,11 @@ const onEnded = () => {
 }
 
 const toggleMic = () => {
+  if (!isRealMicActive) {
+    // If on dummy silent track, request mic access on user click
+    requestMicrophoneAccess()
+    return
+  }
   const t = localStream?.getAudioTracks()[0]
   if (t) {
     t.enabled = !t.enabled
