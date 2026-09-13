@@ -92,5 +92,35 @@ export const intentService = {
   // Set typing indicator
   async setTyping(chatId, isTyping) {
     await api.post('/chats/typing', { chatId, isTyping })
+  },
+
+  // Get other user's profile in a chat
+  async getChatProfile(chatId) {
+    const response = await api.get(`/chats/${chatId}/profile`)
+    return response.data // { user }
+  },
+
+  // Unmatch a user in a chat
+  async unmatchUser(chatId) {
+    const response = await api.post(`/chats/${chatId}/unmatch`)
+    return response.data
+  },
+
+  // Delete chat conversation
+  async deleteChat(chatId) {
+    const response = await api.delete(`/chats/${chatId}`)
+    return response.data
+  },
+
+  // Block a user
+  async blockUser(blockedUserId, reason = 'Blocked by user') {
+    const response = await api.post('/moderation/block', { blockedUserId, reason })
+    return response.data
+  },
+
+  // Report a user
+  async reportUser(reportedUserId, reason, description = '') {
+    const response = await api.post('/moderation/report', { reportedUserId, reason, description })
+    return response.data
   }
 }

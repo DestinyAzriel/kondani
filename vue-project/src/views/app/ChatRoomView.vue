@@ -9,11 +9,11 @@
     <div class="flex items-center justify-between px-3 py-3 bg-night-900/80 backdrop-blur-md border-b border-white/5 z-10">
       <div class="flex items-center gap-3 min-w-0">
         <button @click="router.back()" class="p-1.5 -ml-1 text-white/70 hover:text-white"><ChevronLeftIcon size="24" /></button>
-        <div class="relative flex-shrink-0">
-          <img :src="mediaSrc(chatUser.photo)" class="w-10 h-10 rounded-full object-cover bg-night-800" />
+        <div class="relative flex-shrink-0 cursor-pointer" @click="openProfilePreview">
+          <img :src="mediaSrc(chatUser.photo)" class="w-10 h-10 rounded-full object-cover bg-night-800 ring-2 ring-transparent hover:ring-gold-400/50 transition-all" />
           <div v-if="chatUser.online" class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-lagoon-400 rounded-full border-2 border-night-900"></div>
         </div>
-        <div class="min-w-0">
+        <div class="min-w-0 cursor-pointer" @click="openProfilePreview">
           <div class="flex items-center gap-1.5">
             <h1 class="k-serif text-base truncate">{{ chatUser.name || 'Chat' }}</h1>
             <BadgeCheck v-if="chatUser.isVerified" :size="14" style="color:var(--k-gold)" />
@@ -29,11 +29,49 @@
         <button @click="startCall('video')" class="p-2.5 text-gold-300 bg-white/5 rounded-full hover:bg-white/10 transition-colors" title="Video call">
           <VideoIcon size="19" />
         </button>
+        <!-- Three-dots menu -->
+        <div class="relative" ref="menuRef">
+          <button @click="showMenu = !showMenu" class="p-2.5 text-white/60 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors" title="More options">
+            <MoreVerticalIcon size="19" />
+          </button>
+
+          <!-- Dropdown menu -->
+          <Transition
+            enter-active-class="transition duration-150 ease-out"
+            enter-from-class="opacity-0 scale-90 -translate-y-1"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition duration-100 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-90 -translate-y-1"
+          >
+            <div v-if="showMenu" class="absolute right-0 top-full mt-2 w-56 bg-night-900 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50 backdrop-blur-xl">
+              <div class="py-1.5">
+                <button @click="handleMenuAction('unmatch')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors">
+                  <HeartOffIcon size="17" class="text-white/50" />
+                  <span>Unmatch</span>
+                </button>
+                <button @click="handleMenuAction('delete')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors">
+                  <Trash2Icon size="17" class="text-white/50" />
+                  <span>Delete chat</span>
+                </button>
+                <div class="h-px bg-white/5 mx-3 my-0.5"></div>
+                <button @click="handleMenuAction('report')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-amber-400/90 hover:bg-amber-400/5 hover:text-amber-400 transition-colors">
+                  <FlagIcon size="17" class="text-amber-400/60" />
+                  <span>Report</span>
+                </button>
+                <button @click="handleMenuAction('block')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-[#ff7a6b]/90 hover:bg-[#ff7a6b]/5 hover:text-[#ff7a6b] transition-colors">
+                  <ShieldOffIcon size="17" class="text-[#ff7a6b]/60" />
+                  <span>Block</span>
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
       </div>
     </div>
 
     <!-- Messages -->
-    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3 relative z-10" ref="messagesContainer">
+    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3 relative z-10" ref="messagesContainer" @click="showMenu = false">
       <div v-if="messages.length === 0 && !isLoading" class="flex flex-col items-center text-center text-white/40 text-sm pt-12 gap-3">
         <Sparkles :size="30" :stroke-width="1.5" style="color:var(--k-gold)" />
         <span>Say hello — start the conversation.</span>
@@ -99,6 +137,98 @@
       </div>
       <p v-if="recordError" class="text-xs text-[#ff7a6b] mt-2 px-2">{{ recordError }}</p>
     </div>
+
+    <!-- Confirmation Dialog -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="confirmDialog.show" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-6" @click.self="confirmDialog.show = false">
+        <div class="w-full max-w-sm bg-night-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+          <div class="p-6 text-center">
+            <div class="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-4" :class="confirmDialog.type === 'danger' ? 'bg-[#ff7a6b]/10 text-[#ff7a6b]' : 'bg-amber-400/10 text-amber-400'">
+              <AlertTriangleIcon size="28" />
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">{{ confirmDialog.title }}</h3>
+            <p class="text-sm text-white/60 leading-relaxed">{{ confirmDialog.message }}</p>
+          </div>
+          <div class="flex border-t border-white/5">
+            <button @click="confirmDialog.show = false" class="flex-1 py-3.5 text-sm font-semibold text-white/60 hover:bg-white/5 transition-colors border-r border-white/5">
+              Cancel
+            </button>
+            <button @click="executeConfirmedAction" class="flex-1 py-3.5 text-sm font-bold transition-colors" :class="confirmDialog.type === 'danger' ? 'text-[#ff7a6b] hover:bg-[#ff7a6b]/10' : 'text-amber-400 hover:bg-amber-400/10'">
+              {{ confirmDialog.confirmLabel }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Report Dialog -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showReportDialog" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-6" @click.self="showReportDialog = false">
+        <div class="w-full max-w-sm bg-night-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center gap-3 mb-5">
+              <div class="p-2.5 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                <FlagIcon size="20" />
+              </div>
+              <h3 class="text-lg font-bold text-white">Report {{ chatUser.name }}</h3>
+            </div>
+            <p class="text-xs text-white/40 font-semibold uppercase tracking-wider mb-3">Select a reason</p>
+            <div class="space-y-2">
+              <button
+                v-for="reason in reportReasons"
+                :key="reason"
+                @click="selectedReportReason = reason"
+                class="w-full text-left px-4 py-3 rounded-xl text-sm transition-all border"
+                :class="selectedReportReason === reason
+                  ? 'bg-amber-400/10 border-amber-400/30 text-amber-300 font-semibold'
+                  : 'bg-white/5 border-white/5 text-white/70 hover:bg-white/8'"
+              >
+                {{ reason }}
+              </button>
+            </div>
+            <textarea
+              v-model="reportDescription"
+              placeholder="Additional details (optional)…"
+              class="w-full mt-4 bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white placeholder-white/30 resize-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/30 outline-none"
+              rows="2"
+            ></textarea>
+          </div>
+          <div class="flex border-t border-white/5">
+            <button @click="showReportDialog = false" class="flex-1 py-3.5 text-sm font-semibold text-white/60 hover:bg-white/5 transition-colors border-r border-white/5">
+              Cancel
+            </button>
+            <button
+              @click="submitReport"
+              :disabled="!selectedReportReason"
+              class="flex-1 py-3.5 text-sm font-bold text-amber-400 hover:bg-amber-400/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Submit Report
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Profile Preview Modal -->
+    <ProfilePreviewModal
+      :show="showProfilePreview"
+      :user="profileUser"
+      @close="showProfilePreview = false"
+    />
   </div>
 </template>
 
@@ -108,10 +238,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { intentService } from '@/services/intentService'
 import { socketService } from '@/services/socketService'
 import { useAuthStore } from '@/stores/auth'
+import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.vue'
 import {
   ChevronLeft as ChevronLeftIcon, Check as CheckIcon, CheckCheck as CheckCheckIcon,
   Video as VideoIcon, Phone as PhoneIcon, Mic as MicIcon, Send as SendIcon, X as XIcon,
-  BadgeCheck, Sparkles
+  BadgeCheck, Sparkles, MoreVertical as MoreVerticalIcon,
+  HeartOff as HeartOffIcon, Trash2 as Trash2Icon, Flag as FlagIcon,
+  ShieldOff as ShieldOffIcon, AlertTriangle as AlertTriangleIcon
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -128,6 +261,37 @@ const chatUser = ref({})
 const isLoading = ref(true)
 const otherTyping = ref(false)
 const typingTimeout = ref(null)
+
+/* ---- Three-dots menu ---- */
+const showMenu = ref(false)
+const menuRef = ref(null)
+
+/* ---- Profile preview ---- */
+const showProfilePreview = ref(false)
+const profileUser = ref({})
+
+/* ---- Confirm dialog ---- */
+const confirmDialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  confirmLabel: '',
+  type: 'danger',
+  action: null
+})
+
+/* ---- Report dialog ---- */
+const showReportDialog = ref(false)
+const selectedReportReason = ref('')
+const reportDescription = ref('')
+const reportReasons = [
+  'Inappropriate messages',
+  'Fake profile',
+  'Spam or scam',
+  'Harassment or bullying',
+  'Underage user',
+  'Other'
+]
 
 const chatId = route.params.id
 const myId = authStore.user?._id || authStore.user?.id
@@ -153,10 +317,18 @@ const handleTyping = () => {
   typingTimeout.value = setTimeout(() => intentService.setTyping(chatId, false), 1200)
 }
 
+/* ---- Close menu on outside click ---- */
+const handleClickOutside = (e) => {
+  if (menuRef.value && !menuRef.value.contains(e.target)) {
+    showMenu.value = false
+  }
+}
+
 onMounted(async () => {
   socketService.connect()
   if (myId) socketService.emit('join', String(myId))
   socketService.on('new_message', handleNewMessage)
+  document.addEventListener('click', handleClickOutside)
 
   try {
     // Resolve the other person's info from the chat list
@@ -177,6 +349,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   socketService.off('new_message', handleNewMessage)
+  document.removeEventListener('click', handleClickOutside)
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
   intentService.setTyping(chatId, false)
   stopTracks()
@@ -205,6 +378,90 @@ const sendText = async () => {
   }
 }
 
+/* ---- Profile Preview ---- */
+const openProfilePreview = async () => {
+  showMenu.value = false
+  try {
+    const data = await intentService.getChatProfile(chatId)
+    profileUser.value = data?.user || chatUser.value
+  } catch (e) {
+    console.warn('Could not load full profile, using chat data', e)
+    profileUser.value = chatUser.value
+  }
+  showProfilePreview.value = true
+}
+
+/* ---- Three-dots menu actions ---- */
+const handleMenuAction = (action) => {
+  showMenu.value = false
+  switch (action) {
+    case 'unmatch':
+      confirmDialog.value = {
+        show: true,
+        title: 'Unmatch?',
+        message: `You will no longer be matched with ${chatUser.value.name || 'this person'}. This action cannot be undone.`,
+        confirmLabel: 'Unmatch',
+        type: 'danger',
+        action: 'unmatch'
+      }
+      break
+    case 'delete':
+      confirmDialog.value = {
+        show: true,
+        title: 'Delete chat?',
+        message: `All messages with ${chatUser.value.name || 'this person'} will be permanently deleted.`,
+        confirmLabel: 'Delete',
+        type: 'danger',
+        action: 'delete'
+      }
+      break
+    case 'report':
+      selectedReportReason.value = ''
+      reportDescription.value = ''
+      showReportDialog.value = true
+      break
+    case 'block':
+      confirmDialog.value = {
+        show: true,
+        title: 'Block user?',
+        message: `${chatUser.value.name || 'This person'} will no longer be able to see your profile or message you.`,
+        confirmLabel: 'Block',
+        type: 'danger',
+        action: 'block'
+      }
+      break
+  }
+}
+
+const executeConfirmedAction = async () => {
+  const action = confirmDialog.value.action
+  confirmDialog.value.show = false
+  try {
+    if (action === 'unmatch') {
+      await intentService.unmatchUser(chatId)
+      router.replace('/chats')
+    } else if (action === 'delete') {
+      await intentService.deleteChat(chatId)
+      router.replace('/chats')
+    } else if (action === 'block') {
+      await intentService.blockUser(recipientId)
+      router.replace('/chats')
+    }
+  } catch (e) {
+    console.error(`${action} failed`, e)
+  }
+}
+
+const submitReport = async () => {
+  if (!selectedReportReason.value) return
+  showReportDialog.value = false
+  try {
+    await intentService.reportUser(recipientId, selectedReportReason.value, reportDescription.value)
+  } catch (e) {
+    console.error('Report failed', e)
+  }
+}
+
 /* ---- Voice notes ---- */
 const isRecording = ref(false)
 const recordSeconds = ref(0)
@@ -224,17 +481,36 @@ const startRecording = async () => {
   recordError.value = ''
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    mediaRecorder = new MediaRecorder(micStream)
+
+    // Pick the best supported MIME type for recording
+    const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+    let mimeType = ''
+    for (const mt of mimeTypes) {
+      if (MediaRecorder.isTypeSupported(mt)) { mimeType = mt; break }
+    }
+
+    mediaRecorder = mimeType
+      ? new MediaRecorder(micStream, { mimeType })
+      : new MediaRecorder(micStream)
+
     audioChunks = []
     cancelled = false
-    mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data)
+    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) audioChunks.push(e.data) }
     mediaRecorder.onstop = async () => {
       stopTracks()
       if (cancelled) return
-      const blob = new Blob(audioChunks, { type: 'audio/webm' })
-      await uploadAndSendVoice(blob)
+      const recordedType = mediaRecorder.mimeType || mimeType || 'audio/webm'
+      const blob = new Blob(audioChunks, { type: recordedType })
+      const ext = recordedType.includes('mp4') ? 'mp4' : recordedType.includes('ogg') ? 'ogg' : 'webm'
+      await uploadAndSendVoice(blob, `voice.${ext}`)
     }
-    mediaRecorder.start()
+    mediaRecorder.onerror = (e) => {
+      console.error('MediaRecorder error', e)
+      recordError.value = 'Recording failed. Please try again.'
+      isRecording.value = false
+      stopTracks()
+    }
+    mediaRecorder.start(250) // collect in 250ms chunks for reliability
     isRecording.value = true
     recordSeconds.value = 0
     recordTimer = setInterval(() => {
@@ -243,7 +519,13 @@ const startRecording = async () => {
     }, 1000)
   } catch (err) {
     console.error('Mic error', err)
-    recordError.value = 'Microphone access denied.'
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      recordError.value = 'Microphone permission denied. Please allow microphone access in your browser settings.'
+    } else if (err.name === 'NotFoundError') {
+      recordError.value = 'No microphone found on this device.'
+    } else {
+      recordError.value = 'Could not access microphone. Please check your device settings.'
+    }
     isRecording.value = false
   }
 }
@@ -259,20 +541,20 @@ const cancelRecording = () => {
   isRecording.value = false
 }
 
-const uploadAndSendVoice = async (blob) => {
+const uploadAndSendVoice = async (blob, filename = 'voice.webm') => {
   const tempId = 'tmp-' + Date.now()
   const localUrl = URL.createObjectURL(blob)
   messages.value.push({ id: tempId, mediaUrl: localUrl, time: new Date(), isMe: true, messageType: 'voice', delivered: false, read: false })
   scrollToBottom()
   try {
-    const { url } = await intentService.uploadChatMedia(blob, 'voice.webm')
+    const { url } = await intentService.uploadChatMedia(blob, filename)
     const res = await intentService.sendMessage(chatId, '', 'voice', url)
     const i = messages.value.findIndex(m => m.id === tempId)
     if (i !== -1) messages.value[i] = res.message
     relay(res.message)
   } catch (e) {
     console.error('Voice send failed', e)
-    recordError.value = 'Could not send voice note.'
+    recordError.value = 'Could not send voice note. Please try again.'
     messages.value = messages.value.filter(m => m.id !== tempId)
   }
 }

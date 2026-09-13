@@ -18,12 +18,13 @@ const planRoutes = require('./src/routes/planRoutes');
 
 // Allowed CORS origins: localhost (dev) + CLIENT_ORIGIN env (comma-separated)
 // + any Render/Vercel/Netlify host.
-const envOrigins = (process.env.CLIENT_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+const envOrigins = (process.env.CLIENT_ORIGIN || '').split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
 function isAllowedOrigin(origin) {
   if (!origin) return true;
-  if (envOrigins.includes(origin)) return true;
-  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
-  if (/\.(onrender\.com|vercel\.app|netlify\.app)$/.test(origin)) return true;
+  const clean = origin.replace(/\/+$/, '');
+  if (envOrigins.includes(clean) || envOrigins.includes(origin)) return true;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(clean)) return true;
+  if (/(^https?:\/\/|:\/\/.*?\.)(onrender\.com|vercel\.app|netlify\.app|duckdns\.org)(:\d+)?$/.test(clean)) return true;
   return false;
 }
 
@@ -33,8 +34,8 @@ const server = http.createServer(app);
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    if (isAllowedOrigin(origin)) return callback(null, true)
-    return callback(new Error('CORS policy: origin not allowed'), false)
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(null, false);
   },
   credentials: true
 }));
@@ -133,8 +134,8 @@ app.get('/api/health', (req, res) => {
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) return callback(null, true)
-      return callback(new Error('CORS policy: origin not allowed'), false)
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(null, false);
     },
     methods: ["GET", "POST"],
     credentials: true

@@ -21,10 +21,10 @@
           </p>
         </div>
 
-        <!-- Desktop + Mobile Header Post Button -->
+        <!-- Desktop Header Post Button (Mobile uses floating button) -->
         <button
           @click="openComposer"
-          class="k-btn k-btn-gold shrink-0 py-2.5 px-4 text-xs sm:text-sm flex items-center gap-1.5 shadow-lg"
+          class="hidden md:flex k-btn k-btn-gold shrink-0 py-2.5 px-4 text-xs sm:text-sm items-center gap-1.5 shadow-lg"
         >
           <Plus :size="16" />
           <span>Post a Plan</span>

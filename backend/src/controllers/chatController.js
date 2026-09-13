@@ -49,12 +49,19 @@ exports.getChats = async (req, res) => {
                 id: chatId,
                 userId: match._id,
                 name: match.name,
-                photo: match.photos[0] || 'https://via.placeholder.com/150',
+                photo: match.photos?.[0] || 'https://via.placeholder.com/150',
+                photos: match.photos || [],
+                bio: match.bio || '',
+                age: match.age || (match.birthdate ? new Date().getFullYear() - new Date(match.birthdate).getFullYear() : null),
+                location: match.location || match.city || '',
+                intent: match.relationshipIntent || '',
+                interests: match.interests || [],
+                occupation: match.occupation || match.job || '',
+                isVerified: match.isVerified,
                 lastMessage: lastMessage ? lastMessage.content : 'Start chatting!',
                 lastMessageTime: lastMessage ? lastMessage.createdAt : match.createdAt, // fallback
                 unread: lastMessage ? (!lastMessage.read && lastMessage.sender.toString() !== currentUserId) : false,
                 online: onlineUsers.has(match._id.toString()) || false,
-                isVerified: match.isVerified,
                 typing: typingIndicators.get(chatId) || false
             };
         }));
@@ -200,10 +207,80 @@ exports.setTyping = async (req, res) => {
 exports.uploadChatMedia = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-        const url = await storeUpload(req.file, 'chat-media', 'auto');
+        const isAudio = (req.file.mimetype && req.file.mimetype.startsWith('audio')) ||
+                        (req.file.originalname && (req.file.originalname.endsWith('.webm') || req.file.originalname.endsWith('.mp3') || req.file.originalname.endsWith('.ogg') || req.file.originalname.endsWith('.m4a')));
+        // Cloudinary requires resource_type 'video' for audio files
+        const resourceType = isAudio ? 'video' : 'auto';
+        const url = await storeUpload(req.file, 'chat-media', resourceType);
         res.json({ url });
     } catch (err) {
         console.error('uploadChatMedia error:', err);
-        res.status(500).json({ error: 'Upload failed' });
+        res.status(500).json({ error: 'Upload failed: ' + (err.message || 'unknown error') });
+    }
+};
+
+// Get other user's full profile for a chat
+exports.getChatProfile = async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        const currentUserId = req.user.id;
+        let otherUserId = chatId;
+        if (chatId.includes('_')) {
+            otherUserId = chatId.split('_').find(id => id !== String(currentUserId));
+        }
+
+        const otherUser = await User.findById(otherUserId).select('-password');
+        if (!otherUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({ user: otherUser });
+    } catch (err) {
+        console.error('getChatProfile error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Unmatch user and clear conversation
+exports.unmatchUser = async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        const currentUserId = req.user.id;
+        let otherUserId = chatId;
+        if (chatId.includes('_')) {
+            otherUserId = chatId.split('_').find(id => id !== String(currentUserId));
+        }
+
+        // Remove from both Intent matches
+        await Intent.updateOne(
+            { user: currentUserId },
+            { $pull: { matches: otherUserId } }
+        );
+        if (otherUserId) {
+            await Intent.updateOne(
+                { user: otherUserId },
+                { $pull: { matches: currentUserId } }
+            );
+        }
+
+        // Delete all messages in the chat
+        await Message.deleteMany({ chatId });
+
+        res.json({ success: true, message: 'Unmatched successfully' });
+    } catch (err) {
+        console.error('unmatchUser error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Delete chat messages
+exports.deleteChat = async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        await Message.deleteMany({ chatId });
+        res.json({ success: true, message: 'Chat messages deleted' });
+    } catch (err) {
+        console.error('deleteChat error:', err);
+        res.status(500).json({ error: 'Server error' });
     }
 };

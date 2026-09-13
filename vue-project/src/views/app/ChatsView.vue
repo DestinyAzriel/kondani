@@ -22,7 +22,7 @@
             <div v-for="match in newMatches" :key="match.id"
                  class="flex-shrink-0 w-[58px] text-center cursor-pointer group"
                  @click="selectChat(match.id)">
-              <div class="relative w-14 h-14 mx-auto mb-1">
+              <div class="relative w-14 h-14 mx-auto mb-1" @click.stop="openProfilePreview(match)" title="View profile">
                 <img :src="mediaUrl(match.photo)" class="w-full h-full rounded-full object-cover border-2 border-gold-400 p-0.5 group-hover:scale-105 transition-transform" />
               </div>
               <span class="text-[10px] font-medium text-white/75 truncate block">{{ match.name }}</span>
@@ -40,8 +40,8 @@
                     class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 transition-all text-left"
                     :class="activeChatId === String(chat.id) ? 'bg-white/[0.07] border-r-2 border-r-gold-400' : ''"
                     @click="selectChat(chat.id)">
-              <div class="relative shrink-0">
-                <img :src="mediaUrl(chat.photo)" class="w-12 h-12 rounded-2xl object-cover" />
+              <div class="relative shrink-0" @click.stop="openProfilePreview(chat)" title="View profile">
+                <img :src="mediaUrl(chat.photo)" class="w-12 h-12 rounded-2xl object-cover ring-2 ring-transparent hover:ring-gold-400/50 transition-all" />
                 <div v-if="chat.online" class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-night-950" style="background:var(--k-lagoon)"></div>
               </div>
               <div class="flex-1 min-w-0">
@@ -92,7 +92,7 @@
             <div v-for="match in newMatches" :key="match.id"
                  class="flex-shrink-0 w-[68px] text-center cursor-pointer group"
                  @click="openChatWithUser(match.id)">
-              <div class="relative w-16 h-16 mx-auto mb-1.5">
+              <div class="relative w-16 h-16 mx-auto mb-1.5" @click.stop="openProfilePreview(match)" title="View profile">
                 <img :src="mediaUrl(match.photo)" class="w-full h-full rounded-full object-cover border-2 border-gold-400 p-0.5 group-hover:scale-105 transition-transform" />
                 <div v-if="match.isVerified" class="absolute bottom-0 right-0 bg-gradient-to-r from-gold-300 to-gold-500 rounded-full p-1 border-2 border-night-950">
                   <CheckIcon size="9" class="text-night-950 stroke-[4]" />
@@ -111,8 +111,8 @@
             <div v-for="chat in chats" :key="chat.id"
                  class="flex items-center gap-3.5 p-3 k-card hover:bg-white/[.07] transition-all cursor-pointer active:scale-[0.98]"
                  @click="openChat(chat.id)">
-              <div class="relative">
-                <img :src="mediaUrl(chat.photo)" class="w-14 h-14 rounded-2xl object-cover" />
+              <div class="relative shrink-0" @click.stop="openProfilePreview(chat)" title="View profile">
+                <img :src="mediaUrl(chat.photo)" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-transparent hover:ring-gold-400/50 transition-all" />
                 <div v-if="chat.online" class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-night-950" style="background:var(--k-lagoon)"></div>
               </div>
               <div class="flex-1 min-w-0">
@@ -144,6 +144,13 @@
         </section>
       </div>
     </div>
+
+    <!-- Profile Preview Modal -->
+    <ProfilePreviewModal
+      :show="showProfilePreview"
+      :user="profileUser"
+      @close="showProfilePreview = false"
+    />
   </div>
 </template>
 
@@ -156,6 +163,7 @@ import { Check as CheckIcon, BadgeCheck, MessageCircle as MessageCircleIcon } fr
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ChatPanel from '@/components/feature/ChatPanel.vue'
+import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.vue'
 import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()
@@ -163,6 +171,25 @@ const chats = ref([])
 const newMatches = ref([])
 const isLoading = ref(true)
 const activeChatId = ref(null)
+
+/* Profile preview modal */
+const showProfilePreview = ref(false)
+const profileUser = ref({})
+
+const openProfilePreview = async (item) => {
+  profileUser.value = item
+  showProfilePreview.value = true
+  if (item.id) {
+    try {
+      const data = await intentService.getChatProfile(item.id)
+      if (data?.user) {
+        profileUser.value = { ...item, ...data.user }
+      }
+    } catch (e) {
+      // Keep existing data
+    }
+  }
+}
 
 const isDesktop = ref(window.innerWidth >= 768)
 const onResize = () => { isDesktop.value = window.innerWidth >= 768 }

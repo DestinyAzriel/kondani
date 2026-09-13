@@ -110,8 +110,8 @@ const actionText = computed(() => props.actionText || currentState.value.actionT
 .empty-state-description { font-size: 15px; color: rgba(255, 255, 255, 0.55); line-height: 1.6; margin-bottom: 28px; }
 
 .empty-state-action {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 14px 30px; border: none; cursor: pointer;
+  display: flex; width: 100%; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 24px; border: none; cursor: pointer;
   background: linear-gradient(95deg, var(--k-gold), var(--k-gold-l));
   color: var(--k-night); font-weight: 700; border-radius: 99px;
   box-shadow: 0 10px 26px rgba(244, 183, 64, .35); transition: transform .15s;
@@ -120,12 +120,12 @@ const actionText = computed(() => props.actionText || currentState.value.actionT
 .empty-state-action:hover { transform: translateY(-2px); }
 
 .empty-state-secondary {
-  display: block; width: 100%; padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.8);
-  font-weight: 600; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: background .2s; cursor: pointer;
+  display: flex; width: 100%; align-items: center; justify-content: center; padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.85);
+  font-weight: 600; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background .2s, transform .15s; cursor: pointer;
 }
-.empty-state-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+.empty-state-secondary:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-1px); }
 
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
