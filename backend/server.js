@@ -156,19 +156,22 @@ io.on('connection', (socket) => {
       offer: data.signalData,
       from: data.from,
       name: data.name || '',
+      photo: data.photo || '',
       mode: data.mode || 'video'
     });
   });
 
   socket.on('answer_call', (data) => {
     io.to(data.to).emit('call_answered', {
-      signal: data.signal
+      signal: data.signal,
+      from: data.from
     });
   });
 
   socket.on('ice_candidate', (data) => {
     io.to(data.to).emit('ice_candidate', {
-      candidate: data.candidate
+      candidate: data.candidate,
+      from: data.from
     });
   });
 

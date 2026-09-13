@@ -8,52 +8,72 @@ import ResponsiveContainer from '@/components/layout/ResponsiveContainer.vue'
 import { Phone as PhoneIcon, PhoneOff as PhoneOffIcon, Video as VideoIcon } from 'lucide-vue-next'
 import { socketService } from '@/services/socketService'
 import { useAuthStore } from '@/stores/auth'
-import { callState } from '@/services/callState'
+import { callState, clearCall } from '@/services/callState'
+import { playIncomingRing, stopCallSounds } from '@/utils/callSounds'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const myId = String(authStore.user?._id || authStore.user?.id || '')
-const incomingCall = ref(null) // { offer, from, name, mode }
+const incomingCall = ref(null) // { offer, from, name, photo, mode }
 
 const handleIncomingCall = (data) => {
+  callState.pendingCandidates = []
   incomingCall.value = {
     offer: data.offer,
     from: data.from,
     name: data.name || 'Kondani user',
     mode: data.mode || 'video',
-    photo: 'https://via.placeholder.com/150'
+    photo: data.photo || 'https://via.placeholder.com/150'
+  }
+  playIncomingRing()
+}
+
+const handleEarlyIce = (data) => {
+  if (incomingCall.value && data?.candidate) {
+    callState.pendingCandidates.push(data.candidate)
   }
 }
 
 const acceptCall = () => {
   const c = incomingCall.value
   if (!c) return
-  // Hand the offer to the call view via shared state
+  stopCallSounds()
+  // Hand the offer and early gathered candidates to the call view via shared state
   callState.offer = c.offer
   callState.peerId = c.from
   callState.mode = c.mode
   callState.peerName = c.name
+  callState.peerPhoto = c.photo
   incomingCall.value = null
   router.push({
     path: `/video-call/${c.from}`,
-    query: { initiator: 'false', mode: c.mode, name: c.name, to: c.from }
+    query: { initiator: 'false', mode: c.mode, name: c.name, photo: c.photo, to: c.from }
   })
 }
 
 const rejectCall = () => {
+  stopCallSounds()
   if (incomingCall.value) socketService.emit('end_call', { to: incomingCall.value.from })
   incomingCall.value = null
+  clearCall()
 }
 
 onMounted(() => {
   socketService.connect()
   if (myId) socketService.emit('join', myId)
   socketService.on('call_made', handleIncomingCall)
-  socketService.on('call_ended', () => { incomingCall.value = null })
+  socketService.on('ice_candidate', handleEarlyIce)
+  socketService.on('call_ended', () => {
+    stopCallSounds()
+    incomingCall.value = null
+    clearCall()
+  })
 })
 
 onUnmounted(() => {
+  stopCallSounds()
   socketService.off('call_made', handleIncomingCall)
+  socketService.off('ice_candidate', handleEarlyIce)
 })
 </script>
 

@@ -290,7 +290,7 @@ const uploadAndSendVoice = async (blob) => {
 const startCall = (mode) => {
   router.push({
     path: `/video-call/${props.chatId}`,
-    query: { mode, name: chatUser.value.name || '', to: String(getRecipientId()), initiator: 'true' }
+    query: { mode, name: chatUser.value.name || '', photo: chatUser.value.photo || '', to: String(getRecipientId()), initiator: 'true' }
   })
 }
 </script>
