@@ -3,7 +3,7 @@ const crypto = require('crypto');
 
 class PaymentService {
     constructor() {
-        this.baseUrl = process.env.PAYCHANGU_BASE_URL || 'https://api.paychangu.com';
+        this.baseUrl = (process.env.PAYCHANGU_BASE_URL || 'https://api.paychangu.com').trim();
         this.secretKey = process.env.PAYCHANGU_SECRET_KEY;
         this.publicKey = process.env.PAYCHANGU_PUBLIC_KEY;
     }

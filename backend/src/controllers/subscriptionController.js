@@ -94,7 +94,7 @@ exports.initiatePayment = async (req, res) => {
         const amount = selectedPlan.price;
         const referenceId = `KON-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
-        // Determine client return URL and backend callback webhook URL
+        // Determine client (frontend) return URL
         const originHeader = req.headers.origin || req.headers.referer;
         let clientOrigin = 'http://localhost:5173';
         if (originHeader) {
@@ -106,11 +106,15 @@ exports.initiatePayment = async (req, res) => {
             clientOrigin = process.env.CLIENT_ORIGIN.split(',')[0].trim();
         }
 
+        // Determine backend origin for webhook (IPN) URL
+        const backendOrigin = (process.env.SERVER_URL || process.env.BACKEND_URL || '').trim() ||
+            `${req.protocol}://${req.get('host')}`;
+
         // PayChangu browser redirect destinations:
-        // - callback_url: customer is redirected here on payment SUCCESS (PayChangu appends tx_ref query param)
-        // - return_url: customer is redirected here on payment CANCEL or FAILURE
-        const callbackUrl = `${clientOrigin}/premium?status=success`;
-        const returnUrl = `${clientOrigin}/premium?status=cancelled`;
+        // - callback_url: backend endpoint where PayChangu POSTs payment result (IPN/webhook)
+        // - return_url: frontend page the customer browser is sent to after payment
+        const callbackUrl = `${backendOrigin}/api/subscription/webhook`;
+        const returnUrl = `${clientOrigin}/premium?status=success`;
 
         // Split name into first and last if available
         const nameParts = (user.name || 'Kondani Member').trim().split(/\s+/);
