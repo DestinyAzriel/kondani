@@ -29,13 +29,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired → logout
+      // Token expired or unauthorized
       localStorage.removeItem('kondani_token')
-      window.location.href = '/login'
+      const currentPath = window.location.pathname
+      // NEVER reload or redirect if the user is already on the login or register page
+      if (currentPath !== '/login' && currentPath !== '/register') {
+        window.location.href = '/login'
+      }
     }
     // Friendlier message for cold-start timeouts / network drops
     if (error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '')) {
-      error.message = 'The server is waking up — please try again in a moment.'
+      error.message = 'The server is taking longer than expected — please wait a moment.'
     } else if (!error.response) {
       error.message = 'Network error — check your connection and try again.'
     }

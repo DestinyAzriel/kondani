@@ -73,9 +73,19 @@
             <span v-if="authStore.loading" class="spin"></span>{{ authStore.loading ? 'Verifying…' : (isSignup ? 'Create account' : 'Verify & sign in') }}
           </button>
           <div class="row-between">
-            <button type="button" class="textlink" @click="step = 1">← Change number</button>
-            <button type="button" class="textlink" :disabled="authStore.loading" @click="sendOTP">Resend code</button>
+            <button type="button" class="textlink" @click="changeNumber">← Change number</button>
+            <button
+              type="button"
+              class="textlink"
+              :disabled="authStore.loading || resendCooldown > 0"
+              @click="sendOTP"
+            >
+              {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code' }}
+            </button>
           </div>
+          <p class="sms-notice">
+            Code valid for 5 minutes. SMS delivery may take 15–45 seconds depending on network speed.
+          </p>
         </form>
 
         <p class="terms">By continuing you agree to our
@@ -87,7 +97,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
@@ -104,6 +114,48 @@ const heroImg = 'https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=
 const phone = ref('')
 const otp = ref('')
 const step = ref(1)
+const resendCooldown = ref(0)
+let cooldownInterval = null
+
+const startCooldown = (seconds = 60) => {
+  resendCooldown.value = seconds
+  if (cooldownInterval) clearInterval(cooldownInterval)
+  cooldownInterval = setInterval(() => {
+    if (resendCooldown.value > 0) {
+      resendCooldown.value--
+    } else {
+      clearInterval(cooldownInterval)
+      cooldownInterval = null
+    }
+  }, 1000)
+}
+
+onMounted(() => {
+  // Restore persisted phone or step from session if refreshed/interrupted
+  const savedPhone = sessionStorage.getItem('kondani_auth_phone')
+  if (savedPhone) {
+    phone.value = savedPhone
+  }
+  const savedStep = sessionStorage.getItem('kondani_auth_step')
+  const savedTime = sessionStorage.getItem('kondani_auth_time')
+  if (savedStep === '2' && savedTime) {
+    const elapsedSec = Math.floor((Date.now() - Number(savedTime)) / 1000)
+    // 5 minutes OTP validity
+    if (elapsedSec < 300) {
+      step.value = 2
+      if (elapsedSec < 60) {
+        startCooldown(60 - elapsedSec)
+      }
+    } else {
+      sessionStorage.removeItem('kondani_auth_step')
+      sessionStorage.removeItem('kondani_auth_time')
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (cooldownInterval) clearInterval(cooldownInterval)
+})
 
 const cleanedPhone = computed(() => {
   let val = phone.value.replace(/\D/g, '')
@@ -115,16 +167,36 @@ const isValidPhone = computed(() => cleanedPhone.value.length === 9 && /^[89]/.t
 
 const sendOTP = async () => {
   if (!isValidPhone.value || authStore.loading) return
+  if (resendCooldown.value > 0 && step.value === 2) return
   try {
+    sessionStorage.setItem('kondani_auth_phone', phone.value)
+    sessionStorage.setItem('kondani_auth_step', '2')
+    sessionStorage.setItem('kondani_auth_time', Date.now().toString())
     await authStore.register(`+265${cleanedPhone.value}`)
     step.value = 2
-  } catch { /* error shown via authStore.error */ }
+    startCooldown(60)
+  } catch (err) {
+    // If request fails on step 1, allow retry without advancing
+    if (step.value === 1) {
+      sessionStorage.removeItem('kondani_auth_step')
+    }
+  }
+}
+
+const changeNumber = () => {
+  step.value = 1
+  otp.value = ''
+  sessionStorage.removeItem('kondani_auth_step')
+  sessionStorage.removeItem('kondani_auth_time')
 }
 
 const verifyOTP = async () => {
   if (otp.value.length !== 6) return
   try {
     await authStore.login(`+265${cleanedPhone.value}`, otp.value)
+    sessionStorage.removeItem('kondani_auth_phone')
+    sessionStorage.removeItem('kondani_auth_step')
+    sessionStorage.removeItem('kondani_auth_time')
     if (authStore.user?.role === 'admin' || authStore.user?.role === 'moderator') {
       router.push('/admin')
       return
@@ -176,9 +248,11 @@ const verifyOTP = async () => {
 .note { display: flex; gap: 11px; align-items: flex-start; border: 1px solid rgba(244,183,64,.25); background: rgba(244,183,64,.06); border-radius: 12px; padding: 13px; }
 .note .hl { color: #ffd98a; font-weight: 600; }
 .note p { font-size: 12.5px; color: rgba(241,248,246,.6); line-height: 1.5; }
-.row-between { display: flex; justify-content: space-between; }
+.row-between { display: flex; justify-content: space-between; align-items: center; }
 .textlink { background: none; border: none; color: rgba(241,248,246,.5); font-size: 13px; cursor: pointer; }
-.textlink:hover { color: #ffd98a; }
+.textlink:hover:not(:disabled) { color: #ffd98a; }
+.textlink:disabled { opacity: 0.5; cursor: not-allowed; }
+.sms-notice { font-size: 11.5px; color: rgba(241,248,246,.45); text-align: center; margin-top: 8px; line-height: 1.4; }
 .terms { text-align: center; font-size: 11px; color: rgba(241,248,246,.35); margin-top: 26px; }
 .terms a { color: rgba(241,248,246,.55); }
 

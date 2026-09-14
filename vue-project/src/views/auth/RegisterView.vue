@@ -130,12 +130,27 @@
             Verify Code
           </Button>
 
-          <button
-            @click="step = 1"
-            class="w-full text-sm text-white/40 hover:text-emerald-400 transition-colors"
-          >
-            ← Change phone number
-          </button>
+          <div class="flex items-center justify-between text-xs pt-1">
+            <button
+              type="button"
+              @click="changeNumber"
+              class="text-white/40 hover:text-emerald-400 transition-colors cursor-pointer"
+            >
+              ← Change phone number
+            </button>
+            <button
+              type="button"
+              :disabled="authStore.loading || resendCooldown > 0"
+              @click="sendOTP"
+              class="text-emerald-400 hover:text-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code' }}
+            </button>
+          </div>
+
+          <p class="text-xs text-white/40 text-center leading-relaxed">
+            Code valid for 5 minutes. SMS delivery may take 15–45 seconds depending on mobile network traffic.
+          </p>
         </div>
       </div>
 
@@ -156,11 +171,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/ui/Button.vue'
-// Card component is replaced by direct glass-card class usage for better control
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -168,48 +182,96 @@ const authStore = useAuthStore()
 const phone = ref('')
 const otp = ref('')
 const step = ref(1)
+const resendCooldown = ref(0)
+let cooldownInterval = null
+
+const startCooldown = (seconds = 60) => {
+  resendCooldown.value = seconds
+  if (cooldownInterval) clearInterval(cooldownInterval)
+  cooldownInterval = setInterval(() => {
+    if (resendCooldown.value > 0) {
+      resendCooldown.value--
+    } else {
+      clearInterval(cooldownInterval)
+      cooldownInterval = null
+    }
+  }, 1000)
+}
+
+onMounted(() => {
+  const savedPhone = sessionStorage.getItem('kondani_auth_phone')
+  if (savedPhone) {
+    phone.value = savedPhone
+  }
+  const savedStep = sessionStorage.getItem('kondani_auth_step')
+  const savedTime = sessionStorage.getItem('kondani_auth_time')
+  if (savedStep === '2' && savedTime) {
+    const elapsedSec = Math.floor((Date.now() - Number(savedTime)) / 1000)
+    if (elapsedSec < 300) {
+      step.value = 2
+      if (elapsedSec < 60) {
+        startCooldown(60 - elapsedSec)
+      }
+    } else {
+      sessionStorage.removeItem('kondani_auth_step')
+      sessionStorage.removeItem('kondani_auth_time')
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (cooldownInterval) clearInterval(cooldownInterval)
+})
 
 // Validate Malawian phone (more flexible approach)
 const isValidPhone = computed(() => {
-  // Handle both cases where user might enter with or without +265
   let phoneToValidate = phone.value;
-  
-  // If phone starts with +265, remove it for validation
   if (phoneToValidate.startsWith('+265')) {
     phoneToValidate = phoneToValidate.substring(4);
   }
-  
-  // Clean the phone number (remove any non-digit characters)
   const cleaned = phoneToValidate.replace(/\D/g, '');
-  
-  // Check if it's a valid Malawian number (9 digits starting with 08 or 09)
-  // This is more flexible to accommodate all Malawian mobile operators
   return cleaned.length === 9 && (cleaned.startsWith('9') || cleaned.startsWith('8'));
 })
 
 const sendOTP = async () => {
-  // Ensure we're sending the correct format to backend
   let formattedPhone;
   if (phone.value.startsWith('+265')) {
-    formattedPhone = phone.value; // Already in correct format
+    formattedPhone = phone.value;
   } else {
-    formattedPhone = `+265${phone.value}`; // Add country code
+    formattedPhone = `+265${phone.value}`;
   }
   
-  if (!isValidPhone.value) return
+  if (!isValidPhone.value || authStore.loading) return
+  if (resendCooldown.value > 0 && step.value === 2) return
   
   try {
+    sessionStorage.setItem('kondani_auth_phone', phone.value)
+    sessionStorage.setItem('kondani_auth_step', '2')
+    sessionStorage.setItem('kondani_auth_time', Date.now().toString())
     await authStore.register(formattedPhone)
     step.value = 2
+    startCooldown(60)
   } catch {
-    // Error handled in store
+    if (step.value === 1) {
+      sessionStorage.removeItem('kondani_auth_step')
+    }
   }
+}
+
+const changeNumber = () => {
+  step.value = 1
+  otp.value = ''
+  sessionStorage.removeItem('kondani_auth_step')
+  sessionStorage.removeItem('kondani_auth_time')
 }
 
 const verifyOTP = async () => {
   if (otp.value.length !== 6) return
   try {
     await authStore.login(`+265${phone.value}`, otp.value)
+    sessionStorage.removeItem('kondani_auth_phone')
+    sessionStorage.removeItem('kondani_auth_step')
+    sessionStorage.removeItem('kondani_auth_time')
     if (authStore.user?.role === 'admin' || authStore.user?.role === 'moderator') {
       router.push('/admin')
       return

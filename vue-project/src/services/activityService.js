@@ -64,24 +64,46 @@ class ActivityService {
      * Send heartbeat to server every 60 seconds
      */
     startHeartbeat() {
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval)
         this.heartbeatInterval = setInterval(async () => {
-            if (this.isActive.value) {
+            const token = localStorage.getItem('kondani_token')
+            if (this.isActive.value && token) {
                 await this.sendHeartbeat()
             }
         }, 60000) // Every minute
     }
 
     /**
+     * Stop all intervals
+     */
+    stop() {
+        if (this.activityInterval) {
+            clearInterval(this.activityInterval)
+            this.activityInterval = null
+        }
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval)
+            this.heartbeatInterval = null
+        }
+    }
+
+    /**
      * Send heartbeat to update last seen
      */
     async sendHeartbeat() {
+        const token = localStorage.getItem('kondani_token')
+        if (!token) return
         try {
             await api.post('/activity/heartbeat', {
                 timestamp: Date.now(),
                 isActive: this.isActive.value
             })
         } catch (err) {
-            console.error('Heartbeat failed:', err)
+            if (err.response?.status === 401) {
+                this.stop()
+            } else {
+                console.warn('Heartbeat failed:', err.message)
+            }
         }
     }
 
@@ -89,13 +111,17 @@ class ActivityService {
      * Send activity status change to server
      */
     async sendActivityStatus(status) {
+        const token = localStorage.getItem('kondani_token')
+        if (!token) return
         try {
             await api.post('/activity/status', {
                 status,
                 timestamp: Date.now()
             })
         } catch (err) {
-            console.error('Activity status update failed:', err)
+            if (err.response?.status === 401) {
+                this.stop()
+            }
         }
     }
 
