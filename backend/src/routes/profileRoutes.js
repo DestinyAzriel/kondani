@@ -181,9 +181,62 @@ router.delete('/voice', auth, async (req, res) => {
     }
 });
 
+function getCycleInfo() {
+    const now = new Date();
+    const nextRefresh = new Date(now);
+    nextRefresh.setHours(18, 0, 0, 0);
+    if (now >= nextRefresh) {
+        nextRefresh.setDate(nextRefresh.getDate() + 1);
+    }
+    const yyyy = nextRefresh.getFullYear();
+    const mm = String(nextRefresh.getMonth() + 1).padStart(2, '0');
+    const dd = String(nextRefresh.getDate()).padStart(2, '0');
+    const cycleDate = `${yyyy}-${mm}-${dd}-18`;
+    return { nextRefreshAt: nextRefresh.toISOString(), cycleDate };
+}
+
+function scoreCandidate(currentUser, candidate, cycleDate) {
+    let score = 70; // Base compatibility
+
+    const myInterests = currentUser.interests || [];
+    const theirInterests = candidate.interests || [];
+    const shared = myInterests.filter(i => theirInterests.includes(i));
+    score += Math.min(20, shared.length * 10);
+
+    if (candidate.isVerified) score += 8;
+    if (candidate.photos && candidate.photos.length >= 2) score += 5;
+    if (candidate.bio && candidate.bio.trim().length > 15) score += 4;
+
+    // Stable deterministic variation per candidate per cycle
+    const charSum = String(candidate._id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    score += (charSum) % 6;
+
+    let age = (candidate.age && candidate.age >= 18 && candidate.age <= 100) ? candidate.age : null;
+    if (!age && candidate.birthdate) {
+        const ageDiff = Date.now() - new Date(candidate.birthdate).getTime();
+        const calcAge = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970);
+        if (calcAge >= 18 && calcAge <= 100) age = calcAge;
+    }
+
+    return {
+        id: candidate._id,
+        _id: candidate._id,
+        name: candidate.name || 'Member',
+        age,
+        gender: candidate.gender,
+        bio: candidate.bio || '',
+        district: candidate.district || '',
+        photos: (candidate.photos && candidate.photos.length) ? candidate.photos : [],
+        interests: theirInterests,
+        isVerified: Boolean(candidate.isVerified),
+        matchScore: Math.min(98, score),
+        distance: candidate.district ? candidate.district : 'Nearby'
+    };
+}
+
 /**
  * @route   GET /api/profile/daily-picks
- * @desc    Get AI-curated daily picks
+ * @desc    Get real daily picks for the current 6 PM cycle
  * @access  Private
  */
 router.get('/daily-picks', auth, async (req, res) => {
@@ -191,8 +244,55 @@ router.get('/daily-picks', auth, async (req, res) => {
         const currentUser = await User.findById(req.user.id);
         if (!currentUser) return res.status(404).json({ error: 'User not found' });
 
-        // Exclude self and blocked users
+        const { nextRefreshAt, cycleDate } = getCycleInfo();
+        const DailyPick = require('../models/DailyPick');
+        const Intent = require('../models/Intent');
         const Block = require('../models/Block');
+
+        // Check if user already has a batch for this 6 PM cycle
+        let userDailyPick = await DailyPick.findOne({ user: req.user.id, cycleDate });
+
+        if (userDailyPick) {
+            if (userDailyPick.completed) {
+                return res.json({
+                    picks: [],
+                    completedToday: true,
+                    nextRefreshAt,
+                    totalToday: userDailyPick.picks.length
+                });
+            }
+
+            const unswipedIds = userDailyPick.picks.filter(id =>
+                !userDailyPick.swiped.some(sId => String(sId) === String(id))
+            );
+
+            if (unswipedIds.length === 0) {
+                userDailyPick.completed = true;
+                await userDailyPick.save();
+                return res.json({
+                    picks: [],
+                    completedToday: true,
+                    nextRefreshAt,
+                    totalToday: userDailyPick.picks.length
+                });
+            }
+
+            const candidateUsers = await User.find({ _id: { $in: unswipedIds }, isBanned: { $ne: true } })
+                .select('_id name age birthdate gender bio district location photos interests isVerified')
+                .lean();
+
+            const formatted = candidateUsers.map(c => scoreCandidate(currentUser, c, cycleDate));
+            formatted.sort((a, b) => b.matchScore - a.matchScore);
+
+            return res.json({
+                picks: formatted,
+                completedToday: false,
+                nextRefreshAt,
+                totalToday: userDailyPick.picks.length
+            });
+        }
+
+        // New cycle: Curate fresh real users
         const blocks = await Block.find({
             $or: [{ blockerId: req.user.id }, { blockedUserId: req.user.id }]
         });
@@ -200,9 +300,15 @@ router.get('/daily-picks', auth, async (req, res) => {
             String(b.blockerId) === String(req.user.id) ? b.blockedUserId : b.blockerId
         );
 
-        const excludedIds = [currentUser._id, ...blockedIds];
+        const userIntent = await Intent.findOne({ user: req.user.id });
+        const alreadyInteracted = userIntent ? [
+            ...(userIntent.likes || []),
+            ...(userIntent.passes || []),
+            ...(userIntent.matches || [])
+        ] : [];
 
-        // Preference filter
+        const excludedIds = [currentUser._id, ...blockedIds, ...alreadyInteracted];
+
         const query = {
             _id: { $nin: excludedIds },
             isBanned: { $ne: true },
@@ -214,76 +320,132 @@ router.get('/daily-picks', auth, async (req, res) => {
         }
 
         let candidates = await User.find(query)
-            .select('_id name age birthdate gender bio district location photos interests isVerified createdAt')
+            .select('_id name age birthdate gender bio district location photos interests isVerified')
             .limit(50)
             .lean();
 
-        // If gender filter produced 0 candidates, fallback to all valid users
-        if (candidates.length === 0) {
+        // Fallback if gender yielded zero candidates
+        if (candidates.length === 0 && query.gender) {
             delete query.gender;
             candidates = await User.find(query)
-                .select('_id name age birthdate gender bio district location photos interests isVerified createdAt')
+                .select('_id name age birthdate gender bio district location photos interests isVerified')
                 .limit(50)
                 .lean();
         }
 
-        // Calculate AI Compatibility Score for each candidate
-        const scoredPicks = candidates.map(candidate => {
-            let score = 70; // Base compatibility
+        if (candidates.length === 0) {
+            return res.json({
+                picks: [],
+                completedToday: false,
+                exhausted: true,
+                nextRefreshAt,
+                totalToday: 0
+            });
+        }
 
-            // Shared interests (+10 per shared interest, max 20)
-            const myInterests = currentUser.interests || [];
-            const theirInterests = candidate.interests || [];
-            const shared = myInterests.filter(i => theirInterests.includes(i));
-            score += Math.min(20, shared.length * 10);
-
-            // Verified badge bonus (+8)
-            if (candidate.isVerified) score += 8;
-
-            // Multiple photos bonus (+5)
-            if (candidate.photos && candidate.photos.length >= 2) score += 5;
-
-            // Bio bonus (+4)
-            if (candidate.bio && candidate.bio.trim().length > 15) score += 4;
-
-            // Stable pseudo-random variation per candidate per day (0-6)
-            const dayNum = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-            const charSum = String(candidate._id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-            score += (charSum + dayNum) % 7;
-
-            // Calculate age safely
-            let age = (candidate.age && candidate.age >= 18 && candidate.age <= 100) ? candidate.age : null;
-            if (!age && candidate.birthdate) {
-                const ageDiff = Date.now() - new Date(candidate.birthdate).getTime();
-                const calcAge = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970);
-                if (calcAge >= 18 && calcAge <= 100) age = calcAge;
-            }
-
-            return {
-                id: candidate._id,
-                _id: candidate._id,
-                name: candidate.name || 'Member',
-                age,
-                gender: candidate.gender,
-                bio: candidate.bio || '',
-                district: candidate.district || '',
-                photos: (candidate.photos && candidate.photos.length) ? candidate.photos : [],
-                interests: theirInterests,
-                isVerified: Boolean(candidate.isVerified),
-                matchScore: Math.min(98, score),
-                distance: candidate.district ? candidate.district : 'Nearby'
-            };
-        });
-
-        // Sort by highest match score
+        const scoredPicks = candidates.map(c => scoreCandidate(currentUser, c, cycleDate));
         scoredPicks.sort((a, b) => b.matchScore - a.matchScore);
 
         const limit = currentUser.isPremium ? 10 : 6;
         const topPicks = scoredPicks.slice(0, limit);
 
-        res.json({ picks: topPicks });
+        await DailyPick.create({
+            user: currentUser._id,
+            cycleDate,
+            picks: topPicks.map(p => p._id),
+            swiped: [],
+            completed: false
+        });
+
+        res.json({
+            picks: topPicks,
+            completedToday: false,
+            nextRefreshAt,
+            totalToday: topPicks.length
+        });
     } catch (error) {
         console.error('Daily picks error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * @route   POST /api/profile/daily-picks/:id/swipe
+ * @desc    Record a real like or pass on a daily pick with cycle completion tracking
+ * @access  Private
+ */
+router.post('/daily-picks/:id/swipe', auth, async (req, res) => {
+    try {
+        const { action } = req.body; // 'like' | 'pass'
+        const candidateId = req.params.id;
+        const currentUserId = req.user.id;
+
+        const { cycleDate, nextRefreshAt } = getCycleInfo();
+        const DailyPick = require('../models/DailyPick');
+        const Intent = require('../models/Intent');
+        const User = require('../models/User');
+
+        let dailyPick = await DailyPick.findOne({ user: currentUserId, cycleDate });
+        if (dailyPick) {
+            if (!dailyPick.swiped.some(id => String(id) === String(candidateId))) {
+                dailyPick.swiped.push(candidateId);
+            }
+            const allSwiped = dailyPick.picks.every(pId =>
+                dailyPick.swiped.some(sId => String(sId) === String(pId))
+            );
+            if (allSwiped) {
+                dailyPick.completed = true;
+            }
+            await dailyPick.save();
+        }
+
+        let isMatch = false;
+        let matchData = null;
+
+        if (action === 'like') {
+            let userIntent = await Intent.findOne({ user: currentUserId });
+            if (!userIntent) {
+                userIntent = await Intent.create({ user: currentUserId });
+            }
+            if (!userIntent.likes.some(id => String(id) === String(candidateId))) {
+                userIntent.likes.push(candidateId);
+                await userIntent.save();
+            }
+
+            // Check if reciprocal like exists
+            const targetIntent = await Intent.findOne({ user: candidateId });
+            if (targetIntent && targetIntent.likes.some(id => String(id) === String(currentUserId))) {
+                isMatch = true;
+                if (!userIntent.matches.some(id => String(id) === String(candidateId))) {
+                    userIntent.matches.push(candidateId);
+                    await userIntent.save();
+                }
+                if (!targetIntent.matches.some(id => String(id) === String(currentUserId))) {
+                    targetIntent.matches.push(currentUserId);
+                    await targetIntent.save();
+                }
+                matchData = await User.findById(candidateId).select('name photos district age isVerified');
+            }
+        } else {
+            let userIntent = await Intent.findOne({ user: currentUserId });
+            if (!userIntent) {
+                userIntent = await Intent.create({ user: currentUserId });
+            }
+            if (!userIntent.passes.some(id => String(id) === String(candidateId))) {
+                userIntent.passes.push(candidateId);
+                await userIntent.save();
+            }
+        }
+
+        res.json({
+            success: true,
+            isMatch,
+            matchData,
+            completedToday: dailyPick ? dailyPick.completed : false,
+            nextRefreshAt
+        });
+    } catch (error) {
+        console.error('Daily pick swipe error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });

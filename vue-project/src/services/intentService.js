@@ -48,8 +48,15 @@ export const intentService = {
   // Get curated Daily Picks
   async getDailyPicks() {
     const response = await api.get('/profile/daily-picks')
-    return response.data // { picks: [...] }
+    return response.data // { picks: [...], completedToday, nextRefreshAt, totalToday }
   },
+
+  // Swipe (like/pass) on a Daily Pick
+  async swipeDailyPick(pickId, action) {
+    const response = await api.post(`/profile/daily-picks/${pickId}/swipe`, { action })
+    return response.data // { success, isMatch, matchData, completedToday, nextRefreshAt }
+  },
+
 
   // Get user's likes
   async getLikes() {

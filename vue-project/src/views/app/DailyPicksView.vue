@@ -74,9 +74,25 @@
         </div>
       </div>
 
-      <EmptyState v-else type="no-picks" title="No picks right now"
-        message="Check back later for fresh matches curated for you."
-        action-text="Explore discover" @action="router.push('/encounters')" />
+      <!-- Completed today's batch -->
+      <EmptyState
+        v-else-if="completedToday"
+        type="no-picks"
+        title="You're all caught up for today!"
+        :description="`You've reviewed all your daily picks. Your next batch will arrive in ${timeUntilRefresh} at 6 PM.`"
+        action-text="Explore discover"
+        @action="router.push('/encounters')"
+      />
+
+      <!-- Exhausted / No real registered candidates matching filter -->
+      <EmptyState
+        v-else
+        type="no-picks"
+        title="No picks right now"
+        :description="`Your personalised picks refresh at 6 PM every day. New picks will arrive in ${timeUntilRefresh} as new members join.`"
+        action-text="Explore discover"
+        @action="router.push('/encounters')"
+      />
     </div>
 
     <!-- Profile Preview Modal -->
@@ -89,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { intentService } from '@/services/intentService'
@@ -97,12 +113,17 @@ import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.vue'
 import { BadgeCheck, MapPin as MapPinIcon, Clock as ClockIcon, Star, Heart, Image as ImageIcon } from 'lucide-vue-next'
+import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()
 const { success, info } = useToast()
 
 const picks = ref([])
 const isLoading = ref(true)
+const completedToday = ref(false)
+const nextRefreshAt = ref(null)
+const timeUntilRefresh = ref('')
+let timerInterval = null
 
 const showProfilePreview = ref(false)
 const previewUser = ref({})
@@ -112,20 +133,40 @@ const openProfile = (pick) => {
   showProfilePreview.value = true
 }
 
-import { mediaUrl } from '@/utils/media'
 const photoOf = (p) => mediaUrl(p.photos?.[0])
 const ringStyle = (score = 0) => ({
   background: `conic-gradient(#f4b740 0% ${score}%, rgba(255,255,255,.12) ${score}% 100%)`
 })
 
-const timeUntilRefresh = computed(() => {
-  const now = new Date(); const t = new Date(); t.setHours(18, 0, 0, 0)
-  if (now > t) t.setDate(t.getDate() + 1)
-  const diff = t - now
-  return `${Math.floor(diff / 3600000)}h ${Math.floor((diff % 3600000) / 60000)}m`
-})
+// Live ticking countdown to the next 6 PM cycle
+const updateTimer = () => {
+  const now = new Date()
+  let targetTime
+  if (nextRefreshAt.value) {
+    targetTime = new Date(nextRefreshAt.value)
+  } else {
+    targetTime = new Date(now)
+    targetTime.setHours(18, 0, 0, 0)
+    if (now >= targetTime) targetTime.setDate(targetTime.getDate() + 1)
+  }
 
-onMounted(async () => {
+  const diff = targetTime - now
+  if (diff <= 0) {
+    timeUntilRefresh.value = '0h 0m 0s'
+    // Auto-refresh when countdown strikes 6 PM
+    if (!isLoading.value) {
+      loadPicks()
+    }
+    return
+  }
+
+  const hours = Math.floor(diff / 3600000)
+  const minutes = Math.floor((diff % 3600000) / 60000)
+  const seconds = Math.floor((diff % 60000) / 1000)
+  timeUntilRefresh.value = `${hours}h ${minutes}m ${seconds}s`
+}
+
+const loadPicks = async () => {
   isLoading.value = true
   try {
     const data = await intentService.getDailyPicks()
@@ -134,25 +175,51 @@ onMounted(async () => {
       ...p,
       id: p.id || p._id
     }))
+    completedToday.value = Boolean(data?.completedToday)
+    if (data?.nextRefreshAt) {
+      nextRefreshAt.value = data.nextRefreshAt
+    }
   } catch (e) {
     console.error('Failed to load picks', e)
     picks.value = []
   } finally {
     isLoading.value = false
+    updateTimer()
   }
+}
+
+onMounted(() => {
+  loadPicks()
+  updateTimer()
+  timerInterval = setInterval(updateTimer, 1000)
+})
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
 })
 
 const handleLike = async (pick) => {
   picks.value = picks.value.filter(p => p.id !== pick.id)
   try {
-    const res = await intentService.likeIntent(pick.id)
+    const res = await intentService.swipeDailyPick(pick.id, 'like')
     if (res?.isMatch) info(`It's a match with ${pick.name}!`)
     else success(`You liked ${pick.name}`)
-  } catch (e) { console.error(e) }
+    if (res?.completedToday) completedToday.value = true
+    if (res?.nextRefreshAt) nextRefreshAt.value = res.nextRefreshAt
+  } catch (e) {
+    console.error(e)
+  }
 }
+
 const handlePass = async (pick) => {
   picks.value = picks.value.filter(p => p.id !== pick.id)
-  try { await intentService.passIntent(pick.id) } catch (e) { console.error(e) }
+  try {
+    const res = await intentService.swipeDailyPick(pick.id, 'pass')
+    if (res?.completedToday) completedToday.value = true
+    if (res?.nextRefreshAt) nextRefreshAt.value = res.nextRefreshAt
+  } catch (e) {
+    console.error(e)
+  }
 }
 </script>
 
