@@ -430,8 +430,13 @@ const syncUserData = (u) => {
   prefs.distance = u.preferences?.distance ?? 100
   prefs.ageMin = u.preferences?.ageMin ?? 18
   prefs.ageMax = u.preferences?.ageMax ?? 60
-  prefs.gender = u.preferences?.gender ?? 'Everyone'
-  prefs.verifiedOnly = u.preferences?.verifiedOnly ?? false
+
+  const g = u.preferences?.gender
+  if (g === 'Men') prefs.gender = 'Male'
+  else if (g === 'Women') prefs.gender = 'Female'
+  else prefs.gender = g ?? 'Everyone'
+
+  prefs.verifiedOnly = Boolean(u.preferences?.verifiedOnly)
 
   priv.online = u.showOnlineStatus !== false
   priv.receipts = u.readReceipts !== false
@@ -458,7 +463,7 @@ onMounted(async () => {
 const saveDiscovery = async () => {
   saving.value = true
   try {
-    await authStore.updateUserProfile({
+    const res = await authStore.updateUserProfile({
       preferences: {
         distance: Number(prefs.distance),
         ageMin: Number(prefs.ageMin),
@@ -467,9 +472,21 @@ const saveDiscovery = async () => {
         verifiedOnly: Boolean(prefs.verifiedOnly)
       }
     })
+    if (res?.preferences) {
+      prefs.distance = res.preferences.distance ?? prefs.distance
+      prefs.ageMin = res.preferences.ageMin ?? prefs.ageMin
+      prefs.ageMax = res.preferences.ageMax ?? prefs.ageMax
+      const g = res.preferences.gender
+      if (g === 'Men') prefs.gender = 'Male'
+      else if (g === 'Women') prefs.gender = 'Female'
+      else prefs.gender = g ?? 'Everyone'
+      prefs.verifiedOnly = Boolean(res.preferences.verifiedOnly)
+    }
     success('Discovery settings saved')
   } catch (e) {
-    toastError('Could not save discovery settings')
+    console.error('Failed to save discovery settings:', e)
+    const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Could not save discovery settings'
+    toastError(msg)
   } finally {
     saving.value = false
   }
@@ -477,37 +494,43 @@ const saveDiscovery = async () => {
 
 // Toggle Online Status
 const toggleOnlineStatus = async () => {
+  const prev = priv.online
   priv.online = !priv.online
   try {
     await authStore.updateUserProfile({ showOnlineStatus: priv.online })
     success(priv.online ? 'Online status visible to matches' : 'Online status hidden')
   } catch (e) {
-    priv.online = !priv.online
-    toastError('Could not update online status')
+    priv.online = prev
+    const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Could not update online status'
+    toastError(msg)
   }
 }
 
 // Toggle Read Receipts
 const toggleReadReceipts = async () => {
+  const prev = priv.receipts
   priv.receipts = !priv.receipts
   try {
     await authStore.updateUserProfile({ readReceipts: priv.receipts })
     success(priv.receipts ? 'Read receipts enabled' : 'Read receipts hidden')
   } catch (e) {
-    priv.receipts = !priv.receipts
-    toastError('Could not update read receipts')
+    priv.receipts = prev
+    const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Could not update read receipts'
+    toastError(msg)
   }
 }
 
 // Toggle Visibility
 const toggleVisibility = async () => {
+  const prev = isVisible.value
   isVisible.value = !isVisible.value
   try {
     await authStore.updateUserProfile({ isVisible: isVisible.value })
     success(isVisible.value ? 'Profile is now visible in discovery' : 'Profile hidden from discovery')
   } catch (e) {
-    isVisible.value = !isVisible.value
-    toastError('Could not update visibility')
+    isVisible.value = prev
+    const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Could not update visibility'
+    toastError(msg)
   }
 }
 
@@ -526,7 +549,8 @@ const toggleNotif = async (key) => {
     success('Notification preference saved')
   } catch (e) {
     notif[key] = !notif[key]
-    toastError('Could not save notification preference')
+    const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Could not save notification preference'
+    toastError(msg)
   }
 }
 
