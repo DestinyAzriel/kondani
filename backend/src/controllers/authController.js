@@ -335,6 +335,15 @@ exports.updateProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
+
+        if (updateData.showOnlineStatus !== undefined) {
+            const { onlineUsers } = require('./chatController');
+            const io = req.app.get('io');
+            if (io) {
+                const isOnline = updateData.showOnlineStatus ? onlineUsers.has(String(userId)) : false;
+                io.emit('user_status', { userId: String(userId), isOnline });
+            }
+        }
         
         res.json(user);
     } catch (err) {

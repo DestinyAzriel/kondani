@@ -8,6 +8,9 @@ const { storeUpload } = require('../services/cloudinaryService');
 const onlineUsers = new Map();
 const typingIndicators = new Map();
 
+// Export onlineUsers so socket.io in server.js can update it
+exports.onlineUsers = onlineUsers;
+
 // Helper function to mark messages as delivered
 async function markMessagesAsDelivered(chatId, recipientId) {
     try {
@@ -45,6 +48,10 @@ exports.getChats = async (req, res) => {
             // Get last message
             const lastMessage = await Message.findOne({ chatId }).sort({ createdAt: -1 });
 
+            // Respect the matched user's showOnlineStatus privacy setting
+            const matchShowOnline = match.showOnlineStatus !== false; // default true
+            const isOnline = matchShowOnline && (onlineUsers.has(match._id.toString()) || false);
+
             return {
                 id: chatId,
                 userId: match._id,
@@ -61,7 +68,7 @@ exports.getChats = async (req, res) => {
                 lastMessage: lastMessage ? lastMessage.content : 'Start chatting!',
                 lastMessageTime: lastMessage ? lastMessage.createdAt : match.createdAt, // fallback
                 unread: lastMessage ? (!lastMessage.read && lastMessage.sender.toString() !== currentUserId) : false,
-                online: onlineUsers.has(match._id.toString()) || false,
+                online: isOnline,
                 typing: typingIndicators.get(chatId) || false
             };
         }));
@@ -146,7 +153,7 @@ exports.sendMessage = async (req, res) => {
 // Set user as online
 exports.setUserOnline = async (req, res) => {
     try {
-        const currentUserId = req.user.id;
+        const currentUserId = String(req.user.id);
         onlineUsers.set(currentUserId, Date.now());
         
         // Clean up old entries (older than 5 minutes)
@@ -157,8 +164,17 @@ exports.setUserOnline = async (req, res) => {
             }
         }
         
+        const user = await User.findById(currentUserId).select('showOnlineStatus');
+        const showOnline = user ? user.showOnlineStatus !== false : true;
+        if (showOnline) {
+            await User.findByIdAndUpdate(currentUserId, { isOnline: true, lastActive: new Date() });
+            const io = req.app.get('io');
+            if (io) io.emit('user_status', { userId: currentUserId, isOnline: true });
+        }
+        
         res.json({ success: true });
     } catch (err) {
+        console.error('setUserOnline error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -166,10 +182,14 @@ exports.setUserOnline = async (req, res) => {
 // Set user as offline
 exports.setUserOffline = async (req, res) => {
     try {
-        const currentUserId = req.user.id;
+        const currentUserId = String(req.user.id);
         onlineUsers.delete(currentUserId);
+        await User.findByIdAndUpdate(currentUserId, { isOnline: false, lastActive: new Date() });
+        const io = req.app.get('io');
+        if (io) io.emit('user_status', { userId: currentUserId, isOnline: false });
         res.json({ success: true });
     } catch (err) {
+        console.error('setUserOffline error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -251,15 +271,16 @@ exports.unmatchUser = async (req, res) => {
             otherUserId = chatId.split('_').find(id => id !== String(currentUserId));
         }
 
-        // Remove from both Intent matches
+        // Remove from both Intent matches AND likes/superLikes (both directions)
+        // This ensures the "X people liked you" count also drops
         await Intent.updateOne(
             { user: currentUserId },
-            { $pull: { matches: otherUserId } }
+            { $pull: { matches: otherUserId, likes: otherUserId, superLikes: otherUserId } }
         );
         if (otherUserId) {
             await Intent.updateOne(
                 { user: otherUserId },
-                { $pull: { matches: currentUserId } }
+                { $pull: { matches: currentUserId, likes: currentUserId, superLikes: currentUserId } }
             );
         }
 

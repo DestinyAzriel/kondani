@@ -384,10 +384,17 @@ const handleClickOutside = (e) => {
   }
 }
 
+const handleUserStatus = ({ userId, isOnline }) => {
+  if (String(chatUser.value?.userId) === String(userId) || String(recipientId) === String(userId)) {
+    chatUser.value = { ...chatUser.value, online: isOnline }
+  }
+}
+
 onMounted(async () => {
   socketService.connect()
   if (myId) socketService.emit('join', String(myId))
   socketService.on('new_message', handleNewMessage)
+  socketService.on('user_status', handleUserStatus)
   document.addEventListener('click', handleClickOutside)
 
   try {
@@ -408,6 +415,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   socketService.off('new_message', handleNewMessage)
+  socketService.off('user_status', handleUserStatus)
   document.removeEventListener('click', handleClickOutside)
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
   intentService.setTyping(chatId, false)

@@ -68,7 +68,7 @@
         <p class="k-label mb-3">Privacy &amp; safety</p>
         <div class="k-card overflow-hidden">
           <div class="k-row"><div class="k-row-ic"><Eye :size="16" /></div><div class="grow"><div class="t">Profile visibility</div><div class="d">{{ isVisible ? 'Visible to nearby users' : 'Hidden from everyone' }}</div></div><button class="k-toggle" :class="isVisible?'on':''" @click="toggleVisibility"><span class="knob"></span></button></div>
-          <div class="k-row"><div class="k-row-ic"><CircleDot :size="16" /></div><div class="grow"><div class="t">Show online status</div></div><button class="k-toggle" :class="priv.online?'on':''" @click="priv.online=!priv.online"><span class="knob"></span></button></div>
+          <div class="k-row"><div class="k-row-ic"><CircleDot :size="16" /></div><div class="grow"><div class="t">Show online status</div><div class="d">{{ priv.online ? 'Visible when you are active' : 'Hidden from everyone' }}</div></div><button class="k-toggle" :class="priv.online?'on':''" @click="toggleOnlineStatus"><span class="knob"></span></button></div>
           <div class="k-row"><div class="k-row-ic"><CheckCheck :size="16" /></div><div class="grow"><div class="t">Read receipts</div></div><button class="k-toggle" :class="priv.receipts?'on':''" @click="priv.receipts=!priv.receipts"><span class="knob"></span></button></div>
           <div class="k-row cursor-pointer" @click="router.push('/safety')"><div class="k-row-ic"><Shield :size="16" /></div><div class="grow"><div class="t">Safety center</div></div><ChevronRight :size="18" class="text-white/30" /></div>
         </div>
@@ -141,9 +141,23 @@ const prefs = reactive({
   verifiedOnly: user.value.preferences?.verifiedOnly ?? false
 })
 const notif = reactive({ matches: true, messages: true, likes: true, picks: false })
-const priv = reactive({ online: true, receipts: false })
+const priv = reactive({
+  online: user.value.showOnlineStatus !== false,
+  receipts: false
+})
 const isVisible = ref(user.value.isVisible !== false)
 const saving = ref(false)
+
+const toggleOnlineStatus = async () => {
+  priv.online = !priv.online
+  try {
+    await authStore.updateUserProfile({ showOnlineStatus: priv.online })
+    success(priv.online ? 'Online status visible to matches' : 'Online status hidden')
+  } catch (e) {
+    priv.online = !priv.online
+    toastError('Could not update online status')
+  }
+}
 
 const saveDiscovery = async () => {
   saving.value = true

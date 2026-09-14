@@ -415,16 +415,24 @@ async function loadChat() {
 
 watch(() => props.chatId, (id) => { if (id) loadChat() })
 
+const handleUserStatus = ({ userId, isOnline }) => {
+  if (String(chatUser.value?.userId) === String(userId) || String(getRecipientId()) === String(userId)) {
+    chatUser.value = { ...chatUser.value, online: isOnline }
+  }
+}
+
 onMounted(() => {
   socketService.connect()
   if (myId) socketService.emit('join', String(myId))
   socketService.on('new_message', handleNewMessage)
+  socketService.on('user_status', handleUserStatus)
   document.addEventListener('click', handleClickOutside)
   loadChat()
 })
 
 onUnmounted(() => {
   socketService.off('new_message', handleNewMessage)
+  socketService.off('user_status', handleUserStatus)
   document.removeEventListener('click', handleClickOutside)
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
   intentService.setTyping(props.chatId, false)

@@ -97,6 +97,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    showOnlineStatus: {
+        type: Boolean,
+        default: true
+    },
     isVisible: {
         type: Boolean,
         default: true

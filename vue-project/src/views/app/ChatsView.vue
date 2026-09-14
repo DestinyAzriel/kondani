@@ -162,10 +162,18 @@ const selectChat = (id) => {
 const openChat = (id) => router.push(`/chats/${id}`)
 const openChatWithUser = (userId) => router.push(`/chats/${userId}`)
 
+const handleUserStatus = ({ userId, isOnline }) => {
+  const chat = chats.value.find(c => String(c.userId) === String(userId))
+  if (chat) {
+    chat.online = isOnline
+  }
+}
+
 onMounted(async () => {
   window.addEventListener('resize', onResize)
   socketService.connect()
   socketService.on('new_message', handleNewMessage)
+  socketService.on('user_status', handleUserStatus)
   try {
     await intentService.setUserOnline()
     const chatData = await intentService.getChats()
@@ -186,6 +194,7 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
   socketService.off('new_message', handleNewMessage)
+  socketService.off('user_status', handleUserStatus)
   intentService.setUserOffline()
 })
 </script>

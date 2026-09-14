@@ -142,13 +142,51 @@ const io = new Server(server, {
   }
 });
 
+const { onlineUsers } = require('./src/controllers/chatController');
+const User = require('./src/models/User');
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // Join user room for private messages
-  socket.on('join', (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined room`);
+  // Join user room for private messages & mark online
+  socket.on('join', async (userId) => {
+    if (!userId) return;
+    const strUserId = String(userId);
+    socket.userId = strUserId;
+    socket.join(strUserId);
+    console.log(`User ${strUserId} joined room`);
+
+    // Mark online
+    onlineUsers.set(strUserId, Date.now());
+
+    try {
+      const user = await User.findById(strUserId).select('showOnlineStatus');
+      const showOnline = user ? user.showOnlineStatus !== false : true;
+      if (showOnline) {
+        await User.findByIdAndUpdate(strUserId, { isOnline: true, lastActive: new Date() });
+        io.emit('user_status', { userId: strUserId, isOnline: true });
+      }
+    } catch (e) {
+      console.error('Error in socket join status update:', e);
+    }
+  });
+
+  socket.on('disconnect', async () => {
+    console.log('User disconnected:', socket.id, socket.userId);
+    if (socket.userId) {
+      const uid = socket.userId;
+      // Check if user still has other connected sockets
+      const stillConnected = Array.from(io.sockets.sockets.values()).some(s => s.userId === uid && s.id !== socket.id);
+      if (!stillConnected) {
+        onlineUsers.delete(uid);
+        try {
+          await User.findByIdAndUpdate(uid, { isOnline: false, lastActive: new Date() });
+          io.emit('user_status', { userId: uid, isOnline: false });
+        } catch (e) {
+          console.error('Error updating offline status:', e);
+        }
+      }
+    }
   });
 
   // WebRTC Signaling

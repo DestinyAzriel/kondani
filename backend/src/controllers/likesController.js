@@ -11,9 +11,31 @@ exports.getLikes = async (req, res) => {
         // Identities are unlocked for GOLD and PLATINUM tiers. Free and Plus get the count.
         const canSeeIdentities = isPremium && (tier === 'gold' || tier === 'platinum');
 
-        // People who liked the current user
+        // Get current user's intent to filter out already matched or passed users
+        const myIntent = await Intent.findOne({ user: currentUserId }).populate('matches');
+        const matchedIds = new Set((myIntent?.matches || []).map(m => String(m._id || m)));
+        const passedIds = new Set((myIntent?.passes || []).map(p => String(p)));
+
+        // Get blocked users
+        const Block = require('../models/Block');
+        const blocks = await Block.find({
+            $or: [{ blockerId: currentUserId }, { blockedUserId: currentUserId }]
+        });
+        const blockedIds = new Set(blocks.map(b => 
+            String(b.blockerId) === String(currentUserId) ? String(b.blockedUserId) : String(b.blockerId)
+        ));
+
+        // People who liked the current user (excluding matches, passes, and blocked)
         const likedByIntents = await Intent.find({ likes: currentUserId }).populate('user');
-        const validLikers = likedByIntents.filter(i => i.user);
+        const validLikers = likedByIntents.filter(i => {
+            if (!i.user) return false;
+            const likerId = String(i.user._id);
+            if (likerId === String(currentUserId)) return false;
+            if (matchedIds.has(likerId)) return false;
+            if (passedIds.has(likerId)) return false;
+            if (blockedIds.has(likerId)) return false;
+            return true;
+        });
         const likesCount = validLikers.length;
 
         const newLikes = canSeeIdentities
@@ -27,7 +49,6 @@ exports.getLikes = async (req, res) => {
             : [];
 
         // Mutual matches are always visible (you matched each other).
-        const myIntent = await Intent.findOne({ user: currentUserId }).populate('matches');
         const mutualLikes = myIntent ? myIntent.matches.filter(Boolean).map(user => ({
             id: user._id,
             name: user.name,
