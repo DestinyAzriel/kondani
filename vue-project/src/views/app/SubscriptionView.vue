@@ -175,82 +175,213 @@
 
     </div>
 
-    <!-- Elegant "Opening PayChangu Gateway" Modal (Replaces the blunt toast) -->
-    <div v-if="subscribing" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4 animate-in fade-in duration-200">
-      <div class="bg-neutral-900 border border-white/15 p-6 sm:p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl relative overflow-hidden">
-        <!-- Ambient decorative glow -->
+    <!-- Elegant "Opening PayChangu Gateway" Modal —
+         Mobile  : centered compact card
+         Desktop : fills the full content area to the right of the 340px sidebar -->
+    <div
+      v-if="subscribing"
+      class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md animate-in fade-in duration-200
+             flex items-center justify-center p-4
+             md:items-stretch md:justify-end md:p-0"
+    >
+      <!-- Sidebar spacer (desktop only) — pushes modal out of the nav area -->
+      <div class="hidden md:block shrink-0" style="width: 340px;"></div>
+
+      <!-- Modal card -->
+      <div
+        class="relative bg-neutral-900 border border-white/15 shadow-2xl overflow-hidden text-white
+               w-full max-w-sm rounded-3xl
+               md:max-w-none md:flex-1 md:rounded-none md:border-l md:border-t-0 md:border-r-0 md:border-b-0"
+      >
+        <!-- Ambient glow -->
         <div
-          class="absolute top-[-40px] left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-40 pointer-events-none"
+          class="absolute -top-16 -right-16 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
           :style="{ background: currentPlanData.accentColor || '#f59e0b' }"
         ></div>
 
-        <!-- Animated Gateway Ring & Shield -->
-        <div class="relative w-20 h-20 mx-auto mb-5 flex items-center justify-center">
+        <!-- ======= Inner Layout: 2-column on desktop ======= -->
+        <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 md:divide-x md:divide-white/10 h-full md:h-full">
+
+          <!-- ── Left Column (Desktop Only) ── Plan details & perks -->
+          <div class="hidden md:flex md:col-span-5 flex-col justify-between p-8 lg:p-10 bg-white/[0.02]">
+            <div>
+              <!-- Tier badge row -->
+              <div class="flex items-center gap-2.5 mb-4">
+                <span
+                  class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest"
+                  style="color:#050d12"
+                  :style="{ background: currentPlanData.accentColor || '#f59e0b' }"
+                >
+                  {{ currentPlanData.badge || 'Recommended' }}
+                </span>
+                <span class="text-xs text-white/45 font-medium">Subscription Summary</span>
+              </div>
+
+              <!-- Plan name & headline -->
+              <div class="mb-1">
+                <h3 class="text-3xl font-bold font-serif text-white tracking-tight">
+                  Kondani <span :style="{ color: currentPlanData.accentColor }">{{ currentPlanData.subtitle }}</span>
+                </h3>
+                <p class="text-sm text-white/50 mt-0.5">
+                  {{ currentPlanData.name }} Membership
+                </p>
+              </div>
+              <p class="text-sm text-white/65 mb-7 mt-3 leading-relaxed max-w-xs">
+                {{ currentPlanData.headline }}
+              </p>
+
+              <!-- Included perks list -->
+              <div class="space-y-3">
+                <div
+                  v-for="(feat, idx) in currentPlanData.features.filter(f => f.included)"
+                  :key="idx"
+                  class="flex items-start gap-3 text-sm"
+                >
+                  <div
+                    class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                    :style="{ background: `${currentPlanData.accentColor || '#f59e0b'}22`, color: currentPlanData.accentColor || '#f59e0b' }"
+                  >
+                    <Check :size="12" class="stroke-[2.5]" />
+                  </div>
+                  <span
+                    :class="feat.highlight ? 'text-white font-semibold' : 'text-white/75'"
+                  >{{ feat.text }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Price breakdown card -->
+            <div class="mt-8 border border-white/10 rounded-2xl p-5 bg-white/[0.03] space-y-3">
+              <div class="flex justify-between text-sm text-white/55">
+                <span>Access Period</span>
+                <span class="text-white font-medium">{{ currentPlanData.duration }} Days</span>
+              </div>
+              <div class="flex justify-between text-sm text-white/55">
+                <span>Gateway Fee</span>
+                <span class="text-emerald-400 font-medium">Free (0 MWK)</span>
+              </div>
+              <div class="pt-3 border-t border-white/10 flex justify-between items-baseline">
+                <span class="text-sm font-semibold text-white/80">Total Due Today</span>
+                <span class="text-2xl font-bold font-display" :style="{ color: currentPlanData.accentColor || '#f59e0b' }">
+                  MWK {{ currentPlanData.price.toLocaleString() }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Right Column: Gateway connection & actions ── -->
           <div
-            class="absolute inset-0 rounded-full border-3 border-t-transparent animate-spin"
-            :style="{ borderColor: `${currentPlanData.accentColor || '#f59e0b'} transparent ${currentPlanData.accentColor || '#f59e0b'} ${currentPlanData.accentColor || '#f59e0b'}` }"
-          ></div>
-          <div
-            class="w-13 h-13 rounded-full flex items-center justify-center border shadow-inner"
-            :style="{
-              background: `${currentPlanData.accentColor || '#f59e0b'}20`,
-              borderColor: `${currentPlanData.accentColor || '#f59e0b'}50`,
-              color: currentPlanData.accentColor || '#f59e0b'
-            }"
+            class="col-span-1 md:col-span-7 flex flex-col items-center justify-between
+                   p-6 sm:p-8 md:p-10 lg:p-14 text-center"
           >
-            <ShieldCheck :size="26" />
+            <div class="w-full">
+              <!-- Spinning gateway ring + shield icon -->
+              <div class="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <div
+                  class="absolute inset-0 rounded-full border-[3px] border-t-transparent animate-spin"
+                  :style="{ borderColor: `${currentPlanData.accentColor || '#f59e0b'} transparent ${currentPlanData.accentColor || '#f59e0b'} ${currentPlanData.accentColor || '#f59e0b'}` }"
+                ></div>
+                <div
+                  class="w-16 h-16 rounded-full flex items-center justify-center border-2"
+                  :style="{
+                    background: `${currentPlanData.accentColor || '#f59e0b'}18`,
+                    borderColor: `${currentPlanData.accentColor || '#f59e0b'}55`,
+                    color: currentPlanData.accentColor || '#f59e0b'
+                  }"
+                >
+                  <ShieldCheck :size="30" />
+                </div>
+              </div>
+
+              <!-- Mobile-only tier badge -->
+              <div
+                class="inline-flex md:hidden items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+                :style="{ background: `${currentPlanData.accentColor || '#f59e0b'}18`, color: currentPlanData.accentColor || '#f59e0b' }"
+              >
+                {{ currentPlanData.name }} · {{ currentPlanData.subtitle }}
+              </div>
+
+              <h3 class="text-2xl md:text-3xl font-bold text-white mb-2 font-display">Opening PayChangu</h3>
+              <p class="text-sm text-white/60 max-w-sm mx-auto mb-7 leading-relaxed">
+                Securing your encrypted session… You'll be redirected to complete payment with Airtel Money, TNM Mpamba, or Card.
+              </p>
+
+              <!-- Summary pill -->
+              <div
+                class="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 flex items-center justify-between
+                       max-w-sm mx-auto w-full"
+              >
+                <div class="text-left">
+                  <div class="text-[11px] text-white/45 mb-0.5">Total to Pay</div>
+                  <div class="text-xl font-bold text-white font-display">MWK {{ currentPlanData.price.toLocaleString() }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-[11px] text-white/45 mb-0.5">Access Period</div>
+                  <div class="text-sm font-semibold text-white/80">{{ currentPlanData.duration }} Days</div>
+                </div>
+              </div>
+
+              <!-- Payment channel badges -->
+              <div class="flex items-center justify-center flex-wrap gap-2 mb-6">
+                <div class="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white/75">
+                  <Smartphone :size="14" class="text-red-400" />
+                  <span>Airtel Money</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white/75">
+                  <Smartphone :size="14" class="text-emerald-400" />
+                  <span>TNM Mpamba</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white/75">
+                  <CreditCard :size="14" class="text-sky-400" />
+                  <span>Visa / Mastercard</span>
+                </div>
+              </div>
+
+              <!-- Progress bar -->
+              <div class="max-w-xs mx-auto mb-2">
+                <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full animate-pulse"
+                    :style="{ background: currentPlanData.btnGradient || currentPlanData.accentColor || '#f59e0b', width: '80%' }"
+                  ></div>
+                </div>
+                <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/35 mt-2">
+                  <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                  <span>256-bit SSL Encrypted</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="w-full max-w-sm mx-auto pt-5 border-t border-white/10 flex flex-col gap-3">
+              <button
+                v-if="pendingCheckoutUrl"
+                type="button"
+                @click="proceedToCheckout"
+                class="k-btn w-full flex items-center justify-center gap-2 font-bold py-3.5 text-sm cursor-pointer"
+                :style="{ background: currentPlanData.btnGradient || '#f59e0b', color: '#050d12' }"
+              >
+                <span>Continue to PayChangu</span>
+                <ExternalLink :size="16" />
+              </button>
+
+              <button
+                type="button"
+                @click="subscribing = false"
+                class="text-xs text-white/40 hover:text-white/75 transition-colors py-1 cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
+
         </div>
-
-        <div
-          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2"
-          :style="{ background: `${currentPlanData.accentColor || '#f59e0b'}20`, color: currentPlanData.accentColor || '#f59e0b' }"
-        >
-          <span>{{ currentPlanData.name }} {{ currentPlanData.subtitle }}</span>
-        </div>
-
-        <h3 class="text-xl font-bold text-white mb-1.5 font-display">Opening PayChangu</h3>
-        <p class="text-xs text-white/65 mb-5 leading-relaxed">
-          Securing your session... You'll be redirected to pay with Airtel Money, TNM Mpamba, or Card.
-        </p>
-
-        <!-- Summary Pill -->
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5 mb-5 flex items-center justify-between">
-          <div class="text-left">
-            <div class="text-[11px] text-white/50">Total to Pay</div>
-            <div class="text-lg font-bold text-white font-display">MWK {{ currentPlanData.price.toLocaleString() }}</div>
-          </div>
-          <div class="text-right">
-            <div class="text-[11px] text-white/50">Access Period</div>
-            <div class="text-xs font-semibold text-white/80">{{ currentPlanData.duration }} Days</div>
-          </div>
-        </div>
-
-        <!-- Payment Badges -->
-        <div class="flex items-center justify-center gap-2 mb-4">
-          <span class="text-[10px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">Airtel Money</span>
-          <span class="text-[10px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">TNM Mpamba</span>
-          <span class="text-[10px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">Card</span>
-        </div>
-
-        <div class="flex items-center justify-center gap-2 text-xs text-white/40 mb-4">
-          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Secured with 256-bit SSL</span>
-        </div>
-
-        <button
-          type="button"
-          @click="subscribing = false"
-          class="text-xs text-white/45 hover:text-white/80 transition-colors cursor-pointer"
-        >
-          Cancel
-        </button>
       </div>
     </div>
 
     <!-- Verification / Status Modal (ONLY when user returns from PayChangu) -->
-    <div v-if="verifying" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4 animate-in fade-in duration-200">
-      <div class="bg-neutral-900 border border-amber-400/40 p-6 sm:p-7 rounded-3xl max-w-sm w-full text-center shadow-2xl">
+    <div v-if="verifying" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 md:pl-[360px] animate-in fade-in duration-200">
+      <div class="bg-neutral-900 border border-amber-400/40 p-6 sm:p-8 rounded-3xl max-w-sm md:max-w-md w-full text-center shadow-2xl">
         <div class="w-14 h-14 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <h3 class="text-lg font-bold text-white mb-2">Verifying Payment</h3>
         <p class="text-xs text-white/70 leading-relaxed mb-4">
@@ -267,8 +398,8 @@
     </div>
 
     <!-- Celebratory Success Modal -->
-    <div v-if="showSuccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4">
-      <div class="bg-neutral-900 border border-amber-400 p-6 rounded-3xl max-w-sm w-full text-center shadow-2xl animate-in fade-in zoom-in duration-200">
+    <div v-if="showSuccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 md:pl-[360px]">
+      <div class="bg-neutral-900 border border-amber-400 p-6 sm:p-8 rounded-3xl max-w-sm md:max-w-md w-full text-center shadow-2xl animate-in fade-in zoom-in duration-200">
         <div class="w-16 h-16 bg-amber-400/20 text-amber-300 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-400/50">
           <Crown :size="32" />
         </div>
@@ -292,7 +423,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import subscriptionService from '@/services/subscriptionService'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
-import { X, Crown, Check, Minus, Lock, BadgeCheck, Sparkles, ShieldCheck } from 'lucide-vue-next'
+import { X, Crown, Check, Minus, Lock, BadgeCheck, Sparkles, ShieldCheck, Smartphone, CreditCard, ExternalLink } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -306,6 +437,13 @@ const verifying = ref(false)
 const showSuccessModal = ref(false)
 const activatedTierTitle = ref('Premium')
 const selectedPlan = ref('1_month') // Default to 1 Month Gold (most popular)
+const pendingCheckoutUrl = ref('')
+
+const proceedToCheckout = () => {
+  if (pendingCheckoutUrl.value) {
+    window.location.href = pendingCheckoutUrl.value
+  }
+}
 
 // 3 Differentiated Subscription Tiers
 const availablePlans = [
@@ -413,18 +551,22 @@ const compare = [
 const handleSubscribe = async () => {
   if (subscribing.value) return
   subscribing.value = true
+  pendingCheckoutUrl.value = ''
 
   try {
     const result = await subscriptionService.initiatePayment(selectedPlan.value)
 
     if (result.success && result.checkoutUrl) {
+      pendingCheckoutUrl.value = result.checkoutUrl
       if (result.referenceId) {
         sessionStorage.setItem('pending_payment_ref', result.referenceId)
       }
       // Smooth brief pause so user sees the connecting modal before navigating
       setTimeout(() => {
-        window.location.href = result.checkoutUrl
-      }, 700)
+        if (subscribing.value) {
+          window.location.href = result.checkoutUrl
+        }
+      }, 900)
     } else {
       subscribing.value = false
       error(result.error || 'Could not initiate payment. Please try again.')
