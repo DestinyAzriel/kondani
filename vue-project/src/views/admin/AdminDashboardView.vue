@@ -16,7 +16,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
           <router-link
             to="/encounters"
             class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 transition-all"
@@ -27,11 +27,20 @@
 
           <button
             @click="refreshCurrentTab"
-            class="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all"
+            class="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer"
             title="Refresh data"
             :disabled="isLoading"
           >
             <RefreshCw :size="16" :class="{ 'animate-spin': isLoading }" />
+          </button>
+
+          <button
+            @click="handleLogout"
+            class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-300 hover:text-rose-200 transition-all cursor-pointer"
+            title="Sign out of Admin Portal"
+          >
+            <LogOut :size="14" />
+            <span>Logout</span>
           </button>
         </div>
       </div>
@@ -503,6 +512,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { adminService } from '@/services/adminService'
 import { mediaUrl } from '@/utils/media'
@@ -520,10 +530,12 @@ import {
   Search,
   Check,
   X,
-  Server
+  Server,
+  LogOut
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { success, error } = useToast()
 
 const activeTab = ref('overview')
@@ -660,6 +672,12 @@ const handleToggleBan = async (user) => {
   } catch (err) {
     error('Failed to update ban status')
   }
+}
+
+const handleLogout = async () => {
+  await authStore.logout()
+  success('Signed out of admin')
+  router.push('/login')
 }
 
 onMounted(async () => {
