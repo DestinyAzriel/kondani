@@ -21,4 +21,12 @@ router.get('/users', adminController.getAllUsers);
 router.put('/users/:userId', adminController.updateUser);
 router.delete('/users/:userId', adminController.deleteUser);
 
+// Verifications (Selfie / ID)
+router.get('/verifications', adminController.getVerifications);
+router.post('/verifications/:verificationId/review', adminController.reviewVerification);
+
+// Moderation & Reports
+router.get('/reports', adminController.getReports);
+router.post('/reports/:reportId/review', adminController.reviewReport);
+
 module.exports = router;

@@ -125,6 +125,10 @@ const verifyOTP = async () => {
   if (otp.value.length !== 6) return
   try {
     await authStore.login(`+265${cleanedPhone.value}`, otp.value)
+    if (authStore.user?.role === 'admin' || authStore.user?.role === 'moderator') {
+      router.push('/admin')
+      return
+    }
     const done = authStore.user?.isProfileComplete
     router.push(done ? '/encounters' : '/onboarding')
   } catch { /* error shown via authStore.error */ }

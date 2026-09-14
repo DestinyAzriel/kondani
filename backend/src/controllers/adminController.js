@@ -211,3 +211,134 @@ exports.getRevenueAnalytics = async (req, res) => {
         res.status(500).json({ error: 'Failed to get revenue analytics' });
     }
 };
+
+/**
+ * Get verifications for admin review
+ */
+exports.getVerifications = async (req, res) => {
+    try {
+        const { status = 'all' } = req.query;
+        const filter = {};
+        if (status !== 'all') {
+            filter.status = status;
+        }
+
+        const verifications = await IDVerification.find(filter)
+            .populate('userId', 'name phoneNumber photos district age gender isVerified')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json({ verifications });
+    } catch (error) {
+        console.error('Get verifications error:', error);
+        res.status(500).json({ error: 'Failed to get verifications' });
+    }
+};
+
+/**
+ * Review a verification (approve or reject)
+ */
+exports.reviewVerification = async (req, res) => {
+    try {
+        const { verificationId } = req.params;
+        const { status, rejectionReason } = req.body; // 'approved' or 'rejected'
+
+        if (!['approved', 'rejected'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        const verification = await IDVerification.findById(verificationId);
+        if (!verification) {
+            return res.status(404).json({ error: 'Verification record not found' });
+        }
+
+        verification.status = status;
+        verification.reviewedBy = req.user.id;
+        verification.reviewedAt = new Date();
+        if (rejectionReason) verification.rejectionReason = rejectionReason;
+        await verification.save();
+
+        const user = await User.findById(verification.userId);
+        if (user) {
+            user.isVerified = status === 'approved';
+            if (user.verification && user.verification.id) {
+                user.verification.id.verified = status === 'approved';
+                user.verification.id.status = status;
+                user.verification.id.reviewedAt = new Date();
+                if (rejectionReason) user.verification.id.rejectionReason = rejectionReason;
+            }
+            await user.save();
+        }
+
+        res.json({ message: `Verification ${status} successfully`, verification });
+    } catch (error) {
+        console.error('Review verification error:', error);
+        res.status(500).json({ error: 'Failed to review verification' });
+    }
+};
+
+/**
+ * Get reports for admin review
+ */
+exports.getReports = async (req, res) => {
+    try {
+        const { status = 'all' } = req.query;
+        const filter = {};
+        if (status !== 'all') {
+            filter.status = status;
+        }
+
+        const reports = await Report.find(filter)
+            .populate('reporterId', 'name phoneNumber photos')
+            .populate('reportedUserId', 'name phoneNumber photos isBanned district')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json({ reports });
+    } catch (error) {
+        console.error('Get reports error:', error);
+        res.status(500).json({ error: 'Failed to get reports' });
+    }
+};
+
+/**
+ * Review a report
+ */
+exports.reviewReport = async (req, res) => {
+    try {
+        const { reportId } = req.params;
+        const { status, action, actionNotes } = req.body;
+
+        const report = await Report.findById(reportId);
+        if (!report) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        if (status) report.status = status;
+        if (action) report.action = action;
+        if (actionNotes) report.actionNotes = actionNotes;
+        report.reviewedBy = req.user.id;
+        report.reviewedAt = new Date();
+        await report.save();
+
+        // If action is ban, ban the reported user
+        if (action === 'temporary_ban' || action === 'permanent_ban') {
+            const user = await User.findById(report.reportedUserId);
+            if (user) {
+                user.isBanned = true;
+                user.banReason = report.reason + (actionNotes ? `: ${actionNotes}` : '');
+                if (action === 'temporary_ban') {
+                    user.bannedUntil = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+                } else {
+                    user.bannedUntil = null; // permanent
+                }
+                await user.save();
+            }
+        }
+
+        res.json({ message: 'Report reviewed successfully', report });
+    } catch (error) {
+        console.error('Review report error:', error);
+        res.status(500).json({ error: 'Failed to review report' });
+    }
+};

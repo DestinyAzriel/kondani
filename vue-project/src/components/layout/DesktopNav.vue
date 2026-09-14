@@ -27,6 +27,17 @@
           </button>
         </div>
       </div>
+
+      <!-- Admin Portal Shortcut -->
+      <div v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'moderator'" class="mt-3 pt-2.5 border-t border-white/10">
+        <button
+          @click.stop="router.push('/admin')"
+          class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/25 transition-all shadow-sm"
+        >
+          <Shield :size="14" />
+          <span>Admin Portal</span>
+        </button>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -122,7 +133,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Flame, Sparkles, Star, User as UserIcon, Heart, MessageCircle } from 'lucide-vue-next'
+import { Flame, Sparkles, Star, User as UserIcon, Heart, MessageCircle, Shield } from 'lucide-vue-next'
 import { useProfile } from '@/composables/useProfile'
 import { intentService } from '@/services/intentService'
 import { useAuthStore } from '@/stores/auth'

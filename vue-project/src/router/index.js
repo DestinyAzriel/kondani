@@ -14,6 +14,24 @@ const routes = [
 
   // Protected routes
   {
+    path: '/admin',
+    component: () => import('@/views/admin/AdminDashboardView.vue'),
+    beforeEnter: async (to, from, next) => {
+      const authStore = useAuthStore()
+      if (!authStore.isAuthenticated) {
+        return next('/login')
+      }
+      if (!authStore.user) {
+        try { await authStore.fetchUser() } catch (e) {}
+      }
+      if (authStore.user?.role === 'admin' || authStore.user?.role === 'moderator') {
+        next()
+      } else {
+        next('/encounters')
+      }
+    }
+  },
+  {
     path: '/app',
     component: () => import('@/components/layout/AppLayout.vue'),
     children: [
@@ -75,11 +93,11 @@ router.beforeEach(async (to, from, next) => {
   if (authStore.isAuthenticated) {
     // Redirect away from login/register if already logged in
     if (to.path === '/login' || to.path === '/register') {
-      // Send to onboarding only if profile is incomplete, otherwise to the app
+      if (authStore.user?.role === 'admin' || authStore.user?.role === 'moderator') {
+        return next('/admin')
+      }
       return next(authStore.user?.isProfileComplete ? '/encounters' : '/onboarding')
     }
-    // Don't bounce the user away from /profile or other app routes
-    // even if isProfileComplete is false — let them continue editing
   }
 
   next()

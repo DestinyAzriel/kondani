@@ -28,47 +28,83 @@
       </div>
     </div>
 
-    <div class="relative z-10 px-4 pt-5 max-w-[1040px] mx-auto">
-      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div class="relative z-10 px-4 pt-5 max-w-[1100px] mx-auto">
+      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <SkeletonLoader v-for="i in 3" :key="i" type="card" />
       </div>
 
-      <div v-else-if="picks.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div v-for="pick in picks" :key="pick.id" class="pick-card k-card overflow-hidden group cursor-pointer" @click="openProfile(pick)">
-          <div class="relative h-64 overflow-hidden">
-            <img v-if="photoOf(pick)" :src="photoOf(pick)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="" />
-            <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-white/25" style="background:linear-gradient(160deg,#0e1f29,#081016)"><ImageIcon :size="40" :stroke-width="1.5" /><span class="text-xs">No photo yet</span></div>
-            <div class="absolute inset-0" style="background:linear-gradient(to top,var(--k-night),transparent 60%)"></div>
+      <div
+        v-else-if="picks.length > 0"
+        class="grid gap-6 transition-all duration-300"
+        :class="{
+          'max-w-[460px] mx-auto grid-cols-1': picks.length === 1,
+          'max-w-[840px] mx-auto grid-cols-1 md:grid-cols-2': picks.length === 2,
+          'grid-cols-1 md:grid-cols-2 lg:grid-cols-3': picks.length >= 3
+        }"
+      >
+        <div
+          v-for="pick in picks"
+          :key="pick.id"
+          class="pick-card k-card overflow-hidden group cursor-pointer border border-white/10 hover:border-gold-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-gold-500/10 rounded-2xl"
+          @click="openProfile(pick)"
+        >
+          <div class="relative h-72 md:h-80 overflow-hidden">
+            <img v-if="photoOf(pick)" :src="photoOf(pick)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+            <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-white/25" style="background:linear-gradient(160deg,#0e1f29,#081016)">
+              <ImageIcon :size="48" :stroke-width="1.5" />
+              <span class="text-xs">No photo yet</span>
+            </div>
+            <div class="absolute inset-0" style="background:linear-gradient(to top, var(--k-night) 0%, rgba(5,13,18,0.4) 50%, transparent 100%)"></div>
 
-            <div class="absolute top-2.5 right-2.5 w-12 h-12 rounded-full flex items-center justify-center"
+            <!-- Score Badge -->
+            <div class="absolute top-3 right-3 w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
                  :style="ringStyle(pick.matchScore)">
-              <div class="w-9 h-9 rounded-full flex flex-col items-center justify-center" style="background:var(--k-night)">
-                <b class="text-[11px] k-serif leading-none" style="color:var(--k-gold-l)">{{ pick.matchScore || 85 }}%</b>
+              <div class="w-11 h-11 rounded-full flex flex-col items-center justify-center" style="background:var(--k-night)">
+                <b class="text-xs k-serif leading-none" style="color:var(--k-gold-l)">{{ pick.matchScore || 85 }}%</b>
+                <span class="text-[8px] text-white/40 uppercase tracking-tighter mt-0.5">match</span>
               </div>
             </div>
-            <span v-if="pick.isVerified" class="k-ver absolute top-2.5 left-2.5"><BadgeCheck :size="12" /> Verified</span>
+            <span v-if="pick.isVerified" class="k-ver absolute top-3 left-3 shadow-md"><BadgeCheck :size="13" /> Verified</span>
 
-            <div class="absolute bottom-0 left-0 right-0 p-4">
+            <!-- Bottom overlay in photo -->
+            <div class="absolute bottom-0 left-0 right-0 p-4 pb-3">
               <div class="flex items-baseline gap-2">
-                <h2 class="k-serif text-xl font-bold text-white">{{ pick.name }}</h2>
-                <span v-if="pick.age" class="text-white/80 font-semibold">{{ pick.age }}</span>
+                <h2 class="k-serif text-2xl font-bold text-white tracking-wide">{{ pick.name }}</h2>
+                <span v-if="pick.age" class="text-white/80 font-semibold text-lg">{{ pick.age }}</span>
               </div>
-              <div v-if="pick.distance || pick.district" class="flex items-center gap-1 text-xs mt-0.5" style="color:var(--k-lagoon)">
-                <MapPinIcon :size="12" /><span>{{ pick.distance || pick.district }}</span>
+              <div v-if="pick.distance || pick.district" class="flex items-center gap-1.5 text-xs mt-1" style="color:var(--k-lagoon)">
+                <MapPinIcon :size="13" /><span>{{ pick.distance || pick.district }}</span>
               </div>
             </div>
           </div>
 
-          <div class="p-4">
-            <p v-if="pick.bio" class="text-xs text-white/60 line-clamp-2 mb-3">{{ pick.bio }}</p>
-            <div v-if="pick.interests && pick.interests.length" class="mb-4">
-              <div class="flex flex-wrap gap-1.5">
-                <span v-for="interest in pick.interests.slice(0,3)" :key="interest" class="k-chip" style="font-size:11px;padding:4px 9px">{{ interest }}</span>
+          <!-- Card Details -->
+          <div class="p-4 pt-3 flex flex-col justify-between">
+            <div>
+              <p v-if="pick.bio" class="text-xs text-white/70 line-clamp-2 mb-3 leading-relaxed">{{ pick.bio }}</p>
+              <div v-if="pick.interests && pick.interests.length" class="mb-4">
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="interest in pick.interests.slice(0, 4)" :key="interest" class="k-chip text-[11px] px-2.5 py-1">
+                    {{ interest }}
+                  </span>
+                </div>
               </div>
             </div>
-            <div class="flex gap-2.5" @click.stop>
-              <button @click="handlePass(pick)" class="k-btn k-btn-ghost flex-1 py-2.5 text-xs font-semibold hover:bg-white/10 transition-colors">Pass</button>
-              <button @click="handleLike(pick)" class="k-btn k-btn-gold flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-gold-500/20"><Heart :size="14" class="fill-current" /> Like</button>
+
+            <!-- Swipe Action Buttons -->
+            <div class="flex gap-3 pt-1" @click.stop>
+              <button
+                @click="handlePass(pick)"
+                class="k-btn k-btn-ghost flex-1 py-3 text-xs font-semibold hover:bg-white/10 transition-colors border border-white/10 rounded-xl"
+              >
+                Pass
+              </button>
+              <button
+                @click="handleLike(pick)"
+                class="k-btn k-btn-gold flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-gold-500/20 rounded-xl"
+              >
+                <Heart :size="15" class="fill-current" /> Like
+              </button>
             </div>
           </div>
         </div>
