@@ -140,12 +140,21 @@ exports.getIntents = async (req, res) => {
             isBanned: { $ne: true },
             isVisible: { $ne: false }
         };
-        if (prefs.gender && prefs.gender !== 'Everyone') query.gender = prefs.gender;
+        if (prefs.gender && prefs.gender !== 'Everyone') {
+            const g = String(prefs.gender).toLowerCase();
+            if (g === 'women' || g === 'female') {
+                query.gender = { $in: ['Female', 'female', 'Women', 'women'] };
+            } else if (g === 'men' || g === 'male') {
+                query.gender = { $in: ['Male', 'male', 'Men', 'men'] };
+            } else {
+                query.gender = prefs.gender;
+            }
+        }
         if (prefs.verifiedOnly) query.isVerified = true;
         if (prefs.ageMin || prefs.ageMax) {
             query.age = {};
-            if (prefs.ageMin) query.age.$gte = prefs.ageMin;
-            if (prefs.ageMax) query.age.$lte = prefs.ageMax;
+            if (prefs.ageMin) query.age.$gte = Number(prefs.ageMin);
+            if (prefs.ageMax) query.age.$lte = Number(prefs.ageMax);
         }
 
         // Pull a generous batch, then score + filter by real distance, then paginate.

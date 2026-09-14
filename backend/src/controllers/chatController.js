@@ -85,15 +85,19 @@ exports.getMessages = async (req, res) => {
         const chatId = req.params.id;
         const currentUserId = req.user.id;
         
-        // Mark messages as read when user opens chat
-        await Message.updateMany(
-            { 
-                chatId: chatId, 
-                sender: { $ne: currentUserId },
-                read: false 
-            },
-            { read: true }
-        );
+        // Mark messages as read when user opens chat (unless user disabled read receipts)
+        const currentUserDoc = await User.findById(currentUserId).select('readReceipts');
+        const sendReadReceipt = currentUserDoc ? currentUserDoc.readReceipts !== false : true;
+        if (sendReadReceipt) {
+            await Message.updateMany(
+                { 
+                    chatId: chatId, 
+                    sender: { $ne: currentUserId },
+                    read: false 
+                },
+                { read: true }
+            );
+        }
 
         const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
 

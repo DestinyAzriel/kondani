@@ -101,6 +101,16 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    readReceipts: {
+        type: Boolean,
+        default: true
+    },
+    notifications: {
+        matches: { type: Boolean, default: true },
+        messages: { type: Boolean, default: true },
+        likes: { type: Boolean, default: true },
+        picks: { type: Boolean, default: true }
+    },
     isVisible: {
         type: Boolean,
         default: true

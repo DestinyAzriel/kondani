@@ -322,6 +322,20 @@ exports.updateProfile = async (req, res) => {
 
         const isComplete = existingUser.isProfileComplete || !!(finalName && finalAge && finalBio && Array.isArray(finalPhotos) && finalPhotos.length > 0);
 
+        // Merge preferences and notifications if partially provided
+        if (updateData.preferences) {
+            updateData.preferences = {
+                ...(existingUser.preferences ? (existingUser.preferences.toObject ? existingUser.preferences.toObject() : existingUser.preferences) : {}),
+                ...updateData.preferences
+            };
+        }
+        if (updateData.notifications) {
+            updateData.notifications = {
+                ...(existingUser.notifications ? (existingUser.notifications.toObject ? existingUser.notifications.toObject() : existingUser.notifications) : {}),
+                ...updateData.notifications
+            };
+        }
+
         // Update the user
         const user = await User.findByIdAndUpdate(
             userId,
