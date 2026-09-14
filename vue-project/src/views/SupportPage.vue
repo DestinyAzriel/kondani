@@ -65,7 +65,7 @@ import { LifeBuoy, Mail, MessageCircle, ChevronDown } from 'lucide-vue-next'
 
 const faqs = [
   { q: 'How do I verify my profile?', a: 'Open your profile and tap “Get verified”. Take a quick selfie matching the on-screen pose — our system compares it to your photos. No ID needed.' },
-  { q: 'How do I subscribe to Kondani Gold?', a: 'Tap the Gold banner on your profile or Likes page, then pay MWK 600/month via Airtel Money or TNM Mpamba. Features unlock the moment payment is confirmed.' },
+  { q: 'How do I subscribe to Kondani Premium?', a: 'Tap the Gold banner on your profile or Likes page, then select your plan (from MWK 600) and pay via Airtel Money or TNM Mpamba. Features unlock the moment payment is confirmed.' },
   { q: 'How do I delete my account?', a: 'Go to Settings → Account actions → Delete account. This is permanent and cannot be undone.' },
   { q: 'What payment methods do you accept?', a: 'Airtel Money and TNM Mpamba for all subscriptions and in-app purchases.' },
   { q: 'How do I report someone?', a: 'Tap the menu on their profile and choose “Report”. Our team reviews every report within 24 hours.' }

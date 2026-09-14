@@ -49,7 +49,7 @@
               <span class="font-semibold text-gold-300">You're on Free</span>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60 uppercase">Free</span>
             </div>
-            <div class="text-xs text-white/55 mt-0.5 truncate">Gold is just MWK 600/mo — see who likes you &amp; unlimited likes.</div>
+            <div class="text-xs text-white/55 mt-0.5 truncate">Plans from MWK 600 — see who likes you, unlimited likes &amp; boosts.</div>
           </div>
           <button class="k-btn k-btn-gold whitespace-nowrap" style="padding:9px 18px;font-size:13px" @click="router.push('/premium')">
             Upgrade

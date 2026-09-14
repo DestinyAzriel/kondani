@@ -67,7 +67,7 @@
             </button>
             <button v-if="!profile.isPremium" class="promo promo-gold" @click="router.push('/premium')">
               <span class="promo-ic"><Crown :size="19" /></span>
-              <span class="promo-txt"><b style="color:var(--k-gold-l)">Try Kondani Gold</b><i>See who likes you and match faster — MWK 600/mo.</i></span>
+              <span class="promo-txt"><b style="color:var(--k-gold-l)">Try Kondani Gold</b><i>See who likes you and match faster — plans from MWK 600.</i></span>
               <ChevronRight :size="20" class="text-white/35" />
             </button>
           </div>
