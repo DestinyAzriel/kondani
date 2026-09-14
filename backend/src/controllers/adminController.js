@@ -111,7 +111,7 @@ exports.getAllUsers = async (req, res) => {
 exports.updateUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { role, isBanned, banReason, bannedUntil, isPremium } = req.body;
+        const { role, isBanned, banReason, bannedUntil, isPremium, subscriptionTier } = req.body;
 
         const user = await User.findById(userId);
         if (!user) {
@@ -121,8 +121,14 @@ exports.updateUser = async (req, res) => {
         if (role) user.role = role;
         if (isBanned !== undefined) user.isBanned = isBanned;
         if (banReason) user.banReason = banReason;
-        if (bannedUntil) user.bannedUntil = bannedUntil;
-        if (isPremium !== undefined) user.isPremium = isPremium;
+        if (bannedUntil !== undefined) user.bannedUntil = bannedUntil;
+        if (subscriptionTier !== undefined) {
+            user.subscriptionTier = subscriptionTier;
+            user.isPremium = subscriptionTier !== 'free';
+        } else if (isPremium !== undefined) {
+            user.isPremium = isPremium;
+            if (!isPremium) user.subscriptionTier = 'free';
+        }
 
         await user.save();
 

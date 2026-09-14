@@ -31,11 +31,26 @@ exports.reportUser = async (req, res) => {
             return res.status(400).json({ error: 'You have already reported this user recently' });
         }
 
+        // Normalize reason to schema enum
+        let normalizedReason = 'other';
+        const rawReason = (reason || '').toLowerCase().trim();
+        if (rawReason.includes('inappropriate') || rawReason.includes('message')) {
+            normalizedReason = 'inappropriate_content';
+        } else if (rawReason.includes('fake') || rawReason.includes('catfish')) {
+            normalizedReason = 'fake_profile';
+        } else if (rawReason.includes('scam') || rawReason.includes('spam')) {
+            normalizedReason = 'scam';
+        } else if (rawReason.includes('harass') || rawReason.includes('bull')) {
+            normalizedReason = 'harassment';
+        } else if (rawReason.includes('underage')) {
+            normalizedReason = 'underage';
+        }
+
         // Create report
         const report = await Report.create({
             reporterId,
             reportedUserId,
-            reason,
+            reason: normalizedReason,
             description
         });
 
