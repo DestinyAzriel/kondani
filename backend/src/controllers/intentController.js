@@ -138,7 +138,9 @@ exports.getIntents = async (req, res) => {
         const query = {
             _id: { $nin: excludedIds },
             isBanned: { $ne: true },
-            isVisible: { $ne: false }
+            isVisible: { $ne: false },
+            role: { $nin: ['admin', 'moderator'] },
+            isProfileComplete: { $ne: false }
         };
         if (prefs.gender && prefs.gender !== 'Everyone') {
             const g = String(prefs.gender).toLowerCase();

@@ -277,7 +277,12 @@ router.get('/daily-picks', auth, async (req, res) => {
                 });
             }
 
-            const candidateUsers = await User.find({ _id: { $in: unswipedIds }, isBanned: { $ne: true } })
+            const candidateUsers = await User.find({
+                _id: { $in: unswipedIds },
+                isBanned: { $ne: true },
+                role: { $nin: ['admin', 'moderator'] },
+                isProfileComplete: { $ne: false }
+            })
                 .select('_id name age birthdate gender bio district location photos interests isVerified')
                 .lean();
 
@@ -312,7 +317,9 @@ router.get('/daily-picks', auth, async (req, res) => {
         const query = {
             _id: { $nin: excludedIds },
             isBanned: { $ne: true },
-            name: { $exists: true, $ne: '' }
+            name: { $exists: true, $ne: '' },
+            role: { $nin: ['admin', 'moderator'] },
+            isProfileComplete: { $ne: false }
         };
 
         if (currentUser.preferences?.gender && currentUser.preferences.gender !== 'Everyone') {

@@ -28,9 +28,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or unauthorized
+    if (error.response?.status === 401 || (error.response?.status === 404 && String(error.response?.data?.error).includes('User not found'))) {
+      // Token expired, unauthorized, or deleted user
       localStorage.removeItem('kondani_token')
+      localStorage.removeItem('kondani_user')
       const currentPath = window.location.pathname
       // NEVER reload or redirect if the user is already on the login or register page
       if (currentPath !== '/login' && currentPath !== '/register') {

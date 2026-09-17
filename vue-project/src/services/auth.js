@@ -126,7 +126,7 @@ export const authService = {
       
       const response = await api.put('/auth/profile', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': undefined
         }
       });
       return response.data;

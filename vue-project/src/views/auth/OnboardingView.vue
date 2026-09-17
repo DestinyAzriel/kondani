@@ -167,9 +167,10 @@ const errorMsg = ref('')
 const heroImg = 'https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=1100&q=80&fit=crop'
 const stepClass = (n) => (step.value === n ? 'on' : (step.value > n ? 'done' : ''))
 
+const initialPhotos = (authStore.user?.photos?.filter(Boolean) || []).map(url => ({ file: null, preview: url, url }))
 const form = reactive({
   name: authStore.user?.name || '', dob: '', gender: '', interestedIn: 'Everyone',
-  photos: [], interests: [], bio: '',
+  photos: initialPhotos, interests: [], bio: '',
   coords: null, district: ''
 })
 
@@ -254,13 +255,17 @@ const finish = async () => {
   errorMsg.value = ''
   loading.value = true
   try {
+    const filesToUpload = form.photos.filter(Boolean).filter(p => p.file).map(p => p.file)
+    const existingUrls = form.photos.filter(Boolean).filter(p => !p.file && p.url).map(p => p.url)
+
     const profileData = {
       name: form.name,
       age: calculateAge(form.dob),
       gender: form.gender,
       bio: form.bio,
       interests: form.interests,
-      photos: form.photos.filter(Boolean).map(p => p.file),
+      photos: filesToUpload.length > 0 ? filesToUpload : existingUrls,
+      photoUrls: existingUrls,
       preferences: { gender: form.interestedIn },
       district: form.district,
       location: { type: 'Point', coordinates: form.coords || [0, 0] }
@@ -269,7 +274,7 @@ const finish = async () => {
     router.push('/encounters')
   } catch (err) {
     console.error('Onboarding failed', err)
-    errorMsg.value = 'Could not save your profile. Please try again.'
+    errorMsg.value = err.response?.data?.error || err.response?.data?.message || err.message || 'Could not save your profile. Please try again.'
   } finally {
     loading.value = false
   }
@@ -317,6 +322,11 @@ const finish = async () => {
 .lbl { @apply block text-xs font-semibold text-white/60 mb-2; }
 .field { @apply w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/35 outline-none transition-all; }
 .field:focus { border-color: #f4b740; box-shadow: 0 0 0 1px #f4b740; }
+select.field, select.field option {
+  color-scheme: dark;
+  background-color: #0c1820;
+  color: #f1f8f6;
+}
 .opt { @apply p-3.5 rounded-xl border bg-white/5 border-white/10 text-white/60 font-medium transition-all; }
 .opt-on { background: rgba(244,183,64,.15); border-color: #f4b740; color: #fff; }
 .btn-gold { display:flex;align-items:center;justify-content:center;gap:8px;padding:.9rem 1rem;border-radius:9999px;font-weight:700;color:#1a1205;border:none;cursor:pointer;background:linear-gradient(95deg,#f4b740,#ffd98a);box-shadow:0 10px 26px rgba(244,183,64,.4);transition:transform .15s; }
