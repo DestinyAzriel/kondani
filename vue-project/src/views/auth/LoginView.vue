@@ -158,7 +158,7 @@ const handleCredentialResponse = async (response) => {
     if (data.isNewUser || !authStore.user?.isProfileComplete) {
       router.push('/onboarding')
     } else {
-      router.push('/app/encounters')
+      router.push('/encounters')
     }
   } catch (err) {
     console.error('Google login error:', err)

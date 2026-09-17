@@ -36,6 +36,17 @@ const routes = [
     component: () => import('@/components/layout/AppLayout.vue'),
     children: [
       { path: '', redirect: '/encounters' },
+      { path: 'encounters', redirect: '/encounters' },
+      { path: 'feed', redirect: '/feed' },
+      { path: 'daily-picks', redirect: '/daily-picks' },
+      { path: 'likes', redirect: '/likes' },
+      { path: 'chats', redirect: '/chats' },
+      { path: 'chats/:id', redirect: to => `/chats/${to.params.id}` },
+      { path: 'video-call/:id', redirect: to => `/video-call/${to.params.id}` },
+      { path: 'profile', redirect: '/profile' },
+      { path: 'settings', redirect: '/settings' },
+      { path: 'safety', redirect: '/safety' },
+      { path: 'premium', redirect: '/premium' },
       { path: '/feed', component: () => import('@/views/app/FeedView.vue') },
       { path: '/encounters', component: () => import('@/views/app/EncountersView.vue') },
       { path: '/daily-picks', component: () => import('@/views/app/DailyPicksView.vue') },
@@ -56,7 +67,9 @@ const routes = [
         next('/login')
       }
     }
-  }
+  },
+  // Catch-all route: any unknown or legacy path redirects safely to encounters
+  { path: '/:pathMatch(.*)*', redirect: '/encounters' }
 ]
 
 const router = createRouter({
