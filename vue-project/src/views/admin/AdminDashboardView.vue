@@ -238,7 +238,7 @@
               </div>
               <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
                 <span class="text-white/60">Active Admin Account</span>
-                <span class="text-amber-300 font-semibold">+265 989 503 152</span>
+                <span class="text-amber-300 font-semibold">{{ authStore.user?.email || authStore.user?.phoneNumber || 'destinymwafulirwa@gmail.com' }}</span>
               </div>
             </div>
           </div>
@@ -292,7 +292,7 @@
               <thead class="bg-white/[0.03] border-b border-white/10 text-white/50 uppercase tracking-wider text-[10px]">
                 <tr>
                   <th class="px-4 py-3">Member</th>
-                  <th class="px-4 py-3">Phone</th>
+                  <th class="px-4 py-3">Email / Phone</th>
                   <th class="px-4 py-3">District</th>
                   <th class="px-4 py-3">Tier</th>
                   <th class="px-4 py-3">Role</th>
@@ -319,7 +319,7 @@
                     </div>
                   </td>
 
-                  <td class="px-4 py-3.5 font-mono text-white/70">{{ user.phoneNumber }}</td>
+                  <td class="px-4 py-3.5 font-mono text-white/70">{{ user.email || user.phoneNumber || '—' }}</td>
                   <td class="px-4 py-3.5 text-white/60">{{ user.district || '—' }}</td>
 
                   <td class="px-4 py-3.5">
@@ -509,7 +509,7 @@
                 <span class="text-xs text-white/50">Status: {{ rep.status }}</span>
               </div>
               <div class="text-sm font-semibold text-white">
-                Reported Member: <span class="text-amber-300">{{ rep.reportedUserId?.name || 'Unknown' }}</span> ({{ rep.reportedUserId?.phoneNumber }})
+                Reported Member: <span class="text-amber-300">{{ rep.reportedUserId?.name || 'Unknown' }}</span> ({{ rep.reportedUserId?.email || rep.reportedUserId?.phoneNumber || '—' }})
               </div>
               <p class="text-xs text-white/70 italic">"{{ rep.description || 'No additional comment provided.' }}"</p>
               <div class="text-[11px] text-white/40">Reported by: {{ rep.reporterId?.name || 'Anonymous' }} · {{ formatDate(rep.createdAt) }}</div>
@@ -543,7 +543,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
