@@ -49,7 +49,7 @@ onUnmounted(() => {
 /* Desktop: shift content right by exactly the sidebar width */
 @media (min-width: 768px) {
   .main-wrapper.desktop-active {
-    padding-left: 340px; /* matches DesktopNav w-[340px] exactly */
+    padding-left: 375px; /* matches DesktopNav w-[375px] exactly */
     background: radial-gradient(circle at top right, #0d121f, #05070a);
   }
 

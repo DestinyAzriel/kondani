@@ -177,7 +177,7 @@
 
     <!-- Elegant "Opening PayChangu Gateway" Modal —
          Mobile  : centered compact card
-         Desktop : fills the full content area to the right of the 340px sidebar -->
+         Desktop : fills the full content area to the right of the 375px sidebar -->
     <div
       v-if="subscribing"
       class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md animate-in fade-in duration-200
@@ -185,7 +185,7 @@
              md:items-stretch md:justify-end md:p-0"
     >
       <!-- Sidebar spacer (desktop only) — pushes modal out of the nav area -->
-      <div class="hidden md:block shrink-0" style="width: 340px;"></div>
+      <div class="hidden md:block shrink-0" style="width: 375px;"></div>
 
       <!-- Modal card -->
       <div

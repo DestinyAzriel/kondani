@@ -18,50 +18,107 @@
       </div>
     </div>
 
-    <!-- ====== MOBILE: Standard single-column ====== -->
-    <div v-else class="pb-24 relative z-10">
-      <div class="sticky top-0 z-20 bg-night-950/85 backdrop-blur-md border-b border-white/5 px-4 py-4">
-        <h1 class="k-title">Messages</h1>
+    <!-- ====== MOBILE: Tinder-Grade Architecture (Screenshot 3) ====== -->
+    <div v-else class="pb-28 relative z-10">
+      <!-- Top App Bar -->
+      <div class="sticky top-0 z-20 bg-night-950/90 backdrop-blur-xl border-b border-white/5 px-4 pt-3 pb-2.5">
+        <div class="flex items-center justify-between mb-2">
+          <h1 class="text-2xl font-bold tracking-tight text-white font-display">Chat</h1>
+          <div class="flex items-center gap-2">
+            <button @click="router.push('/safety')" class="p-2 text-white/70 hover:text-white transition-colors" title="Safety Center">
+              <Shield :size="20" />
+            </button>
+            <button @click="router.push('/profile')" class="p-2 text-white/70 hover:text-white transition-colors" title="My Profile">
+              <Smile :size="20" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar (Tinder: Search N Matches) -->
+        <div class="relative flex items-center">
+          <Search :size="16" class="absolute left-3.5 text-white/40 pointer-events-none" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="totalMatchesCount > 0 ? `Search ${totalMatchesCount} Matches` : 'Search matches and messages'"
+            class="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.07] border border-white/10 text-sm text-white placeholder-white/40 focus:outline-none focus:border-gold-400/80 transition-colors"
+          />
+        </div>
       </div>
-      <div class="px-4 pt-5 space-y-6">
-        <section v-if="newMatches.length > 0">
-          <h2 class="k-label mb-3" style="color:var(--k-gold)">New matches</h2>
-          <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            <div v-for="match in newMatches" :key="match.id"
-                 class="flex-shrink-0 w-[68px] text-center cursor-pointer group"
-                 @click="openChatWithUser(match.id)">
-              <div class="relative w-16 h-16 mx-auto mb-1.5" @click.stop="openProfilePreview(match)" title="View profile">
-                <img :src="mediaUrl(match.photo)" class="w-full h-full rounded-full object-cover border-2 border-gold-400 p-0.5 group-hover:scale-105 transition-transform" />
-                <div v-if="match.isVerified" class="absolute bottom-0 right-0 bg-gradient-to-r from-gold-300 to-gold-500 rounded-full p-1 border-2 border-night-950">
-                  <CheckIcon size="9" class="text-night-950 stroke-[4]" />
+
+      <div class="space-y-6 pt-3">
+        <!-- New Matches Horizontal Shelf -->
+        <section v-if="likesCount > 0 || filteredNewMatches.length > 0" class="px-4">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white/50 mb-3">New Matches</h2>
+          <div class="flex gap-3.5 overflow-x-auto pb-1 scrollbar-hide">
+            <!-- 1 Likes Gold Card (Tinder Screenshot 3) -->
+            <div v-if="likesCount > 0" @click="router.push('/likes')" class="flex-shrink-0 flex flex-col items-center cursor-pointer group">
+              <div class="relative w-[76px] h-[100px] rounded-2xl overflow-hidden border-2 border-gold-400 bg-gradient-to-b from-gold-500/25 via-night-900 to-night-950 flex flex-col items-center justify-center p-2 shadow-lg group-hover:scale-105 transition-transform">
+                <div class="w-10 h-10 rounded-full bg-gold-400/20 border border-gold-400/40 flex items-center justify-center text-gold-400 mb-1">
+                  <Heart :size="18" class="fill-current animate-pulse" />
                 </div>
+                <span class="text-xs font-bold text-gold-300">{{ likesCount }}</span>
               </div>
-              <span class="text-xs font-medium text-white/80 truncate block">{{ match.name }}</span>
+              <span class="mt-1.5 text-xs font-semibold text-white/90 truncate max-w-[76px] text-center">
+                {{ likesCount }} {{ likesCount === 1 ? 'Like' : 'Likes' }}
+              </span>
+            </div>
+
+            <!-- Match Portrait Cards -->
+            <div v-for="match in filteredNewMatches" :key="match.id"
+                 class="flex-shrink-0 flex flex-col items-center cursor-pointer group"
+                 @click="openChatWithUser(match.id)">
+              <div class="relative w-[76px] h-[100px] rounded-2xl overflow-hidden border border-white/10 group-hover:border-gold-400 group-hover:scale-105 transition-all bg-night-900">
+                <img :src="mediaUrl(match.photo)" class="w-full h-full object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <!-- Red unread dot (Tinder signature) -->
+                <div class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-night-950 shadow-sm"></div>
+              </div>
+              <div class="mt-1.5 flex items-center justify-center gap-1 max-w-[76px]">
+                <span class="text-xs font-semibold text-white/90 truncate">{{ match.name }}</span>
+                <BadgeCheck v-if="match.isVerified" :size="12" class="text-gold-400 shrink-0" />
+              </div>
             </div>
           </div>
         </section>
-        <section>
-          <h2 class="k-label mb-3">Conversations</h2>
+
+        <!-- Messages Conversation List -->
+        <section class="px-4">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white/50 mb-2">Messages</h2>
+
           <div v-if="isLoading" class="space-y-3">
-            <SkeletonLoader v-for="i in 5" :key="i" type="chat" />
+            <SkeletonLoader v-for="i in 4" :key="i" type="chat" />
           </div>
-          <div v-else-if="chats.length > 0" class="space-y-2">
-            <div v-for="chat in chats" :key="chat.id"
-                 class="flex items-center gap-3.5 p-3 k-card hover:bg-white/[.07] transition-all cursor-pointer active:scale-[0.98]"
+
+          <div v-else-if="filteredChats.length > 0" class="divide-y divide-white/[0.04]">
+            <div v-for="chat in filteredChats" :key="chat.id"
+                 class="flex items-center gap-3.5 py-3.5 cursor-pointer active:opacity-75 transition-opacity"
                  @click="openChat(chat.id)">
+              <!-- 52px Circular Avatar -->
               <div class="relative shrink-0" @click.stop="openProfilePreview(chat)" title="View profile">
-                <img :src="mediaUrl(chat.photo)" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-transparent hover:ring-gold-400/50 transition-all" />
-                <div v-if="chat.online" class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-night-950" style="background:var(--k-lagoon)"></div>
+                <img :src="mediaUrl(chat.photo)" class="w-13 h-13 rounded-full object-cover border border-white/15" />
+                <div v-if="chat.online" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-lagoon-400 rounded-full border-2 border-night-950"></div>
+                <div v-if="chat.unread" class="absolute top-0 right-0 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-night-950 shadow-sm"></div>
               </div>
+
+              <!-- Content -->
               <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-start">
-                  <h3 class="k-serif text-base truncate flex items-center gap-1.5">
-                    {{ chat.name }}
-                    <BadgeCheck v-if="chat.isVerified" :size="14" style="color:var(--k-gold)" />
-                  </h3>
-                  <span class="text-xs text-white/40 whitespace-nowrap ml-2">{{ formatTime(chat.lastMessageTime) }}</span>
+                <div class="flex items-center justify-between gap-2 mb-0.5">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <h3 class="k-serif text-base font-semibold text-white truncate leading-tight">
+                      {{ chat.name }}
+                    </h3>
+                    <BadgeCheck v-if="chat.isVerified" :size="14" class="text-gold-400 shrink-0" />
+                  </div>
+
+                  <!-- Your Turn pill badge (Tinder Screenshot 3 signature) -->
+                  <span v-if="chat.unread || chat.yourTurn" class="px-2.5 py-0.5 rounded-full bg-white/10 text-white/90 text-[11px] font-medium shrink-0">
+                    Your Turn
+                  </span>
+                  <span v-else class="text-xs text-white/40 shrink-0 font-normal">{{ formatTime(chat.lastMessageTime) }}</span>
                 </div>
-                <div v-if="chat.typing" class="flex items-center gap-1.5 mt-1">
+
+                <div v-if="chat.typing" class="flex items-center gap-1.5 mt-0.5">
                   <div class="flex gap-1">
                     <div class="w-1.5 h-1.5 bg-lagoon-400 rounded-full animate-bounce"></div>
                     <div class="w-1.5 h-1.5 bg-lagoon-400 rounded-full animate-bounce" style="animation-delay:.2s"></div>
@@ -69,13 +126,17 @@
                   </div>
                   <span class="text-xs text-lagoon-300">typing...</span>
                 </div>
-                <div v-else class="flex items-center gap-2 mt-0.5">
-                  <p class="text-sm truncate" :class="chat.unread ? 'text-white font-medium' : 'text-white/55'">{{ chat.lastMessage }}</p>
-                  <span v-if="chat.unread" class="ml-auto w-5 h-5 rounded-full bg-lagoon-400 text-night-950 text-[10px] font-bold flex items-center justify-center flex-shrink-0">•</span>
+
+                <div v-else class="flex items-center gap-1.5 mt-0.5">
+                  <span v-if="chat.isLastSender" class="text-xs text-white/40">↩</span>
+                  <p class="text-sm truncate leading-snug" :class="chat.unread ? 'text-white font-medium' : 'text-white/55'">
+                    {{ chat.lastMessage || 'Start chatting!' }}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
+
           <EmptyState v-else type="no-chats" title="No conversations yet"
             message="When you match with someone, your chats appear here."
             action-text="Start discovering" @action="router.push('/encounters')" />
@@ -93,11 +154,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { intentService } from '@/services/intentService'
 import { socketService } from '@/services/socketService'
-import { Check as CheckIcon, BadgeCheck, MessageCircle as MessageCircleIcon } from 'lucide-vue-next'
+import { Check as CheckIcon, BadgeCheck, MessageCircle as MessageCircleIcon, Shield, Smile, Search, Heart } from 'lucide-vue-next'
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ChatPanel from '@/components/feature/ChatPanel.vue'
@@ -105,10 +166,29 @@ import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.
 import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()
-const chats = ref([])
-const newMatches = ref([])
-const isLoading = ref(true)
+
+/* LocalStorage Cache helpers to prevent 1-second disappearing/flicker on reload */
+const getCached = (key, fallback) => {
+  try {
+    const v = localStorage.getItem(key)
+    return v ? JSON.parse(v) : fallback
+  } catch (e) {
+    return fallback
+  }
+}
+
+const setCached = (key, val) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(val))
+  } catch (e) {}
+}
+
+const chats = ref(getCached('kondani_chats', []))
+const newMatches = ref(getCached('kondani_matches', []))
+const likesCount = ref(getCached('kondani_likes_count', 0))
+const isLoading = ref(chats.value.length === 0 && newMatches.value.length === 0)
 const activeChatId = ref(null)
+const searchQuery = ref('')
 
 /* Profile preview modal */
 const showProfilePreview = ref(false)
@@ -129,6 +209,22 @@ const openProfilePreview = async (item) => {
   }
 }
 
+const totalMatchesCount = computed(() => {
+  return newMatches.value.length + (likesCount.value || 0)
+})
+
+const filteredNewMatches = computed(() => {
+  if (!searchQuery.value.trim()) return newMatches.value
+  const q = searchQuery.value.toLowerCase()
+  return newMatches.value.filter(m => (m.name || '').toLowerCase().includes(q))
+})
+
+const filteredChats = computed(() => {
+  if (!searchQuery.value.trim()) return chats.value
+  const q = searchQuery.value.toLowerCase()
+  return chats.value.filter(c => (c.name || '').toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q))
+})
+
 const isDesktop = ref(window.innerWidth >= 768)
 const onResize = () => { isDesktop.value = window.innerWidth >= 768 }
 
@@ -138,9 +234,13 @@ const handleNewMessage = (message) => {
     const chat = chats.value[i]
     chat.lastMessage = message.content
     chat.lastMessageTime = new Date().toISOString()
-    if (String(message.chatId) !== activeChatId.value) chat.unread = true
+    if (String(message.chatId) !== activeChatId.value) {
+      chat.unread = true
+      chat.yourTurn = true
+    }
     chats.value.splice(i, 1)
     chats.value.unshift(chat)
+    setCached('kondani_chats', chats.value)
   }
 }
 
@@ -153,20 +253,14 @@ const formatTime = (timestamp) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-const selectChat = (id) => {
-  activeChatId.value = String(id)
-  const chat = chats.value.find(c => String(c.id) === String(id))
-  if (chat) chat.unread = false
-}
-
 const openChat = (id) => router.push(`/chats/${id}`)
 const openChatWithUser = (userId) => router.push(`/chats/${userId}`)
 
 const handleUserStatus = ({ userId, isOnline }) => {
   const chat = chats.value.find(c => String(c.userId) === String(userId))
-  if (chat) {
-    chat.online = isOnline
-  }
+  if (chat) chat.online = isOnline
+  const match = newMatches.value.find(m => String(m.id) === String(userId))
+  if (match) match.online = isOnline
 }
 
 onMounted(async () => {
@@ -174,18 +268,29 @@ onMounted(async () => {
   socketService.connect()
   socketService.on('new_message', handleNewMessage)
   socketService.on('user_status', handleUserStatus)
+
   try {
     await intentService.setUserOnline()
     const chatData = await intentService.getChats()
-    chats.value = chatData?.chats || []
+    if (chatData?.chats) {
+      chats.value = chatData.chats
+      setCached('kondani_chats', chats.value)
+    }
+
     const likeData = await intentService.getLikes()
-    newMatches.value = likeData?.mutualLikes || []
+    if (likeData) {
+      newMatches.value = likeData?.mutualLikes || []
+      likesCount.value = likeData?.likesCount || 0
+      setCached('kondani_matches', newMatches.value)
+      setCached('kondani_likes_count', likesCount.value)
+    }
+
     // Auto-select first chat on desktop
-    if (isDesktop.value && chats.value.length > 0) {
+    if (isDesktop.value && chats.value.length > 0 && !activeChatId.value) {
       activeChatId.value = String(chats.value[0].id)
     }
   } catch (e) {
-    chats.value = []; newMatches.value = []
+    // Keep cached data
   } finally {
     isLoading.value = false
   }
@@ -201,29 +306,6 @@ onUnmounted(() => {
 
 <style scoped>
 .desktop-layout { overflow: hidden; height: 100vh; height: 100dvh; }
-
-.desktop-two-panel {
-  display: flex;
-  height: 100%;
-  overflow: hidden;
-}
-
-.chat-list-panel {
-  width: 320px;
-  min-width: 260px;
-  flex-shrink: 0;
-  background: rgba(14, 31, 41, 0.7);
-}
-
-.chat-content-panel {
-  flex: 1;
-  min-width: 0;
-  background: var(--k-night);
-}
-
-.border-white\/8 { border-color: rgba(255,255,255,.08); }
-.divide-white\/5 > * { border-color: rgba(255,255,255,.05); }
-
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
