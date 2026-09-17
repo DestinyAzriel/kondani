@@ -67,10 +67,10 @@
             <!-- Match Portrait Cards -->
             <div v-for="match in filteredNewMatches" :key="match.id"
                  class="flex-shrink-0 flex flex-col items-center cursor-pointer group"
-                 @click="openChatWithUser(match.id)">
-              <div class="relative w-[76px] h-[100px] rounded-2xl overflow-hidden border border-white/10 group-hover:border-gold-400 group-hover:scale-105 transition-all bg-night-900">
+                 @click="openChatWithUser(match)">
+              <div class="relative w-[76px] h-[100px] rounded-2xl overflow-hidden border border-white/10 group-hover:border-gold-400 group-hover:scale-105 transition-all bg-night-900 shadow-md">
                 <img :src="mediaUrl(match.photo)" class="w-full h-full object-cover" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                 <!-- Red unread dot (Tinder signature) -->
                 <div class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-night-950 shadow-sm"></div>
               </div>
@@ -164,10 +164,12 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import ChatPanel from '@/components/feature/ChatPanel.vue'
 import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.vue'
 import { mediaUrl } from '@/utils/media'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
-/* LocalStorage Cache helpers to prevent 1-second disappearing/flicker on reload */
+/* LocalStorage Cache helpers to prevent disappearing/flicker on reload */
 const getCached = (key, fallback) => {
   try {
     const v = localStorage.getItem(key)
@@ -186,6 +188,7 @@ const setCached = (key, val) => {
 const chats = ref(getCached('kondani_chats', []))
 const newMatches = ref(getCached('kondani_matches', []))
 const likesCount = ref(getCached('kondani_likes_count', 0))
+const contactedUserIds = ref(new Set(getCached('kondani_contacted_matches', [])))
 const isLoading = ref(chats.value.length === 0 && newMatches.value.length === 0)
 const activeChatId = ref(null)
 const searchQuery = ref('')
@@ -209,14 +212,40 @@ const openProfilePreview = async (item) => {
   }
 }
 
+// User IDs who already have an active conversation
+const activeChatUserIds = computed(() => {
+  const set = new Set(contactedUserIds.value)
+  chats.value.forEach(c => {
+    if (c.userId) set.add(String(c.userId))
+    if (c.id) {
+      set.add(String(c.id))
+      if (typeof c.id === 'string' && c.id.includes('_')) {
+        c.id.split('_').forEach(part => set.add(part))
+      }
+    }
+    if (c.participantId) set.add(String(c.participantId))
+  })
+  return set
+})
+
+// Only matches who have NOT been contacted or added to Messages yet
+const uncontactedMatches = computed(() => {
+  const myId = String(authStore.user?._id || authStore.user?.id || '')
+  return newMatches.value.filter(m => {
+    const mId = String(m.id || m._id || '')
+    if (!mId || mId === myId) return false
+    return !activeChatUserIds.value.has(mId)
+  })
+})
+
 const totalMatchesCount = computed(() => {
-  return newMatches.value.length + (likesCount.value || 0)
+  return uncontactedMatches.value.length + (likesCount.value || 0)
 })
 
 const filteredNewMatches = computed(() => {
-  if (!searchQuery.value.trim()) return newMatches.value
+  if (!searchQuery.value.trim()) return uncontactedMatches.value
   const q = searchQuery.value.toLowerCase()
-  return newMatches.value.filter(m => (m.name || '').toLowerCase().includes(q))
+  return uncontactedMatches.value.filter(m => (m.name || '').toLowerCase().includes(q))
 })
 
 const filteredChats = computed(() => {
@@ -241,6 +270,7 @@ const handleNewMessage = (message) => {
     chats.value.splice(i, 1)
     chats.value.unshift(chat)
     setCached('kondani_chats', chats.value)
+    setCached('kondani_desktop_chats', chats.value)
   }
 }
 
@@ -254,7 +284,41 @@ const formatTime = (timestamp) => {
 }
 
 const openChat = (id) => router.push(`/chats/${id}`)
-const openChatWithUser = (userId) => router.push(`/chats/${userId}`)
+
+// Clicking a match: removes from New Matches, moves to Messages, and opens chat
+const openChatWithUser = (m) => {
+  const targetId = typeof m === 'object' ? String(m.id || m._id) : String(m)
+  const myId = String(authStore.user?._id || authStore.user?.id || '')
+  const chatId = [myId, targetId].sort().join('_')
+
+  contactedUserIds.value.add(targetId)
+  setCached('kondani_contacted_matches', Array.from(contactedUserIds.value))
+  setCached('kondani_desktop_contacted_matches', Array.from(contactedUserIds.value))
+
+  const existingChat = chats.value.find(c =>
+    String(c.id) === chatId ||
+    String(c.userId) === targetId ||
+    (typeof c.id === 'string' && c.id.includes(targetId))
+  )
+
+  if (!existingChat && typeof m === 'object') {
+    chats.value.unshift({
+      id: chatId,
+      userId: targetId,
+      name: m.name,
+      photo: m.photo,
+      isVerified: m.isVerified,
+      lastMessage: 'Start chatting!',
+      lastMessageTime: new Date().toISOString(),
+      unread: false,
+      yourTurn: true
+    })
+    setCached('kondani_chats', chats.value)
+    setCached('kondani_desktop_chats', chats.value)
+  }
+
+  router.push(`/chats/${chatId}`)
+}
 
 const handleUserStatus = ({ userId, isOnline }) => {
   const chat = chats.value.find(c => String(c.userId) === String(userId))
