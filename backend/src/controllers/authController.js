@@ -226,6 +226,9 @@ exports.googleAuth = async (req, res) => {
         const name = payload.name || payload.given_name || 'Kondani Member';
         const photo = payload.picture || null;
 
+        const ADMIN_EMAILS = ['destinymwafulirwa@gmail.com'];
+        const isAdmin = ADMIN_EMAILS.includes(email) || (process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL.toLowerCase());
+
         // Find or create user
         let user = await User.findOne({
             $or: [{ googleId }, { email }]
@@ -239,6 +242,7 @@ exports.googleAuth = async (req, res) => {
                 email,
                 name,
                 photos: photo ? [photo] : [],
+                role: isAdmin ? 'admin' : 'user',
                 isVerified: true,
                 verification: {
                     email: { verified: true, verifiedAt: new Date() }
@@ -246,10 +250,14 @@ exports.googleAuth = async (req, res) => {
                 isProfileComplete: false
             });
             await user.save();
-            console.log(`[Google Auth] Created new user: ${email} (${name})`);
+            console.log(`[Google Auth] Created new user: ${email} (${name}) with role: ${user.role}`);
         } else {
             // Update googleId and photo if missing
             let changed = false;
+            if (isAdmin && user.role !== 'admin') {
+                user.role = 'admin';
+                changed = true;
+            }
             if (!user.googleId) {
                 user.googleId = googleId;
                 changed = true;
@@ -265,12 +273,12 @@ exports.googleAuth = async (req, res) => {
             if (changed) {
                 await user.save();
             }
-            console.log(`[Google Auth] Existing user logged in: ${email}`);
+            console.log(`[Google Auth] Existing user logged in: ${email} (role: ${user.role})`);
         }
 
         // Generate JWT
         const token = jwt.sign(
-            { id: user._id, email: user.email, name: user.name },
+            { id: user._id, email: user.email, name: user.name, role: user.role },
             process.env.JWT_SECRET || 'kondani_secret_key_2024',
             { expiresIn: '30d' }
         );
