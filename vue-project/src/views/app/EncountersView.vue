@@ -79,10 +79,9 @@
               <span v-if="topProfile.age" class="text-2xl text-white/70 leading-none">{{ topProfile.age }}</span>
               <span v-if="topProfile.isVerified" class="k-ver mb-1"><BadgeCheck :size="13" /> Verified</span>
             </div>
-            <div v-if="topProfile.distance" class="flex items-center gap-1.5 text-sm text-white/60 mt-2">
+            <div v-if="topProfile.district || topProfile.distance" class="flex items-center gap-1.5 text-sm text-white/60 mt-2">
               <MapPin :size="15" style="color:var(--k-lagoon)" />
-              <span>{{ topProfile.distance }}</span>
-              <span v-if="topProfile.district" class="text-white/35">· {{ topProfile.district }}</span>
+              <span>{{ topProfile.district || topProfile.distance }}</span>
             </div>
 
             <div v-if="topProfile.bio" class="mt-5">

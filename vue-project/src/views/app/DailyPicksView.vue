@@ -72,8 +72,8 @@
                 <h2 class="k-serif text-2xl font-bold text-white tracking-wide">{{ pick.name }}</h2>
                 <span v-if="pick.age" class="text-white/80 font-semibold text-lg">{{ pick.age }}</span>
               </div>
-              <div v-if="pick.distance || pick.district" class="flex items-center gap-1.5 text-xs mt-1" style="color:var(--k-lagoon)">
-                <MapPinIcon :size="13" /><span>{{ pick.distance || pick.district }}</span>
+              <div v-if="pick.district || pick.distance" class="flex items-center gap-1.5 text-xs mt-1" style="color:var(--k-lagoon)">
+                <MapPinIcon :size="13" /><span>{{ pick.district || pick.distance }}</span>
               </div>
             </div>
           </div>

@@ -168,7 +168,7 @@ const heroImg = 'https://images.unsplash.com/photo-1719179542047-a4d84fd35c1f?w=
 const stepClass = (n) => (step.value === n ? 'on' : (step.value > n ? 'done' : ''))
 
 const form = reactive({
-  name: '', dob: '', gender: '', interestedIn: 'Everyone',
+  name: authStore.user?.name || '', dob: '', gender: '', interestedIn: 'Everyone',
   photos: [], interests: [], bio: '',
   coords: null, district: ''
 })

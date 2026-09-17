@@ -155,9 +155,11 @@ const rtcConfig = {
       credential: 'openrelayproject'
     },
 
-    // 3. Dedicated VPS coturn
+    // 3. Dedicated VPS coturn (turn.kondani.com)
     {
       urls: [
+        'turn:turn.kondani.com:3478',
+        'stun:turn.kondani.com:3478',
         'turn:kondani.duckdns.org:3478',
         'stun:kondani.duckdns.org:3478'
       ],

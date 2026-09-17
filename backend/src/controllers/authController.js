@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const { storeUpload } = require('../services/cloudinaryService');
 const { sendSMS } = require('../services/smsService');
+const { sendWhatsApp } = require('../services/whatsappService');
 
 // Configure axios with timeout and retry settings
 const telegramAxios = axios.create({
@@ -94,19 +95,31 @@ async function sendOTP(phoneNumber) {
         expires: Date.now() + 5 * 60 * 1000 // 5 minutes
     });
     
-    // Automatically send SMS to user's phone via Africa's Talking
-    const smsMessage = `Your Kondani verification code is ${otp}. Valid for 5 minutes. Do not share this code.`;
-    sendSMS({ to: phoneNumber, message: smsMessage })
-        .then((res) => {
-            if (res.success) {
-                console.log(`✅ Automated SMS OTP dispatched to ${phoneNumber}`);
-            } else {
-                console.warn(`⚠️ Africa's Talking SMS delivery notice:`, res.error);
-            }
-        })
-        .catch((e) => console.error('Error dispatching SMS:', e.message));
+    const otpMessage = `Your Kondani verification code is: *${otp}*\n\nThis code is valid for 5 minutes. Do not share it with anyone.`;
 
-    // Admin / console notification fallback
+    // --- Primary: WhatsApp via Green API ---
+    const waResult = await sendWhatsApp({ to: phoneNumber, message: otpMessage });
+    if (waResult.success) {
+        console.log(`[OTP] ✅ WhatsApp OTP dispatched to ${phoneNumber}`);
+        // Also notify admin via console/Telegram for audit
+        notifyAdmin(phoneNumber, otp);
+        return otp;
+    }
+
+    console.warn(`[OTP] WhatsApp delivery failed for ${phoneNumber}, trying Africa's Talking SMS fallback...`);
+
+    // --- Fallback: Africa's Talking SMS ---
+    const smsMessage = `Your Kondani verification code is ${otp}. Valid for 5 minutes. Do not share this code.`;
+    const smsResult = await sendSMS({ to: phoneNumber, message: smsMessage });
+    if (smsResult.success) {
+        console.log(`[OTP] ✅ SMS OTP dispatched to ${phoneNumber} via Africa's Talking`);
+    } else {
+        console.warn(`[OTP] ⚠️ Both WhatsApp and SMS delivery failed for ${phoneNumber}. Using admin notification only.`);
+        console.warn(`[OTP] WhatsApp error:`, JSON.stringify(waResult.error));
+        console.warn(`[OTP] SMS error:`, JSON.stringify(smsResult.error));
+    }
+
+    // Admin / console notification fallback (always runs)
     notifyAdmin(phoneNumber, otp);
     
     return otp;
@@ -187,6 +200,90 @@ exports.login = async (req, res) => {
     } catch (err) {
         console.error('verify-otp/login error:', err);
         res.status(500).json({ error: err.message || 'Server error' });
+    }
+};
+
+// Google One-Tap & OAuth Sign-In (100% Phone-Free)
+exports.googleAuth = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) {
+            return res.status(400).json({ error: 'Google credential is required' });
+        }
+
+        // Verify ID token with Google's tokeninfo API
+        const tokenRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`, {
+            timeout: 10000
+        });
+        const payload = tokenRes.data;
+
+        if (!payload || !payload.email) {
+            return res.status(400).json({ error: 'Invalid Google token' });
+        }
+
+        const googleId = payload.sub;
+        const email = payload.email.toLowerCase();
+        const name = payload.name || payload.given_name || 'Kondani Member';
+        const photo = payload.picture || null;
+
+        // Find or create user
+        let user = await User.findOne({
+            $or: [{ googleId }, { email }]
+        });
+
+        let isNewUser = false;
+        if (!user) {
+            isNewUser = true;
+            user = new User({
+                googleId,
+                email,
+                name,
+                photos: photo ? [photo] : [],
+                isVerified: true,
+                verification: {
+                    email: { verified: true, verifiedAt: new Date() }
+                },
+                isProfileComplete: false
+            });
+            await user.save();
+            console.log(`[Google Auth] Created new user: ${email} (${name})`);
+        } else {
+            // Update googleId and photo if missing
+            let changed = false;
+            if (!user.googleId) {
+                user.googleId = googleId;
+                changed = true;
+            }
+            if ((!user.photos || user.photos.length === 0) && photo) {
+                user.photos = [photo];
+                changed = true;
+            }
+            if (!user.name && name) {
+                user.name = name;
+                changed = true;
+            }
+            if (changed) {
+                await user.save();
+            }
+            console.log(`[Google Auth] Existing user logged in: ${email}`);
+        }
+
+        // Generate JWT
+        const token = jwt.sign(
+            { id: user._id, email: user.email, name: user.name },
+            process.env.JWT_SECRET || 'kondani_secret_key_2024',
+            { expiresIn: '30d' }
+        );
+
+        res.json({
+            success: true,
+            token,
+            user,
+            isNewUser: isNewUser || !user.isProfileComplete
+        });
+    } catch (err) {
+        console.error('[Google Auth Error]:', err.response?.data || err.message);
+        res.status(400).json({ error: 'Google sign-in failed. Please try again.' });
     }
 };
 

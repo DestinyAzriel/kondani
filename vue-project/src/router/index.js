@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 const routes = [
   { path: '/', component: () => import('@/views/LandingPage.vue') },
   { path: '/login', component: () => import('@/views/auth/LoginView.vue') },
-  { path: '/register', component: () => import('@/views/auth/RegisterView.vue') },
+  { path: '/register', redirect: '/login?signup=1' },
   { path: '/onboarding', component: () => import('@/views/auth/OnboardingView.vue') },
   { path: '/verify-photo', component: () => import('@/views/auth/PhotoVerificationView.vue') },
   { path: '/privacy', component: () => import('@/views/PrivacyPolicy.vue') },

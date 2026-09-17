@@ -28,6 +28,7 @@
                 <h2 class="k-serif" style="font-size:1.5rem;line-height:1.1">{{ profile.name || 'Your name' }}<span v-if="profile.age" class="text-white/55 font-normal">, {{ profile.age }}</span></h2>
                 <span v-if="profile.isVerified" class="vseal"><Check :size="13" /></span>
               </div>
+              <div v-if="profile.district" class="flex items-center gap-1.5 text-xs text-white/75 mt-1.5"><MapPin :size="13" /> {{ profile.district }}</div>
               <button v-if="!isEditing" class="edit-pill mt-3" @click="toggleEdit"><Pencil :size="14" /> Edit profile</button>
               <button v-else class="edit-pill edit-pill-on mt-3" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done' }}</button>
             </div>

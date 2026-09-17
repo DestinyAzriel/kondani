@@ -24,6 +24,39 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    // Set session directly (e.g. from WhatsApp 1-tap verification)
+    async setSession({ token, user }) {
+      this.token = token
+      localStorage.setItem('kondani_token', token)
+      if (user) {
+        this.user = user
+        try { localStorage.setItem('kondani_user', JSON.stringify(user)) } catch (e) {}
+      }
+      await this.fetchUser()
+    },
+
+    // Login / Register with Google
+    async googleLogin(credential) {
+      this.loading = true
+      this.error = null
+      try {
+        const data = await authService.googleLogin(credential)
+        this.token = data.token
+        localStorage.setItem('kondani_token', data.token)
+        if (data.user) {
+          this.user = data.user
+          try { localStorage.setItem('kondani_user', JSON.stringify(data.user)) } catch (e) {}
+        }
+        await this.fetchUser()
+        return data
+      } catch (err) {
+        this.error = err.response?.data?.error || err.response?.data?.message || err.message || 'Google sign-in failed'
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Login with OTP
     async login(phone, otp) {
       this.loading = true

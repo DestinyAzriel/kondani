@@ -24,6 +24,39 @@ const upload = multer({
 
 router.post('/send-otp', authController.register);
 router.post('/verify-otp', authController.login);
+router.post('/google', authController.googleAuth);
+
+// WhatsApp Inbound 1-Tap Verification routes
+const whatsappBot = require('../services/whatsappBotService');
+router.post('/whatsapp-session', (req, res) => {
+  try {
+    const { socketId, phone } = req.body || {};
+    const session = whatsappBot.registerSession(socketId, phone);
+    res.json(session);
+  } catch (err) {
+    console.error('Error creating WhatsApp session:', err);
+    res.status(500).json({ error: 'Failed to create verification session' });
+  }
+});
+
+router.get('/whatsapp-status', (req, res) => {
+  try {
+    const status = whatsappBot.getStatus();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch WhatsApp status' });
+  }
+});
+
+router.get('/whatsapp-poll/:code', (req, res) => {
+  try {
+    const result = whatsappBot.checkSessionStatus(req.params.code);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to check verification status' });
+  }
+});
+
 router.get('/profile', authMiddleware, authController.getProfile);
 // Add the profile update route with file upload support
 router.put('/profile', authMiddleware, upload.array('photos', 6), authController.updateProfile);

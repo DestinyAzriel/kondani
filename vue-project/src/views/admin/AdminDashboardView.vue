@@ -136,6 +136,39 @@
           </div>
         </div>
 
+        <!-- WhatsApp Inbound Gateway Status Card -->
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <Smartphone :size="20" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-white text-sm">WhatsApp Inbound Gateway</h3>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  :class="waStatus.connected ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'"
+                >
+                  {{ waStatus.connected ? 'Active & Ready' : 'Pairing Required' }}
+                </span>
+              </div>
+              <p class="text-xs text-white/50 mt-0.5">
+                Bot Number: +{{ waStatus.botNumber || '265989503152' }} · 1-Tap verification at zero SMS cost
+              </p>
+            </div>
+          </div>
+
+          <div v-if="!waStatus.connected && waStatus.qr" class="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/10">
+            <img :src="waStatus.qr" alt="Scan QR" class="w-24 h-24 rounded-lg bg-white p-1" />
+            <div class="text-xs text-white/70 max-w-xs space-y-1">
+              <div class="font-bold text-white">Link Device</div>
+              <div>1. Open WhatsApp on +{{ waStatus.botNumber || '265989503152' }}</div>
+              <div>2. Tap Linked Devices → Link a Device</div>
+              <div>3. Scan this QR code</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Quick Action Panels -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Pending Verifications Teaser -->
@@ -515,6 +548,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { adminService } from '@/services/adminService'
+import { api } from '@/services/api'
 import { mediaUrl } from '@/utils/media'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
 import {
@@ -531,7 +565,8 @@ import {
   Check,
   X,
   Server,
-  LogOut
+  LogOut,
+  Smartphone
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -542,6 +577,7 @@ const activeTab = ref('overview')
 const isLoading = ref(false)
 
 const stats = ref({})
+const waStatus = ref({})
 const userList = ref([])
 const userSearchQuery = ref('')
 const userTierFilter = ref('')
@@ -614,9 +650,19 @@ const fetchReports = async () => {
   }
 }
 
+const fetchWhatsAppStatus = async () => {
+  try {
+    const res = await api.get('/auth/whatsapp-status')
+    waStatus.value = res.data || {}
+  } catch (err) {
+    console.error('Failed to load WhatsApp status:', err)
+  }
+}
+
 const refreshCurrentTab = async () => {
   isLoading.value = true
   await fetchDashboardStats()
+  await fetchWhatsAppStatus()
   if (activeTab.value === 'users') await fetchUsers()
   else if (activeTab.value === 'verifications') await fetchVerifications(verificationFilter.value)
   else if (activeTab.value === 'reports') await fetchReports()
@@ -680,13 +726,27 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
+let waStatusInterval = null
+
 onMounted(async () => {
   isLoading.value = true
   await fetchDashboardStats()
+  await fetchWhatsAppStatus()
   await fetchUsers()
   await fetchVerifications('all')
   await fetchReports()
   isLoading.value = false
+
+  // Poll WhatsApp pairing status if not yet connected
+  waStatusInterval = setInterval(() => {
+    if (activeTab.value === 'overview') {
+      fetchWhatsAppStatus()
+    }
+  }, 6000)
+})
+
+onUnmounted(() => {
+  if (waStatusInterval) clearInterval(waStatusInterval)
 })
 </script>
 

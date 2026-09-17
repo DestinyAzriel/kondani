@@ -24,7 +24,7 @@ function isAllowedOrigin(origin) {
   const clean = origin.replace(/\/+$/, '');
   if (envOrigins.includes(clean) || envOrigins.includes(origin)) return true;
   if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(clean)) return true;
-  if (/(^https?:\/\/|:\/\/.*?\.)(onrender\.com|vercel\.app|netlify\.app|duckdns\.org)(:\d+)?$/.test(clean)) return true;
+  if (/(^https?:\/\/|:\/\/.*?\.)(kondani\.com|onrender\.com|vercel\.app|netlify\.app|duckdns\.org)(:\d+)?$/.test(clean)) return true;
   return false;
 }
 
@@ -224,10 +224,22 @@ io.on('connection', (socket) => {
     // data: { to, from, content, type }
     io.to(data.to).emit('new_message', data);
   });
+
+  // Client subscribes to a specific WhatsApp verification session code
+  socket.on('subscribe_whatsapp_verification', (code) => {
+    if (code) {
+      socket.join(`verification_${code}`);
+    }
+  });
 });
 
 // Make io accessible in routes
 app.set('io', io);
+
+// Initialize WhatsApp Inbound Verification Bot
+const whatsappBot = require('./src/services/whatsappBotService');
+whatsappBot.setIO(io);
+whatsappBot.initWhatsAppBot();
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

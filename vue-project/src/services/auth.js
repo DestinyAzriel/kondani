@@ -2,6 +2,12 @@
 import api from './api'
 
 export const authService = {
+  // Google Sign-In (100% Phone-Free)
+  async googleLogin(credential) {
+    const response = await api.post('/auth/google', { credential })
+    return response.data // { success: true, token, user, isNewUser }
+  },
+
   // Send OTP to phone
   async sendOTP(phone) {
     // More flexible validation
@@ -24,6 +30,18 @@ export const authService = {
     
     const response = await api.post('/auth/send-otp', { phoneNumber: formattedPhone })
     return response.data
+  },
+
+  // Create WhatsApp 1-Tap verification session
+  async createWhatsAppSession(socketId, phone = '') {
+    const response = await api.post('/auth/whatsapp-session', { socketId, phone })
+    return response.data // { code, botNumber, waLink, expiresIn }
+  },
+
+  // Check if WhatsApp session is verified (polling fallback)
+  async pollWhatsAppVerification(code) {
+    const response = await api.get(`/auth/whatsapp-poll/${code}`)
+    return response.data // { status: 'verified' | 'pending' | 'not_found', token, user }
   },
 
   // Verify OTP
