@@ -635,7 +635,16 @@ const sendText = async () => {
   try {
     const res = await intentService.sendMessage(props.chatId, content)
     const i = messages.value.findIndex(m => m.id === tempId)
-    if (i !== -1) messages.value[i] = res.message
+    if (i !== -1) {
+      // If recipient is shown as online in the UI, optimistically set delivered=true
+      // This keeps chat bubble tick in sync with sidebar (which reads from DB)
+      const recipientIsOnline = chatUser.value?.online === true
+      messages.value[i] = {
+        ...res.message,
+        delivered: res.message.delivered || recipientIsOnline,
+        read: res.message.read || false
+      }
+    }
     relay(res.message)
   } catch (e) {
     messages.value = messages.value.filter(m => m.id !== tempId)
@@ -818,7 +827,15 @@ const uploadAndSendVoice = async (blob, filename = 'voice.webm') => {
     const { url } = await intentService.uploadChatMedia(blob, filename)
     const res = await intentService.sendMessage(props.chatId, '', 'voice', url)
     const i = messages.value.findIndex(m => m.id === tempId)
-    if (i !== -1) messages.value[i] = res.message
+    if (i !== -1) {
+      const recipientIsOnline = chatUser.value?.online === true
+      messages.value[i] = {
+        ...res.message,
+        mediaUrl: res.message.mediaUrl || URL.createObjectURL(blob),
+        delivered: res.message.delivered || recipientIsOnline,
+        read: res.message.read || false
+      }
+    }
     relay(res.message)
   } catch {
     recordError.value = 'Could not send voice note. Please try again.'
