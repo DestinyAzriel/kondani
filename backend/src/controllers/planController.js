@@ -17,7 +17,7 @@ const SEED_PLANS = [
         mockAge: 24,
         mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&auto=format&fit=crop&q=80',
-        isVerified: true
+        isVerified: false
     },
     {
         activity: 'Hiking up Mulanje Mountain trails',
@@ -29,7 +29,7 @@ const SEED_PLANS = [
         mockAge: 27,
         mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=400&auto=format&fit=crop&q=80',
-        isVerified: true
+        isVerified: false
     },
     {
         activity: 'Afrobeats & cocktails at Club 101',
@@ -41,7 +41,7 @@ const SEED_PLANS = [
         mockAge: 23,
         mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=400&auto=format&fit=crop&q=80',
-        isVerified: true
+        isVerified: false
     },
     {
         activity: 'Sunday lunch & lake breeze in Salima',
@@ -53,7 +53,7 @@ const SEED_PLANS = [
         mockAge: 25,
         mockGender: 'Female',
         mockPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-        isVerified: true
+        isVerified: false
     },
     {
         activity: 'Evening drinks & jazz at Woodlands',
@@ -65,7 +65,7 @@ const SEED_PLANS = [
         mockAge: 28,
         mockGender: 'Male',
         mockPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-        isVerified: true
+        isVerified: false
     }
 ];
 
@@ -128,8 +128,8 @@ exports.getPlans = async (req, res) => {
 
         // Fetch plans populated with author and applicants
         const plans = await Plan.find(query)
-            .populate('user', 'name age photos isVerified location district bio gender subscriptionTier isPremium')
-            .populate('interestedUsers.user', 'name age photos isVerified location district')
+            .populate('user', 'name age photos isVerified verification location district bio gender subscriptionTier isPremium')
+            .populate('interestedUsers.user', 'name age photos isVerified verification location district')
             .sort({ createdAt: -1 })
             .limit(50);
 
@@ -174,7 +174,7 @@ exports.getPlans = async (req, res) => {
                             name: item.user?.name || 'Kondani Member',
                             age: item.user?.age || null,
                             photo: item.user?.photos?.[0] || '',
-                            isVerified: !!item.user?.isVerified,
+                            isVerified: Boolean(item.user?.isVerified && item.user?.verification?.id?.status === 'approved'),
                             joinedAt: item.joinedAt,
                             isLocked: false
                         }));
@@ -188,7 +188,7 @@ exports.getPlans = async (req, res) => {
                                     name: item.user?.name || 'Kondani Member',
                                     age: item.user?.age || null,
                                     photo: item.user?.photos?.[0] || '',
-                                    isVerified: !!item.user?.isVerified,
+                                    isVerified: Boolean(item.user?.isVerified && item.user?.verification?.id?.status === 'approved'),
                                     joinedAt: item.joinedAt,
                                     isLocked: false
                                 };
@@ -198,7 +198,7 @@ exports.getPlans = async (req, res) => {
                                 name: 'Interested Member',
                                 age: null,
                                 photo: item.user?.photos?.[0] || '',
-                                isVerified: !!item.user?.isVerified,
+                                isVerified: Boolean(item.user?.isVerified && item.user?.verification?.id?.status === 'approved'),
                                 joinedAt: item.joinedAt,
                                 isLocked: true
                             };
@@ -227,7 +227,7 @@ exports.getPlans = async (req, res) => {
                         name: author.name || 'Kondani Member',
                         age: author.age || null,
                         photo: author.photos?.[0] || '',
-                        isVerified: !!author.isVerified,
+                        isVerified: Boolean(author.isVerified && author.verification?.id?.status === 'approved'),
                         location: author.location?.city || author.district || plan.location,
                         tier: author.subscriptionTier || (author.isPremium ? 'gold' : 'free')
                     }
@@ -310,7 +310,7 @@ exports.createPlan = async (req, res) => {
         });
 
         const populated = await Plan.findById(newPlan._id)
-            .populate('user', 'name age photos isVerified location district bio');
+            .populate('user', 'name age photos isVerified verification location district bio');
 
         const author = populated.user;
         res.status(201).json({
@@ -335,7 +335,7 @@ exports.createPlan = async (req, res) => {
                     name: author.name,
                     age: author.age,
                     photo: author.photos?.[0] || '',
-                    isVerified: !!author.isVerified,
+                    isVerified: Boolean(author.isVerified && author.verification?.id?.status === 'approved'),
                     location: author.district || populated.location
                 }
             }

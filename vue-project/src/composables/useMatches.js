@@ -18,7 +18,7 @@ const mockMatches = ref([
     age: 30,
     distance: '2.5 km',
     location: 'Lilongwe',
-    isVerified: true,
+    isVerified: false,
     avatar: 'https://i.pravatar.cc/150?img=2',
     intentContext: 'Looking for hiking partner',
     matchedAt: new Date()
@@ -52,7 +52,7 @@ export function useMatches() {
         age: 28,
         distance: '0.8 km',
         location: 'Mzuzu',
-        isVerified: true,
+        isVerified: false,
         avatar: 'https://i.pravatar.cc/150?img=3',
         intentContext: 'Afrobeats night this weekend',
         matchedAt: new Date()

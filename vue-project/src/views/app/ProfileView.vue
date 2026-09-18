@@ -155,7 +155,7 @@ const newInterest = ref('')
 const editForm = reactive({ bio: '', interests: [], photos: [] })
 
 const isUserVerified = computed(() => {
-  return Boolean(profile.value.isVerified && (profile.value.verification?.id?.status === 'approved' || profile.value.idVerified))
+  return Boolean(profile.value.isVerified && profile.value.verification?.id?.status === 'approved')
 })
 
 const checklist = computed(() => [

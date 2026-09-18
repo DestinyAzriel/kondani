@@ -15,7 +15,7 @@ const dummyUsers = [
         bio: 'Love hiking and coffee. Looking for someone adventurous.',
         interests: ['Hiking', 'Coffee', 'Travel'],
         photos: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500'],
-        isVerified: true
+        isVerified: false
     },
     {
         phone: '+265990000002',
@@ -37,7 +37,7 @@ const dummyUsers = [
         bio: 'Student at Mzuzu Uni. Love reading and quiet evenings.',
         interests: ['Reading', 'Movies', 'Study'],
         photos: ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'],
-        isVerified: true
+        isVerified: false
     },
     {
         phone: '+265990000004',
@@ -48,7 +48,7 @@ const dummyUsers = [
         bio: 'Entrepreneur. Tech lover. Always building something.',
         interests: ['Tech', 'Business', 'Fitness'],
         photos: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500'],
-        isVerified: true
+        isVerified: false
     },
     {
         phone: '+265990000005',

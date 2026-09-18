@@ -81,7 +81,7 @@ export function useIntents() {
       location: 'Lilongwe',
       intentTitle: 'Coffee at Mamma Mia this afternoon?',
       isOnline: true,
-      isVerified: true,
+      isVerified: false,
       avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&auto=format&fit=crop&q=60'
     },
     {
@@ -92,7 +92,7 @@ export function useIntents() {
       location: 'Blantyre',
       intentTitle: 'Looking for hiking partner at Mulanje',
       isOnline: false,
-      isVerified: true,
+      isVerified: false,
       avatar: 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=400&auto=format&fit=crop&q=60'
     },
     {
@@ -114,7 +114,7 @@ export function useIntents() {
       location: 'Mzuzu',
       intentTitle: 'Anyone up for football at Kamuzu Stadium?',
       isOnline: true,
-      isVerified: true,
+      isVerified: false,
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=60'
     },
     {
@@ -125,7 +125,7 @@ export function useIntents() {
       location: 'Lilongwe',
       intentTitle: 'Trying the new restaurant on City Centre',
       isOnline: false,
-      isVerified: true,
+      isVerified: false,
       avatar: 'https://images.unsplash.com/photo-1548142813-c348350df52b?w=400&auto=format&fit=crop&q=60'
     },
     {

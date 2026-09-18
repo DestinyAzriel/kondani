@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token && state.token !== 'null' && state.token !== 'undefined',
-    isVerified: (state) => state.user?.idVerified || state.user?.isVerified || false
+    isVerified: (state) => Boolean(state.user?.isVerified && state.user?.verification?.id?.status === 'approved')
   },
 
   actions: {

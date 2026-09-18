@@ -193,6 +193,12 @@ exports.login = async (req, res) => {
             { expiresIn: '30d' }
         );
         
+        // Ensure isVerified is strictly synced with approved selfie verification
+        if (user.isVerified && user.verification?.id?.status !== 'approved') {
+            user.isVerified = false;
+            await user.save();
+        }
+
         res.json({
             token,
             user
@@ -282,6 +288,12 @@ exports.googleAuth = async (req, res) => {
             process.env.JWT_SECRET || 'kondani_secret_key_2024',
             { expiresIn: '30d' }
         );
+
+        // Ensure isVerified is strictly synced with approved selfie verification
+        if (user.isVerified && user.verification?.id?.status !== 'approved') {
+            user.isVerified = false;
+            await user.save();
+        }
 
         res.json({
             success: true,
@@ -420,6 +432,9 @@ exports.updateProfile = async (req, res) => {
         delete updateData.banReason;
         delete updateData.bannedUntil;
         delete updateData.fcmToken;
+        delete updateData.isVerified;
+        delete updateData.verification;
+        delete updateData.idVerified;
         
         // Find existing user first to safely preserve completion status
         const existingUser = await User.findById(userId);

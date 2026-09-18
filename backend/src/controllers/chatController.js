@@ -267,7 +267,10 @@ exports.getChatProfile = async (req, res) => {
             await otherUser.save();
         }
 
-        res.json({ user: otherUser });
+        const userObj = otherUser.toObject ? otherUser.toObject() : { ...otherUser };
+        userObj.isVerified = Boolean(otherUser.isVerified && otherUser.verification?.id?.status === 'approved');
+
+        res.json({ user: userObj });
     } catch (err) {
         console.error('getChatProfile error:', err);
         res.status(500).json({ error: 'Server error' });

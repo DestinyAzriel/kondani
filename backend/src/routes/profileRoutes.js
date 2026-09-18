@@ -431,7 +431,18 @@ router.post('/daily-picks/:id/swipe', auth, async (req, res) => {
                     targetIntent.matches.push(currentUserId);
                     await targetIntent.save();
                 }
-                matchData = await User.findById(candidateId).select('name photos district age isVerified');
+                const matchedUser = await User.findById(candidateId).select('name photos district age isVerified verification');
+                if (matchedUser) {
+                    matchData = {
+                        id: matchedUser._id,
+                        _id: matchedUser._id,
+                        name: matchedUser.name,
+                        photos: matchedUser.photos,
+                        district: matchedUser.district,
+                        age: matchedUser.age,
+                        isVerified: Boolean(matchedUser.isVerified && matchedUser.verification?.id?.status === 'approved')
+                    };
+                }
             }
         } else {
             let userIntent = await Intent.findOne({ user: currentUserId });

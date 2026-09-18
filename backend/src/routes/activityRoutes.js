@@ -113,10 +113,21 @@ router.get('/online/users', auth, async (req, res) => {
             isOnline: true,
             isVisible: true
         })
-            .select('name age location photos isVerified lastSeen')
+            .select('name age location photos isVerified verification lastSeen')
             .limit(parseInt(limit));
 
-        res.json(users);
+        const sanitizedUsers = users.map(u => ({
+            id: u._id,
+            _id: u._id,
+            name: u.name,
+            age: u.age,
+            location: u.location,
+            photos: u.photos,
+            isVerified: Boolean(u.isVerified && u.verification?.id?.status === 'approved'),
+            lastSeen: u.lastSeen
+        }));
+
+        res.json(sanitizedUsers);
     } catch (error) {
         console.error('Online users error:', error);
         res.status(500).json({ error: 'Server error' });

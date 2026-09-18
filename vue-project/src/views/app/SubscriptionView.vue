@@ -489,7 +489,7 @@ const availablePlans = [
       { text: '5 Super Likes every day', included: true },
       { text: '1 Monthly Profile Boost (10x views)', included: true },
       { text: 'Rewind accidental left-swipes', included: true },
-      { text: 'Verified Gold Crown badge on profile', included: true },
+      { text: 'Exclusive Gold Crown VIP badge on profile', included: true },
       { text: 'Priority Likes in swipe decks', included: false }
     ]
   },

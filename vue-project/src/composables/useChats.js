@@ -11,7 +11,7 @@ const mockChats = [
     distance: '1.2 km',
     location: 'Blantyre',
     isOnline: true,
-    isVerified: true,
+    isVerified: false,
     avatar: 'https://i.pravatar.cc/150?img=1',
     lastMessage: 'Hey! I saw your coffee intent — I know a great spot in Blantyre!',
     timeSent: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
@@ -26,7 +26,7 @@ const mockChats = [
     distance: '2.5 km',
     location: 'Lilongwe',
     isOnline: false,
-    isVerified: true,
+    isVerified: false,
     avatar: 'https://i.pravatar.cc/150?img=2',
     lastMessage: 'Looking forward to the hiking trip this weekend!',
     timeSent: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
@@ -41,7 +41,7 @@ const mockChats = [
     distance: '0.8 km',
     location: 'Mzuzu',
     isOnline: true,
-    isVerified: true,
+    isVerified: false,
     avatar: 'https://i.pravatar.cc/150?img=3',
     lastMessage: 'Can’t wait for Afrobeats night! What time are you planning to go?',
     timeSent: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
