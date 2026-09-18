@@ -41,6 +41,7 @@ function resolveChatId(id, currentUserId) {
 exports.getChats = async (req, res) => {
     try {
         const currentUserId = req.user.id;
+        const IDVerification = require('../models/IDVerification');
 
         // Get matches from Intent
         const myIntent = await Intent.findOne({ user: currentUserId }).populate('matches');
@@ -49,7 +50,16 @@ exports.getChats = async (req, res) => {
             return res.json({ chats: [] });
         }
 
-        const chats = await Promise.all(myIntent.matches.map(async (match) => {
+        // Strict Gold Tick: Only users who have an approved selfie in IDVerification get isVerified = true
+        const matchUserIds = myIntent.matches.filter(Boolean).map(m => m._id);
+        const approvedVerifications = await IDVerification.find({
+            userId: { $in: matchUserIds },
+            status: 'approved',
+            selfieUrl: { $exists: true, $ne: '' }
+        }).select('userId');
+        const verifiedUserIds = new Set(approvedVerifications.map(v => v.userId.toString()));
+
+        const chats = await Promise.all(myIntent.matches.filter(Boolean).map(async (match) => {
             // Generate unique chat ID (e.g., sorted user IDs joined)
             const chatId = [currentUserId, match._id.toString()].sort().join('_');
 
@@ -77,7 +87,7 @@ exports.getChats = async (req, res) => {
                 intent: match.relationshipIntent || '',
                 interests: match.interests || [],
                 occupation: match.occupation || match.job || '',
-                isVerified: Boolean(match.isVerified && match.verification?.id?.status === 'approved'),
+                isVerified: verifiedUserIds.has(match._id.toString()),
                 lastMessage: lastMessage ? lastMessage.content : 'Start chatting!',
                 lastMessageType: lastMessage ? (lastMessage.messageType || 'text') : 'text',
                 lastMessageTime: lastMessage ? lastMessage.createdAt : match.createdAt, // fallback
@@ -112,9 +122,11 @@ exports.getMessages = async (req, res) => {
         if (sendReadReceipt) {
             await Message.updateMany(
                 { 
-                    $or: [{ chatId }, { chatId: rawChatId }],
-                    sender: { $ne: currentObjId },
-                    $or: [{ read: false }, { delivered: false }]
+                    $and: [
+                        { $or: [{ chatId }, { chatId: rawChatId }] },
+                        { sender: { $ne: currentObjId } },
+                        { $or: [{ read: false }, { delivered: false }] }
+                    ]
                 },
                 { read: true, delivered: true }
             );
@@ -164,24 +176,24 @@ exports.sendMessage = async (req, res) => {
         const mongoose = require('mongoose');
         const currentObjId = mongoose.Types.ObjectId.isValid(currentUserId) ? new mongoose.Types.ObjectId(currentUserId) : currentUserId;
 
+        // Determine recipient so we can check their online status
+        const recipientId = String(chatId).includes('_')
+            ? String(chatId).split('_').find(id => id !== String(currentUserId))
+            : rawChatId;
+        const isRecipientOnline = recipientId ? onlineUsers.has(String(recipientId)) : false;
+
         // Since current user is responding, mark previous messages from other user as delivered & read
         await Message.updateMany(
             { 
                 $or: [{ chatId }, { chatId: rawChatId }],
-                sender: { $ne: currentObjId }, 
-                $or: [{ read: false }, { delivered: false }] 
+                sender: { $ne: currentObjId }
             },
             { read: true, delivered: true }
         );
 
         const io = req.app?.get('io');
-        if (io) {
-            const otherUserId = String(chatId).includes('_')
-                ? String(chatId).split('_').find(id => id !== String(currentUserId))
-                : rawChatId;
-            if (otherUserId) {
-                io.to(String(otherUserId)).emit('messages_read', { chatId });
-            }
+        if (io && recipientId) {
+            io.to(String(recipientId)).emit('messages_read', { chatId });
         }
 
         const newMessage = await Message.create({
@@ -189,7 +201,8 @@ exports.sendMessage = async (req, res) => {
             sender: currentUserId,
             content,
             messageType,
-            mediaUrl
+            mediaUrl,
+            delivered: isRecipientOnline  // immediately mark delivered if recipient is online
         });
         
         res.json({
@@ -202,7 +215,7 @@ exports.sendMessage = async (req, res) => {
                 time: newMessage.createdAt,
                 isMe: true,
                 read: false,
-                delivered: false,
+                delivered: isRecipientOnline,  // true = double grey tick, false = single grey tick
                 messageType: newMessage.messageType,
                 mediaUrl: newMessage.mediaUrl
             }
@@ -316,14 +329,17 @@ exports.getChatProfile = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Auto-correct any legacy unverified users
-        if (otherUser.isVerified && otherUser.verification?.id?.status !== 'approved') {
-            otherUser.isVerified = false;
-            await otherUser.save();
-        }
+        const IDVerification = require('../models/IDVerification');
+        // Strict Gold Tick: Only granted to users with an approved selfie in IDVerification
+        const verRecord = await IDVerification.findOne({
+            userId: otherUser._id,
+            status: 'approved',
+            selfieUrl: { $exists: true, $ne: '' }
+        });
+        const isVerified = Boolean(verRecord);
 
         const userObj = otherUser.toObject ? otherUser.toObject() : { ...otherUser };
-        userObj.isVerified = Boolean(otherUser.isVerified && otherUser.verification?.id?.status === 'approved');
+        userObj.isVerified = isVerified;
 
         res.json({ user: userObj });
     } catch (err) {
