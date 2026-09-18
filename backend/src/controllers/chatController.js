@@ -27,6 +27,17 @@ async function markMessagesAsDelivered(chatId, recipientId) {
     }
 }
 
+// Helper to normalize chatId whether it is a sorted pair (user1_user2) or a single peer userId
+function resolveChatId(id, currentUserId) {
+    if (!id) return id;
+    const strId = String(id);
+    if (strId.includes('_')) return strId;
+    if (currentUserId) {
+        return [String(currentUserId), strId].sort().join('_');
+    }
+    return strId;
+}
+
 exports.getChats = async (req, res) => {
     try {
         const currentUserId = req.user.id;
@@ -46,7 +57,9 @@ exports.getChats = async (req, res) => {
             await markMessagesAsDelivered(chatId, currentUserId);
 
             // Get last message
-            const lastMessage = await Message.findOne({ chatId }).sort({ createdAt: -1 });
+            const lastMessage = await Message.findOne({
+                $or: [{ chatId }, { chatId: match._id.toString() }]
+            }).sort({ createdAt: -1 });
 
             // Respect the matched user's showOnlineStatus privacy setting
             const matchShowOnline = match.showOnlineStatus !== false; // default true
@@ -66,6 +79,7 @@ exports.getChats = async (req, res) => {
                 occupation: match.occupation || match.job || '',
                 isVerified: Boolean(match.isVerified && match.verification?.id?.status === 'approved'),
                 lastMessage: lastMessage ? lastMessage.content : 'Start chatting!',
+                lastMessageType: lastMessage ? (lastMessage.messageType || 'text') : 'text',
                 lastMessageTime: lastMessage ? lastMessage.createdAt : match.createdAt, // fallback
                 lastMessageFromMe: lastMessage ? lastMessage.sender.toString() === currentUserId : false,
                 lastMessageRead: lastMessage ? Boolean(lastMessage.read) : false,
@@ -85,8 +99,9 @@ exports.getChats = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
     try {
-        const chatId = req.params.id;
+        const rawChatId = req.params.id;
         const currentUserId = req.user.id;
+        const chatId = resolveChatId(rawChatId, currentUserId);
         
         // Mark messages as read when user opens chat (unless user disabled read receipts)
         const currentUserDoc = await User.findById(currentUserId).select('readReceipts');
@@ -97,7 +112,7 @@ exports.getMessages = async (req, res) => {
         if (sendReadReceipt) {
             await Message.updateMany(
                 { 
-                    chatId: chatId, 
+                    $or: [{ chatId }, { chatId: rawChatId }],
                     sender: { $ne: currentObjId },
                     $or: [{ read: false }, { delivered: false }]
                 },
@@ -109,14 +124,16 @@ exports.getMessages = async (req, res) => {
             if (io) {
                 const otherUserId = String(chatId).includes('_')
                     ? String(chatId).split('_').find(id => id !== String(currentUserId))
-                    : null;
+                    : rawChatId;
                 if (otherUserId) {
                     io.to(String(otherUserId)).emit('messages_read', { chatId });
                 }
             }
         }
 
-        const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
+        const messages = await Message.find({ 
+            $or: [{ chatId }, { chatId: rawChatId }] 
+        }).sort({ createdAt: 1 });
 
         const formattedMessages = messages.map(msg => ({
             id: msg._id,
@@ -140,15 +157,20 @@ exports.getMessages = async (req, res) => {
 
 exports.sendMessage = async (req, res) => {
     try {
-        const chatId = req.params.id;
-        const { content, messageType = 'text', mediaUrl = null } = req.body;
+        const rawChatId = req.params.id;
         const currentUserId = req.user.id;
+        const chatId = resolveChatId(rawChatId, currentUserId);
+        const { content, messageType = 'text', mediaUrl = null } = req.body;
         const mongoose = require('mongoose');
         const currentObjId = mongoose.Types.ObjectId.isValid(currentUserId) ? new mongoose.Types.ObjectId(currentUserId) : currentUserId;
 
         // Since current user is responding, mark previous messages from other user as delivered & read
         await Message.updateMany(
-            { chatId: chatId, sender: { $ne: currentObjId }, $or: [{ read: false }, { delivered: false }] },
+            { 
+                $or: [{ chatId }, { chatId: rawChatId }],
+                sender: { $ne: currentObjId }, 
+                $or: [{ read: false }, { delivered: false }] 
+            },
             { read: true, delivered: true }
         );
 
@@ -156,7 +178,7 @@ exports.sendMessage = async (req, res) => {
         if (io) {
             const otherUserId = String(chatId).includes('_')
                 ? String(chatId).split('_').find(id => id !== String(currentUserId))
-                : null;
+                : rawChatId;
             if (otherUserId) {
                 io.to(String(otherUserId)).emit('messages_read', { chatId });
             }

@@ -309,7 +309,22 @@ const topNavItems = computed(() => [
 ])
 
 const isActive = (p) => route.path === p
-const isActiveChat = (id) => route.path === `/chats/${id}` || route.params.id === String(id)
+
+const getActiveRouteChatId = () => {
+  if (route.params.id) return String(route.params.id)
+  if (route.path.startsWith('/chats/')) {
+    const segment = route.path.replace(/^\/chats\//, '').split('/')[0]
+    if (segment) return segment
+  }
+  return ''
+}
+
+const isActiveChat = (id) => {
+  const currentId = getActiveRouteChatId()
+  if (!currentId) return false
+  const strId = String(id || '')
+  return strId === currentId || strId.includes(currentId) || currentId.includes(strId)
+}
 
 const formatTime = (t) => {
   if (!t) return ''
@@ -319,41 +334,45 @@ const formatTime = (t) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+const clearActiveChatUnread = () => {
+  const currentId = getActiveRouteChatId()
+  if (!currentId) return
+  let changed = false
+  chats.value.forEach(c => {
+    if (isActiveChat(c.id) || (c.userId && String(c.userId) === currentId)) {
+      if (c.unread || c.yourTurn) changed = true
+      c.unread = false
+      c.yourTurn = false
+    }
+  })
+  if (changed) {
+    setCached('kondani_desktop_chats', chats.value)
+    setCached('kondani_chats', chats.value)
+  }
+}
+
 const syncFromStorage = () => {
   const cached = getCached('kondani_desktop_chats') || getCached('kondani_chats')
   if (cached && Array.isArray(cached)) {
     chats.value = cached
-    const currentId = route.params.id
-    if (currentId) {
-      const active = chats.value.find(c => isActiveChat(c.id))
-      if (active) {
-        active.unread = false
-        active.yourTurn = false
-      }
-    }
+    clearActiveChatUnread()
   }
 }
 
-watch(() => route.params.id, (newId) => {
-  if (newId) {
-    const chat = chats.value.find(c => isActiveChat(c.id))
-    if (chat) {
-      chat.unread = false
-      chat.yourTurn = false
-      setCached('kondani_desktop_chats', chats.value)
-      setCached('kondani_chats', chats.value)
-    }
-  }
+watch(() => [route.path, route.params.id], () => {
+  clearActiveChatUnread()
 }, { immediate: true })
 
 const openChat = (id) => {
-  const chat = chats.value.find(c => String(c.id) === String(id))
-  if (chat) {
-    chat.unread = false
-    chat.yourTurn = false
-    setCached('kondani_desktop_chats', chats.value)
-    setCached('kondani_chats', chats.value)
-  }
+  const strId = String(id)
+  chats.value.forEach(c => {
+    if (String(c.id) === strId || (c.userId && String(c.userId) === strId) || (typeof c.id === 'string' && c.id.includes(strId))) {
+      c.unread = false
+      c.yourTurn = false
+    }
+  })
+  setCached('kondani_desktop_chats', chats.value)
+  setCached('kondani_chats', chats.value)
   router.push(`/chats/${id}`)
 }
 
@@ -469,6 +488,7 @@ onMounted(async () => {
     const c = await intentService.getChats()
     if (c?.chats) {
       chats.value = c.chats
+      clearActiveChatUnread()
       setCached('kondani_desktop_chats', chats.value)
       setCached('kondani_chats', chats.value)
     }

@@ -415,15 +415,25 @@ const otherTypingTimer = ref(null)
 
 const clearSidebarUnread = () => {
   try {
-    ['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
+    const rId = String(recipientId || '')
+    const cId = String(chatId || '')
+    ;['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
       const stored = localStorage.getItem(key)
       if (stored) {
         const arr = JSON.parse(stored)
         if (Array.isArray(arr)) {
-          const item = arr.find(c => String(c.id) === String(chatId) || (c.userId && String(c.userId) === String(recipientId)))
-          if (item) {
-            item.unread = false
-            item.yourTurn = false
+          let updated = false
+          arr.forEach(c => {
+            const match = String(c.id) === cId ||
+                          (c.userId && String(c.userId) === rId) ||
+                          (typeof c.id === 'string' && (c.id.includes(rId) || c.id.includes(cId)))
+            if (match) {
+              c.unread = false
+              c.yourTurn = false
+              updated = true
+            }
+          })
+          if (updated) {
             localStorage.setItem(key, JSON.stringify(arr))
           }
         }
@@ -435,12 +445,18 @@ const clearSidebarUnread = () => {
 
 const updateSidebarLastMessage = (content) => {
   try {
-    ['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
+    const rId = String(recipientId || '')
+    const cId = String(chatId || '')
+    ;['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
       const stored = localStorage.getItem(key)
       if (stored) {
         let arr = JSON.parse(stored)
         if (Array.isArray(arr)) {
-          const idx = arr.findIndex(c => String(c.id) === String(chatId) || (c.userId && String(c.userId) === String(recipientId)))
+          const idx = arr.findIndex(c => 
+            String(c.id) === cId || 
+            (c.userId && String(c.userId) === rId) ||
+            (typeof c.id === 'string' && (c.id.includes(rId) || c.id.includes(cId)))
+          )
           if (idx !== -1) {
             const chat = arr[idx]
             chat.lastMessage = content

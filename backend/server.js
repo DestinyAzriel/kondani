@@ -270,8 +270,23 @@ io.on('connection', (socket) => {
 
     if (!isAnswered && (trackedCall || (fromId && toId))) {
       try {
-        const callerId = trackedCall?.callerId || (data?.initiator ? fromId : (data?.callerId || fromId));
-        const calleeId = trackedCall?.calleeId || (callerId === fromId ? toId : fromId);
+        let callerId = trackedCall?.callerId;
+        let calleeId = trackedCall?.calleeId;
+        if (!callerId || !calleeId) {
+          if (data?.initiator === true) {
+            callerId = fromId;
+            calleeId = toId;
+          } else if (data?.initiator === false || data?.reason === 'declined') {
+            callerId = toId;
+            calleeId = fromId;
+          } else if (data?.callerId) {
+            callerId = String(data.callerId);
+            calleeId = callerId === fromId ? toId : fromId;
+          } else {
+            callerId = fromId;
+            calleeId = toId;
+          }
+        }
         const mode = (trackedCall?.mode || data?.mode || 'video') === 'audio' ? 'voice' : 'video';
         const chatId = [callerId, calleeId].sort().join('_');
         const messageType = mode === 'voice' ? 'missed_voice_call' : 'missed_video_call';

@@ -277,6 +277,17 @@ const syncFromStorage = () => {
   const cached = getCached('kondani_chats') || getCached('kondani_desktop_chats')
   if (cached && Array.isArray(cached)) {
     chats.value = cached
+    if (activeChatId.value) {
+      const active = chats.value.find(c => 
+        String(c.id) === activeChatId.value ||
+        (c.userId && String(c.userId) === activeChatId.value) ||
+        (typeof c.id === 'string' && c.id.includes(activeChatId.value))
+      )
+      if (active) {
+        active.unread = false
+        active.yourTurn = false
+      }
+    }
   }
 }
 
