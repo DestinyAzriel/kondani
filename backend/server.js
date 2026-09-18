@@ -142,8 +142,15 @@ const io = new Server(server, {
   }
 });
 
+app.set('io', io);
+
 const { onlineUsers } = require('./src/controllers/chatController');
 const User = require('./src/models/User');
+const Message = require('./src/models/Message');
+const mongoose = require('mongoose');
+
+// Track in-flight call attempts: key = sorted(caller_callee), value = { callerId, calleeId, mode, answered: false, createdAt }
+const activeCalls = new Map();
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -166,6 +173,24 @@ io.on('connection', (socket) => {
         await User.findByIdAndUpdate(strUserId, { isOnline: true, lastActive: new Date() });
         io.emit('user_status', { userId: strUserId, isOnline: true });
       }
+
+      // Automatically mark pending undelivered messages to this user as delivered!
+      const userObjId = mongoose.Types.ObjectId.isValid(strUserId) ? new mongoose.Types.ObjectId(strUserId) : strUserId;
+      const pendingDeliveries = await Message.find({
+        chatId: { $regex: strUserId },
+        sender: { $ne: userObjId },
+        delivered: false
+      }).select('_id chatId sender');
+
+      if (pendingDeliveries.length > 0) {
+        await Message.updateMany(
+          { _id: { $in: pendingDeliveries.map(m => m._id) } },
+          { delivered: true }
+        );
+        pendingDeliveries.forEach(m => {
+          io.to(String(m.sender)).emit('message_delivered', { messageId: m._id, chatId: m.chatId });
+        });
+      }
     } catch (e) {
       console.error('Error in socket join status update:', e);
     }
@@ -175,7 +200,6 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id, socket.userId);
     if (socket.userId) {
       const uid = socket.userId;
-      // Check if user still has other connected sockets
       const stillConnected = Array.from(io.sockets.sockets.values()).some(s => s.userId === uid && s.id !== socket.id);
       if (!stillConnected) {
         onlineUsers.delete(uid);
@@ -191,9 +215,20 @@ io.on('connection', (socket) => {
 
   // WebRTC Signaling
   socket.on('call_user', (data) => {
-    io.to(data.userToCall).emit('call_made', {
+    const callerId = String(data.from);
+    const calleeId = String(data.userToCall);
+    const callKey = [callerId, calleeId].sort().join('_');
+    activeCalls.set(callKey, {
+      callerId,
+      calleeId,
+      mode: data.mode || 'video',
+      answered: false,
+      createdAt: Date.now()
+    });
+
+    io.to(calleeId).emit('call_made', {
       offer: data.signalData,
-      from: data.from,
+      from: callerId,
       name: data.name || '',
       photo: data.photo || '',
       mode: data.mode || 'video'
@@ -201,9 +236,17 @@ io.on('connection', (socket) => {
   });
 
   socket.on('answer_call', (data) => {
-    io.to(data.to).emit('call_answered', {
+    const fromId = String(data.from);
+    const toId = String(data.to);
+    const callKey = [fromId, toId].sort().join('_');
+    const existing = activeCalls.get(callKey);
+    if (existing) {
+      existing.answered = true;
+    }
+
+    io.to(toId).emit('call_answered', {
       signal: data.signal,
-      from: data.from
+      from: fromId
     });
   });
 
@@ -215,8 +258,65 @@ io.on('connection', (socket) => {
   });
 
   // Caller cancels or either side hangs up / declines
-  socket.on('end_call', (data) => {
-    if (data && data.to) io.to(data.to).emit('call_ended');
+  socket.on('end_call', async (data) => {
+    if (data && data.to) io.to(String(data.to)).emit('call_ended');
+
+    const toId = data?.to ? String(data.to) : '';
+    const fromId = data?.from ? String(data.from) : (socket.userId || '');
+    const callKey = (toId && fromId) ? [fromId, toId].sort().join('_') : null;
+    const trackedCall = callKey ? activeCalls.get(callKey) : null;
+
+    const isAnswered = data?.connected === true || (trackedCall && trackedCall.answered);
+
+    if (!isAnswered && (trackedCall || (fromId && toId))) {
+      try {
+        const callerId = trackedCall?.callerId || (data?.initiator ? fromId : (data?.callerId || fromId));
+        const calleeId = trackedCall?.calleeId || (callerId === fromId ? toId : fromId);
+        const mode = (trackedCall?.mode || data?.mode || 'video') === 'audio' ? 'voice' : 'video';
+        const chatId = [callerId, calleeId].sort().join('_');
+        const messageType = mode === 'voice' ? 'missed_voice_call' : 'missed_video_call';
+        const content = mode === 'voice' ? 'Missed voice call' : 'Missed video call';
+
+        // Check recent missed call in last 5 seconds to prevent duplicates
+        const recentMissed = await Message.findOne({
+          chatId,
+          messageType,
+          createdAt: { $gte: new Date(Date.now() - 5000) }
+        });
+
+        if (!recentMissed) {
+          const missedMsg = await Message.create({
+            chatId,
+            sender: callerId,
+            content,
+            messageType,
+            read: false,
+            delivered: onlineUsers.has(calleeId)
+          });
+
+          const payload = {
+            id: missedMsg._id,
+            chatId,
+            sender: callerId,
+            from: callerId,
+            to: calleeId,
+            content,
+            messageType,
+            time: missedMsg.createdAt,
+            read: false,
+            delivered: missedMsg.delivered
+          };
+
+          // Deliver missed call card to callee and caller
+          io.to(calleeId).emit('new_message', { ...payload, isMe: false });
+          io.to(callerId).emit('new_message', { ...payload, isMe: true });
+        }
+      } catch (err) {
+        console.error('Error creating missed call message:', err);
+      }
+    }
+
+    if (callKey) activeCalls.delete(callKey);
   });
 
   // Chat Messages: Real-time WhatsApp-style delivery & tick tracking
@@ -226,36 +326,62 @@ io.on('connection', (socket) => {
     const fromId = String(data?.from);
     const isRecipientOnline = onlineUsers.has(toId);
 
+    // Auto-mark prior messages from recipient in this chat as delivered and read since sender is replying
+    try {
+      const fromObjId = mongoose.Types.ObjectId.isValid(fromId) ? new mongoose.Types.ObjectId(fromId) : fromId;
+      await Message.updateMany(
+        { chatId: data.chatId, sender: { $ne: fromObjId }, $or: [{ read: false }, { delivered: false }] },
+        { read: true, delivered: true }
+      );
+      io.to(fromId).emit('messages_read', { chatId: data.chatId });
+      io.to(toId).emit('messages_read', { chatId: data.chatId });
+    } catch (e) {
+      console.error('Error auto-marking read on reply:', e);
+    }
+
+    const messagePayload = {
+      ...data,
+      sender: fromId,
+      from: fromId,
+      isMe: false,
+      delivered: isRecipientOnline
+    };
+
     if (isRecipientOnline) {
-      // Recipient is online -> mark delivered in DB and emit double gray tick to sender
       try {
         if (data.id) {
-          const Message = require('./src/models/Message');
           await Message.findByIdAndUpdate(data.id, { delivered: true });
         }
       } catch (e) {
         console.error('Error marking message delivered:', e);
       }
 
-      io.to(toId).emit('new_message', { ...data, delivered: true });
+      io.to(toId).emit('new_message', messagePayload);
       io.to(fromId).emit('message_delivered', { messageId: data.id, chatId: data.chatId });
     } else {
-      // Recipient is offline -> message remains single tick (✓)
-      io.to(toId).emit('new_message', { ...data, delivered: false });
+      io.to(toId).emit('new_message', { ...messagePayload, delivered: false });
     }
   });
 
-  // Read receipts: Turn double gray ticks -> double blue/cyan ticks (✓✓)
+  // Read receipts: Turn gray ticks -> double sky-blue ticks (✓✓)
   socket.on('mark_read', async (data) => {
     // data: { chatId, readerId, senderId }
-    if (!data?.chatId || !data?.senderId) return;
+    if (!data?.chatId) return;
     try {
-      const Message = require('./src/models/Message');
-      await Message.updateMany(
-        { chatId: data.chatId, sender: data.senderId, read: false },
-        { read: true, delivered: true }
-      );
-      io.to(String(data.senderId)).emit('messages_read', { chatId: data.chatId });
+      const query = { chatId: data.chatId, $or: [{ read: false }, { delivered: false }] };
+      if (data.senderId && mongoose.Types.ObjectId.isValid(data.senderId)) {
+        query.sender = new mongoose.Types.ObjectId(data.senderId);
+      } else if (data.readerId && mongoose.Types.ObjectId.isValid(data.readerId)) {
+        query.sender = { $ne: new mongoose.Types.ObjectId(data.readerId) };
+      }
+
+      await Message.updateMany(query, { read: true, delivered: true });
+
+      const targetId = data.senderId || (String(data.chatId).includes('_') ? String(data.chatId).split('_').find(id => id !== String(data.readerId)) : null);
+      if (targetId) {
+        io.to(String(targetId)).emit('messages_read', { chatId: data.chatId });
+      }
+      io.to(String(data.chatId)).emit('messages_read', { chatId: data.chatId });
     } catch (e) {
       console.error('Error in socket mark_read:', e);
     }

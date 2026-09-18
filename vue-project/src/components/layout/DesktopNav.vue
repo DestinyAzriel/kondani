@@ -158,8 +158,12 @@
 
                 <!-- Last message preview with WhatsApp ticks -->
                 <div v-else class="flex items-center gap-1 min-w-0 flex-1">
+                  <!-- Missed call preview icon -->
+                  <span v-if="chat.lastMessageType === 'missed_voice_call' || chat.lastMessageType === 'missed_video_call' || String(chat.lastMessage).includes('Missed')" class="shrink-0 flex items-center mr-0.5 text-rose-400">
+                    <PhoneMissedIcon :size="12" />
+                  </span>
                   <!-- WhatsApp Tick for messages sent by me -->
-                  <span v-if="chat.lastMessageFromMe && chat.lastMessage && chat.lastMessage !== 'Start chatting!'" class="shrink-0 flex items-center mr-0.5">
+                  <span v-else-if="(chat.lastMessageFromMe || chat.isLastSender) && chat.lastMessage && chat.lastMessage !== 'Start chatting!'" class="shrink-0 flex items-center mr-0.5">
                     <!-- Blue/Cyan double tick = Read -->
                     <CheckCheckIcon v-if="chat.lastMessageRead" :size="13" class="text-sky-400 stroke-[2.5]" title="Read" />
                     <!-- Grey double tick = Delivered -->
@@ -167,7 +171,11 @@
                     <!-- Grey single tick = Sent / Recipient Offline -->
                     <CheckIcon v-else :size="13" class="text-white/40 stroke-[2]" title="Sent" />
                   </span>
-                  <p class="text-xs truncate leading-normal flex-1" :class="chat.unread ? 'text-white font-semibold' : 'text-white/50'">
+                  <p class="text-xs truncate leading-normal flex-1"
+                     :class="[
+                       chat.unread ? 'text-white font-semibold' : 'text-white/50',
+                       (chat.lastMessageType === 'missed_voice_call' || String(chat.lastMessage).includes('Missed')) ? 'text-rose-400/90' : ''
+                     ]">
                     {{ chat.lastMessage || 'Start chatting!' }}
                   </p>
                 </div>
@@ -204,9 +212,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Flame, Sparkles, Star, User as UserIcon, Heart, MessageCircle, Shield, BadgeCheck, Search, Check as CheckIcon, CheckCheck as CheckCheckIcon } from 'lucide-vue-next'
+import { Flame, Sparkles, Star, User as UserIcon, Heart, MessageCircle, Shield, BadgeCheck, Search, Check as CheckIcon, CheckCheck as CheckCheckIcon, PhoneMissed as PhoneMissedIcon } from 'lucide-vue-next'
 import { useProfile } from '@/composables/useProfile'
 import { intentService } from '@/services/intentService'
 import { socketService } from '@/services/socketService'
@@ -311,7 +319,43 @@ const formatTime = (t) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-const openChat = (id) => router.push(`/chats/${id}`)
+const syncFromStorage = () => {
+  const cached = getCached('kondani_desktop_chats') || getCached('kondani_chats')
+  if (cached && Array.isArray(cached)) {
+    chats.value = cached
+    const currentId = route.params.id
+    if (currentId) {
+      const active = chats.value.find(c => isActiveChat(c.id))
+      if (active) {
+        active.unread = false
+        active.yourTurn = false
+      }
+    }
+  }
+}
+
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    const chat = chats.value.find(c => isActiveChat(c.id))
+    if (chat) {
+      chat.unread = false
+      chat.yourTurn = false
+      setCached('kondani_desktop_chats', chats.value)
+      setCached('kondani_chats', chats.value)
+    }
+  }
+}, { immediate: true })
+
+const openChat = (id) => {
+  const chat = chats.value.find(c => String(c.id) === String(id))
+  if (chat) {
+    chat.unread = false
+    chat.yourTurn = false
+    setCached('kondani_desktop_chats', chats.value)
+    setCached('kondani_chats', chats.value)
+  }
+  router.push(`/chats/${id}`)
+}
 
 // Clicking a match: moves them immediately to Messages, removes from New Matches, and opens chat
 const openChatWith = (m) => {
@@ -352,17 +396,21 @@ const openChatWith = (m) => {
 const handleNewMessage = (message) => {
   const i = chats.value.findIndex(c => String(c.id) === String(message.chatId))
   const myId = String(authStore.user?._id || authStore.user?.id || '')
-  const isMe = String(message.sender) === myId
+  const isMe = Boolean(message.isMe || String(message.sender || message.from) === myId)
 
   if (i !== -1) {
     const chat = chats.value[i]
     chat.lastMessage = message.content
+    chat.lastMessageType = message.messageType
     chat.lastMessageTime = new Date().toISOString()
     chat.lastMessageFromMe = isMe
     chat.lastMessageRead = Boolean(message.read)
-    chat.lastMessageDelivered = Boolean(message.delivered)
+    chat.lastMessageDelivered = Boolean(message.delivered || isMe)
     chat.typing = false
-    if (!isActiveChat(chat.id) && !isMe) {
+    if (isActiveChat(chat.id) || isMe) {
+      chat.unread = false
+      chat.yourTurn = false
+    } else {
       chat.unread = true
       chat.yourTurn = true
     }
@@ -409,6 +457,7 @@ const handleUserStatus = ({ userId, isOnline }) => {
 }
 
 onMounted(async () => {
+  window.addEventListener('kondani:chats_changed', syncFromStorage)
   socketService.connect()
   socketService.on('new_message', handleNewMessage)
   socketService.on('user_typing', handleUserTyping)
@@ -438,6 +487,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('kondani:chats_changed', syncFromStorage)
   socketService.off('new_message', handleNewMessage)
   socketService.off('user_typing', handleUserTyping)
   socketService.off('message_delivered', handleMessageDelivered)

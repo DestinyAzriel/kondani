@@ -143,15 +143,50 @@
       </div>
 
       <div v-for="msg in messages" :key="msg.id"
-           :class="['flex flex-col max-w-[78%]', msg.isMe ? 'ml-auto items-end' : 'mr-auto items-start']">
-        <div :class="['rounded-2xl px-3.5 py-2.5', msg.isMe
+           :class="['flex flex-col max-w-[82%]', msg.isMe ? 'ml-auto items-end' : 'mr-auto items-start']">
+        <!-- Missed / Outgoing Call Card (WhatsApp Style) -->
+        <div v-if="msg.messageType === 'missed_voice_call' || msg.messageType === 'missed_video_call'"
+             class="rounded-2xl p-3 border transition-all shadow-lg min-w-[220px] max-w-[280px]"
+             :class="msg.isMe 
+               ? 'bg-white/[0.07] border-white/10 text-white rounded-br-md' 
+               : 'bg-rose-950/40 border-rose-500/30 text-white rounded-bl-md'">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                 :class="msg.isMe ? 'bg-white/10 text-white/70' : 'bg-rose-500/20 text-rose-400'">
+              <component :is="msg.isMe ? (msg.messageType === 'missed_video_call' ? VideoIcon : PhoneOutgoingIcon) : (msg.messageType === 'missed_video_call' ? VideoOffIcon : PhoneMissedIcon)" size="20" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-bold leading-tight truncate"
+                 :class="msg.isMe ? 'text-white/90' : 'text-rose-300'">
+                {{ msg.isMe ? (msg.messageType === 'missed_video_call' ? 'Outgoing video call' : 'Outgoing voice call') : (msg.messageType === 'missed_video_call' ? 'Missed video call' : 'Missed voice call') }}
+              </p>
+              <p class="text-[11px] text-white/50 mt-0.5">
+                {{ msg.isMe ? 'No answer' : 'Tap to call back' }}
+              </p>
+            </div>
+          </div>
+          
+          <div class="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between">
+            <span class="text-[10.5px] text-white/40 font-mono">{{ formatTime(msg.time) }}</span>
+            <button @click.stop="startCall(msg.messageType === 'missed_video_call' ? 'video' : 'audio')"
+                    class="px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    :class="msg.isMe ? 'bg-white/10 hover:bg-white/15 text-white' : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 border border-rose-500/30'">
+              <component :is="msg.messageType === 'missed_video_call' ? VideoIcon : PhoneIcon" size="12" />
+              <span>{{ msg.isMe ? 'Call again' : 'Call back' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Normal message bubble (text, voice, image) -->
+        <div v-else :class="['rounded-2xl px-3.5 py-2.5', msg.isMe
           ? 'bg-gradient-to-br from-gold-500 to-gold-300 text-night-950 rounded-br-md'
           : 'bg-white/8 text-white rounded-bl-md']">
           <p v-if="msg.messageType === 'text' || !msg.messageType" class="text-sm leading-relaxed whitespace-pre-wrap break-words">{{ msg.content }}</p>
           <audio v-else-if="msg.messageType === 'voice'" :src="mediaSrc(msg.mediaUrl)" controls class="max-w-[220px] h-9"></audio>
           <img v-else-if="msg.messageType === 'image'" :src="mediaSrc(msg.mediaUrl)" class="rounded-xl max-w-[220px] max-h-[280px] object-cover" />
         </div>
-        <div class="flex items-center gap-1.5 mt-1 px-1">
+
+        <div v-if="msg.messageType !== 'missed_voice_call' && msg.messageType !== 'missed_video_call'" class="flex items-center gap-1.5 mt-1 px-1">
           <span class="text-[10px] text-white/35">{{ formatTime(msg.time) }}</span>
           <span v-if="msg.isMe" class="inline-flex items-center">
             <!-- Double Blue/Cyan Ticks: Read -->
@@ -318,6 +353,7 @@ import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.
 import {
   ChevronLeft as ChevronLeftIcon, Check as CheckIcon, CheckCheck as CheckCheckIcon,
   Video as VideoIcon, Phone as PhoneIcon, Mic as MicIcon, Send as SendIcon, X as XIcon,
+  PhoneMissed as PhoneMissedIcon, PhoneOutgoing as PhoneOutgoingIcon, VideoOff as VideoOffIcon,
   BadgeCheck, Sparkles, MoreVertical as MoreVerticalIcon,
   HeartOff as HeartOffIcon, Trash2 as Trash2Icon, Flag as FlagIcon,
   ShieldOff as ShieldOffIcon, AlertTriangle as AlertTriangleIcon, ChevronRight as ChevronRightIcon
@@ -388,12 +424,73 @@ const scrollToBottom = () => nextTick(() => {
 const formatTime = (t) => t ? new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
 const otherTypingTimer = ref(null)
 
+const clearSidebarUnread = () => {
+  try {
+    ['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
+      const stored = localStorage.getItem(key)
+      if (stored) {
+        const arr = JSON.parse(stored)
+        if (Array.isArray(arr)) {
+          const item = arr.find(c => String(c.id) === String(props.chatId) || (c.userId && String(c.userId) === String(getRecipientId())))
+          if (item) {
+            item.unread = false
+            item.yourTurn = false
+            localStorage.setItem(key, JSON.stringify(arr))
+          }
+        }
+      }
+    })
+    window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId: props.chatId } }))
+  } catch (e) {}
+}
+
+const updateSidebarLastMessage = (content) => {
+  try {
+    ['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
+      const stored = localStorage.getItem(key)
+      if (stored) {
+        let arr = JSON.parse(stored)
+        if (Array.isArray(arr)) {
+          const idx = arr.findIndex(c => String(c.id) === String(props.chatId) || (c.userId && String(c.userId) === String(getRecipientId())))
+          if (idx !== -1) {
+            const chat = arr[idx]
+            chat.lastMessage = content
+            chat.lastMessageFromMe = true
+            chat.lastMessageTime = new Date().toISOString()
+            chat.unread = false
+            chat.yourTurn = false
+            chat.lastMessageDelivered = true
+            chat.lastMessageRead = false
+            arr.splice(idx, 1)
+            arr.unshift(chat)
+            localStorage.setItem(key, JSON.stringify(arr))
+          }
+        }
+      }
+    })
+    window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId: props.chatId } }))
+  } catch (e) {}
+}
+
 const handleNewMessage = (message) => {
   if (String(message.chatId) !== String(props.chatId)) return
-  messages.value.push({ ...message, isMe: false })
+  const isMe = Boolean(message.isMe || String(message.sender || message.from) === String(myId))
+  messages.value.push({ ...message, isMe })
+
+  if (!isMe) {
+    // When recipient responds or sends a message, previous sent messages are delivered & read
+    messages.value.forEach(m => {
+      if (m.isMe) {
+        m.delivered = true
+        m.read = true
+      }
+    })
+  }
+
   scrollToBottom()
   // Acknowledge read immediately since user is actively viewing
   socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
+  clearSidebarUnread()
 }
 
 const handleMessageDelivered = ({ messageId, chatId: cId }) => {
@@ -453,8 +550,9 @@ async function loadChat() {
     const data = await intentService.getChatMessages(props.chatId)
     messages.value = data?.messages || []
 
-    // Acknowledge read upon opening chat
+    // Acknowledge read upon opening chat & clear local unread badge
     socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
+    clearSidebarUnread()
   } catch (e) {
     messages.value = []
   } finally {
@@ -517,6 +615,7 @@ const sendText = async () => {
   messages.value.push({ id: tempId, content, time: new Date(), isMe: true, messageType: 'text', delivered: false, read: false })
   newMessage.value = ''
   scrollToBottom()
+  updateSidebarLastMessage(content)
   try {
     const res = await intentService.sendMessage(props.chatId, content)
     const i = messages.value.findIndex(m => m.id === tempId)

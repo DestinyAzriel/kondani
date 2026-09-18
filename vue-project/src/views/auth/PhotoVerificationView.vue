@@ -117,7 +117,18 @@ const onFileSelected = async (e) => {
     resultVerified.value = !!result.verified
     resultMessage.value = result.message || (result.verified ? 'Your gold badge is active.' : 'Selfie received and is under review.')
     if (result.verified) {
-      authStore.user = { ...authStore.user, isVerified: true }
+      authStore.user = {
+        ...authStore.user,
+        isVerified: true,
+        verification: {
+          ...authStore.user?.verification,
+          id: {
+            ...authStore.user?.verification?.id,
+            status: 'approved',
+            verified: true
+          }
+        }
+      }
     }
     stopCamera()
     step.value = 'result'
@@ -167,7 +178,18 @@ const capture = async () => {
     resultVerified.value = !!result.verified
     resultMessage.value = result.message || (result.verified ? 'Your gold badge is active.' : 'Selfie received and is under review.')
     if (result.verified) {
-      authStore.user = { ...authStore.user, isVerified: true }
+      authStore.user = {
+        ...authStore.user,
+        isVerified: true,
+        verification: {
+          ...authStore.user?.verification,
+          id: {
+            ...authStore.user?.verification?.id,
+            status: 'approved',
+            verified: true
+          }
+        }
+      }
     }
     stopCamera()
     step.value = 'result'

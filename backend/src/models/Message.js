@@ -25,7 +25,7 @@ const messageSchema = new mongoose.Schema({
     },
     messageType: {
         type: String,
-        enum: ['text', 'image', 'emoji'],
+        enum: ['text', 'image', 'emoji', 'voice', 'missed_voice_call', 'missed_video_call', 'call'],
         default: 'text'
     },
     mediaUrl: {

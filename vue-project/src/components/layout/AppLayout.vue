@@ -53,7 +53,15 @@ const acceptCall = () => {
 
 const rejectCall = () => {
   stopCallSounds()
-  if (incomingCall.value) socketService.emit('end_call', { to: incomingCall.value.from })
+  if (incomingCall.value) {
+    socketService.emit('end_call', {
+      to: incomingCall.value.from,
+      from: myId,
+      mode: incomingCall.value.mode,
+      connected: false,
+      reason: 'declined'
+    })
+  }
   incomingCall.value = null
   clearCall()
 }

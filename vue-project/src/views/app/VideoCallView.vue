@@ -488,8 +488,11 @@ const toggleCamera = () => {
   }
 }
 
+let ringTimeout = null
+
 const endCall = (remote = false) => {
   stopCallSounds()
+  if (ringTimeout) clearTimeout(ringTimeout)
   if (callTimer) clearInterval(callTimer)
   localStream?.getTracks().forEach(t => t.stop())
   if (pc) {
@@ -497,7 +500,13 @@ const endCall = (remote = false) => {
     pc = null
   }
   if (!remote && peerId) {
-    socketService.emit('end_call', { to: peerId })
+    socketService.emit('end_call', {
+      to: peerId,
+      from: myId,
+      mode,
+      connected: callStatus.value === 'connected',
+      initiator: isInitiator
+    })
   }
   clearCall()
   router.back()
@@ -506,7 +515,10 @@ const endCall = (remote = false) => {
 onMounted(async () => {
   socketService.connect()
   if (myId) socketService.emit('join', myId)
-  socketService.on('call_answered', onAnswered)
+  socketService.on('call_answered', (data) => {
+    if (ringTimeout) clearTimeout(ringTimeout)
+    onAnswered(data)
+  })
   socketService.on('ice_candidate', onIce)
   socketService.on('call_ended', onEnded)
 
@@ -514,6 +526,13 @@ onMounted(async () => {
   if (!ok) return
   if (isInitiator) {
     await doCall()
+    // 45 second ring timeout if callee does not answer
+    ringTimeout = setTimeout(() => {
+      if (callStatus.value !== 'connected') {
+        playCallEnded()
+        endCall(false)
+      }
+    }, 45000)
   } else {
     await doAnswer()
   }
@@ -521,6 +540,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopCallSounds()
+  if (ringTimeout) clearTimeout(ringTimeout)
   socketService.off('call_answered', onAnswered)
   socketService.off('ice_candidate', onIce)
   socketService.off('call_ended', onEnded)
