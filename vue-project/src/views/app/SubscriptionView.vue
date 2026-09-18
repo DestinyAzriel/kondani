@@ -185,7 +185,7 @@
              md:items-stretch md:justify-end md:p-0"
     >
       <!-- Sidebar spacer (desktop only) — pushes modal out of the nav area -->
-      <div class="hidden md:block shrink-0" style="width: 375px;"></div>
+      <div class="hidden md:block shrink-0" style="width: 320px;"></div>
 
       <!-- Modal card -->
       <div

@@ -49,16 +49,21 @@ onUnmounted(() => {
 /* Desktop: shift content right by exactly the sidebar width */
 @media (min-width: 768px) {
   .main-wrapper.desktop-active {
-    padding-left: 375px; /* matches DesktopNav w-[375px] exactly */
+    padding-left: 320px; /* matches DesktopNav w-[320px] exactly */
     background: radial-gradient(circle at top right, #0d121f, #05070a);
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   /* Let each view control its own max-width — no global cap here */
   .content-area {
     width: 100%;
+    max-width: 100%;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 }
 

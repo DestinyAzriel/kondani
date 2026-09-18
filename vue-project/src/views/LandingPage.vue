@@ -3,7 +3,7 @@
     <!-- NAV -->
     <nav class="nav">
       <div class="nav-in">
-        <div class="logo-row">
+        <div class="logo-row cursor-pointer select-none hover:opacity-85 transition-opacity" @click="refreshPage" title="Refresh Kondani">
           <KondaniMark :size="36" />
           <b>Kondani</b>
         </div>
@@ -107,7 +107,10 @@
     <!-- FOOTER -->
     <footer class="footer">
       <div class="foot">
-        <div class="logo-row"><KondaniMark :size="30" /><b>Kondani</b></div>
+        <div class="logo-row cursor-pointer select-none hover:opacity-85 transition-opacity" @click="refreshPage" title="Refresh Kondani">
+          <KondaniMark :size="30" />
+          <b>Kondani</b>
+        </div>
         <div class="foot-links">
           <router-link to="/privacy">Privacy</router-link>
           <router-link to="/safety-center">Safety</router-link>
@@ -121,6 +124,7 @@
 <script setup>
 import KondaniMark from '@/components/ui/KondaniMark.vue'
 
+const refreshPage = () => { window.location.reload() }
 const img = (id, w) => `https://images.unsplash.com/${id}?w=${w}&q=80&fit=crop`
 const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 </script>

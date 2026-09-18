@@ -5,7 +5,7 @@
       <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[45%] rounded-full blur-[100px]" style="background: radial-gradient(circle, rgba(244,183,64,.12), transparent 70%)"></div>
     </div>
 
-    <div class="max-w-[1040px] mx-auto relative z-10">
+    <div class="max-w-4xl mx-auto px-2 sm:px-4 relative z-10 w-full">
       <div class="mb-6">
         <h1 class="k-title" style="font-size:2rem">Who likes you</h1>
         <p class="text-white/55 mt-1">People who've shown interest in you</p>

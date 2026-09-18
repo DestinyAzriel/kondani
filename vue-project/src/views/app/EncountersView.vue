@@ -7,10 +7,10 @@
          style="background:radial-gradient(circle,rgba(45,212,191,.10),transparent 70%)"></div>
 
     <!-- Header -->
-    <div class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-4 max-w-[1040px] mx-auto w-full">
-      <div class="flex items-center gap-2.5">
-        <KondaniMark :size="32" />
-        <h1 class="k-serif text-2xl">Kondani</h1>
+    <div class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-4 max-w-4xl mx-auto w-full">
+      <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity select-none group" @click="loadProfiles" title="Refresh Discover">
+        <KondaniMark :size="32" class="transition-transform group-hover:scale-105" />
+        <h1 class="k-serif text-2xl group-hover:text-gold-300 transition-colors">Kondani</h1>
       </div>
       <button @click="showFilterModal = true" class="k-iconbtn relative" title="Filters">
         <SlidersHorizontal :size="19" />
@@ -21,7 +21,7 @@
     </div>
 
     <!-- Main -->
-    <div class="relative z-10 w-full max-w-[1040px] mx-auto px-4 pb-28">
+    <div class="relative z-10 w-full max-w-4xl mx-auto px-4 pb-28">
       <!-- Empty: centered across the whole content area -->
       <div v-if="!isLoading && profiles.length === 0" class="flex justify-center pt-2">
         <EmptyState

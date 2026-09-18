@@ -8,7 +8,7 @@
 
     <!-- Header -->
     <div class="sticky top-0 z-40 bg-night-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-4 relative">
-      <div class="max-w-[1040px] mx-auto flex items-center justify-between gap-4">
+      <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
         <div>
           <h1 class="k-title flex items-center gap-2">
             Plans Nearby
@@ -32,7 +32,7 @@
       </div>
 
       <!-- Category Filter Pills -->
-      <div class="max-w-[1040px] mx-auto mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div class="max-w-4xl mx-auto mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <button
           v-for="cat in categoryFilters"
           :key="cat.id"
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Main Content Area -->
-    <div class="px-4 pt-6 relative z-10 max-w-[1040px] mx-auto">
+    <div class="px-4 pt-6 relative z-10 max-w-4xl mx-auto">
       <!-- Loading Skeletons -->
       <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div v-for="i in 6" :key="i" class="k-card p-5 animate-pulse space-y-4">

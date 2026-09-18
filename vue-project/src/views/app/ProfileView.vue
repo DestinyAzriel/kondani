@@ -4,14 +4,14 @@
     <div class="absolute top-[-12%] right-[-8%] w-[45%] h-[38%] rounded-full blur-[130px] pointer-events-none"
          style="background:radial-gradient(circle,rgba(244,183,64,.1),transparent 70%)"></div>
 
-    <div class="max-w-5xl mx-auto px-5 pt-6 relative z-10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-6 relative z-10 w-full">
       <!-- top bar -->
-      <div class="flex items-center justify-between mb-7">
+      <div class="flex items-center justify-between mb-6">
         <h1 class="k-title" style="font-size:1.9rem">Profile</h1>
         <button class="k-iconbtn" title="Settings" @click="router.push('/settings')"><Settings :size="19" /></button>
       </div>
 
-      <div class="lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-10 lg:items-start">
+      <div class="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[330px_minmax(0,1fr)] gap-6 xl:gap-8 items-start">
 
         <!-- LEFT column -->
         <div class="lg:sticky lg:top-6">
@@ -234,7 +234,7 @@ const handleLogout = async () => {
 .promo-txt i { font-style: normal; font-size: 12px; color: var(--k-mut); line-height: 1.4; }
 
 /* photo grid */
-.pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
 .pgrid .g { aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; position: relative; }
 .pgrid .g img { width: 100%; height: 100%; object-fit: cover; }
 .pgrid .g .main { position: absolute; top: 7px; left: 7px; font-size: 9.5px; font-weight: 700; background: var(--k-gold); color: var(--k-night); padding: 2px 8px; border-radius: 6px; }

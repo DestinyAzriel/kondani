@@ -8,7 +8,7 @@
     <!-- Header -->
     <nav class="relative z-10 bg-night-950/80 backdrop-blur-xl border-b border-white/5 p-4">
       <div class="max-w-5xl mx-auto">
-        <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity w-fit">
+        <router-link to="/encounters" class="flex items-center gap-3 hover:opacity-80 transition-opacity w-fit" title="Kondani Encounters">
           <KondaniMark :size="38" />
           <span class="k-serif text-2xl">Kondani</span>
         </router-link>

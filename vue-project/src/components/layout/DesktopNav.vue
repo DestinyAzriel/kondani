@@ -1,14 +1,14 @@
 <template>
-  <nav class="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[375px] bg-night-950/95 backdrop-blur-2xl border-r border-white/5 z-50 overflow-hidden text-white" role="navigation">
+  <nav class="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[320px] bg-night-950/95 backdrop-blur-2xl border-r border-white/5 z-50 overflow-hidden text-white" role="navigation">
     <!-- Brand -->
-    <div class="p-5 flex items-center justify-between border-b border-white/5">
-      <div class="flex items-center gap-3 cursor-pointer" @click="router.push('/encounters')">
-        <KondaniMark :size="36" />
-        <span class="k-serif text-2xl tracking-tight">Kondani</span>
+    <div class="px-4 py-4 flex items-center justify-between border-b border-white/5">
+      <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity select-none group" @click="router.push('/encounters')" title="Go to Discover">
+        <KondaniMark :size="34" class="transition-transform group-hover:scale-105" />
+        <span class="k-serif text-2xl tracking-tight text-white group-hover:text-gold-300 transition-colors">Kondani</span>
       </div>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-0.5">
         <button v-for="item in topNavItems" :key="item.name" @click.stop="router.push(item.route)"
-          class="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all relative"
+          class="p-1.5 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all relative"
           :class="{ 'text-gold-400 bg-gold-500/10': isActive(item.route) }" :title="item.label">
           <component :is="item.icon" :size="18" />
           <span v-if="item.badge && item.badge > 0" class="absolute -top-1 -right-1 bg-gold-400 text-night-950 text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
@@ -19,25 +19,25 @@
     </div>
 
     <!-- Profile strip -->
-    <div class="px-4 py-3 border-b border-white/5 bg-white/[0.02]">
+    <div class="px-3.5 py-3 border-b border-white/5 bg-white/[0.02]">
       <div class="flex items-center justify-between cursor-pointer group" @click="router.push('/profile')">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
           <div class="relative">
-            <img v-if="profile?.photos?.[0]" :src="src(profile.photos[0])" class="w-10 h-10 rounded-full object-cover border-2 border-gold-400 shadow-sm" />
-            <div v-else class="w-10 h-10 rounded-full bg-night-900 flex items-center justify-center border border-white/10"><UserIcon size="20" class="text-white/40" /></div>
+            <img v-if="profile?.photos?.[0]" :src="src(profile.photos[0])" class="w-9 h-9 rounded-full object-cover border-2 border-gold-400 shadow-sm" />
+            <div v-else class="w-9 h-9 rounded-full bg-night-900 flex items-center justify-center border border-white/10"><UserIcon size="18" class="text-white/40" /></div>
           </div>
           <div class="flex flex-col">
-            <span class="k-serif text-[15px] font-semibold text-white group-hover:text-gold-300 transition-colors leading-tight">My Profile</span>
-            <span class="text-[11px] text-white/40">View & Edit</span>
+            <span class="k-serif text-[14px] font-semibold text-white group-hover:text-gold-300 transition-colors leading-tight">My Profile</span>
+            <span class="text-[10px] text-white/40">View & Edit</span>
           </div>
         </div>
 
         <div v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'moderator'">
           <button
             @click.stop="router.push('/admin')"
-            class="flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/25 transition-all shadow-sm"
+            class="flex items-center gap-1 py-1 px-2.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-semibold hover:bg-amber-500/25 transition-all shadow-sm"
           >
-            <Shield :size="13" />
+            <Shield :size="12" />
             <span>Admin</span>
           </button>
         </div>
@@ -45,14 +45,14 @@
     </div>
 
     <!-- Search Bar (Tinder: Search N Matches) -->
-    <div class="px-4 py-2.5 border-b border-white/5 bg-white/[0.015]">
+    <div class="px-3.5 py-2.5 border-b border-white/5 bg-white/[0.015]">
       <div class="relative flex items-center">
-        <Search :size="15" class="absolute left-3 text-white/35 pointer-events-none" />
+        <Search :size="14" class="absolute left-3 text-white/35 pointer-events-none" />
         <input
           v-model="searchQuery"
           type="text"
           :placeholder="totalMatchesCount > 0 ? `Search ${totalMatchesCount} Matches` : 'Search matches and messages'"
-          class="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-white/35 focus:outline-none focus:border-gold-400/80 transition-colors"
+          class="w-full pl-8 pr-3 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-white/35 focus:outline-none focus:border-gold-400/80 transition-colors"
         />
       </div>
     </div>
