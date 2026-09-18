@@ -19,7 +19,11 @@
             <h2 class="k-serif text-base truncate hover:text-gold-300 transition-colors">{{ chatUser.name || 'Chat' }}</h2>
             <BadgeCheck v-if="chatUser.isVerified" :size="14" style="color:var(--k-gold)" />
           </div>
-          <span class="text-xs" :class="chatUser.online ? 'text-lagoon-300' : 'text-white/40'">
+          <span v-if="otherTyping" class="text-xs text-lagoon-300 font-medium animate-pulse flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-lagoon-400 animate-ping"></span>
+            typing…
+          </span>
+          <span v-else class="text-xs" :class="chatUser.online ? 'text-lagoon-300' : 'text-white/40'">
             {{ chatUser.online ? 'Online now' : 'Offline' }}
           </span>
         </div>
@@ -147,10 +151,16 @@
           <audio v-else-if="msg.messageType === 'voice'" :src="mediaSrc(msg.mediaUrl)" controls class="max-w-[220px] h-9"></audio>
           <img v-else-if="msg.messageType === 'image'" :src="mediaSrc(msg.mediaUrl)" class="rounded-xl max-w-[220px] max-h-[280px] object-cover" />
         </div>
-        <div class="flex items-center gap-1 mt-1 px-1">
+        <div class="flex items-center gap-1.5 mt-1 px-1">
           <span class="text-[10px] text-white/35">{{ formatTime(msg.time) }}</span>
-          <CheckCheckIcon v-if="msg.isMe && msg.read" :size="12" class="text-lagoon-300" />
-          <CheckIcon v-else-if="msg.isMe && msg.delivered" :size="12" class="text-white/40" />
+          <span v-if="msg.isMe" class="inline-flex items-center">
+            <!-- Double Blue/Cyan Ticks: Read -->
+            <CheckCheckIcon v-if="msg.read" size="14" class="text-sky-400 stroke-[2.5]" title="Read" />
+            <!-- Double Gray Ticks: Delivered -->
+            <CheckCheckIcon v-else-if="msg.delivered" size="14" class="text-white/55 stroke-2" title="Delivered" />
+            <!-- Single Gray Tick: Sent to server (recipient offline) -->
+            <CheckIcon v-else size="13" class="text-white/40 stroke-2" title="Sent" />
+          </span>
         </div>
       </div>
 
@@ -376,17 +386,54 @@ const scrollToBottom = () => nextTick(() => {
 })
 
 const formatTime = (t) => t ? new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+const otherTypingTimer = ref(null)
 
 const handleNewMessage = (message) => {
   if (String(message.chatId) !== String(props.chatId)) return
   messages.value.push({ ...message, isMe: false })
   scrollToBottom()
+  // Acknowledge read immediately since user is actively viewing
+  socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
+}
+
+const handleMessageDelivered = ({ messageId, chatId: cId }) => {
+  if (String(cId) !== String(props.chatId)) return
+  const msg = messages.value.find(m => String(m.id) === String(messageId))
+  if (msg) msg.delivered = true
+  else {
+    const lastSent = [...messages.value].reverse().find(m => m.isMe)
+    if (lastSent) lastSent.delivered = true
+  }
+}
+
+const handleMessagesRead = ({ chatId: cId }) => {
+  if (String(cId) !== String(props.chatId)) return
+  messages.value.forEach(m => {
+    if (m.isMe) {
+      m.read = true
+      m.delivered = true
+    }
+  })
+}
+
+const handleUserTyping = (data) => {
+  if (String(data?.chatId) !== String(props.chatId) || String(data?.from) !== String(getRecipientId())) return
+  otherTyping.value = !!data.isTyping
+  if (data.isTyping) {
+    scrollToBottom()
+    if (otherTypingTimer.value) clearTimeout(otherTypingTimer.value)
+    otherTypingTimer.value = setTimeout(() => { otherTyping.value = false }, 3500)
+  }
 }
 
 const handleTyping = () => {
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
-  intentService.setTyping(props.chatId, true)
-  typingTimeout.value = setTimeout(() => intentService.setTyping(props.chatId, false), 1200)
+  socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId), isTyping: true })
+  intentService.setTyping(props.chatId, true).catch(() => {})
+  typingTimeout.value = setTimeout(() => {
+    socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId), isTyping: false })
+    intentService.setTyping(props.chatId, false).catch(() => {})
+  }, 1800)
 }
 
 const handleClickOutside = (e) => {
@@ -405,6 +452,9 @@ async function loadChat() {
     if (found) chatUser.value = found
     const data = await intentService.getChatMessages(props.chatId)
     messages.value = data?.messages || []
+
+    // Acknowledge read upon opening chat
+    socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
   } catch (e) {
     messages.value = []
   } finally {
@@ -425,6 +475,9 @@ onMounted(() => {
   socketService.connect()
   if (myId) socketService.emit('join', String(myId))
   socketService.on('new_message', handleNewMessage)
+  socketService.on('message_delivered', handleMessageDelivered)
+  socketService.on('messages_read', handleMessagesRead)
+  socketService.on('user_typing', handleUserTyping)
   socketService.on('user_status', handleUserStatus)
   document.addEventListener('click', handleClickOutside)
   loadChat()
@@ -432,15 +485,29 @@ onMounted(() => {
 
 onUnmounted(() => {
   socketService.off('new_message', handleNewMessage)
+  socketService.off('message_delivered', handleMessageDelivered)
+  socketService.off('messages_read', handleMessagesRead)
+  socketService.off('user_typing', handleUserTyping)
   socketService.off('user_status', handleUserStatus)
+  socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId), isTyping: false })
   document.removeEventListener('click', handleClickOutside)
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
-  intentService.setTyping(props.chatId, false)
+  if (otherTypingTimer.value) clearTimeout(otherTypingTimer.value)
+  intentService.setTyping(props.chatId, false).catch(() => {})
   stopTracks()
 })
 
 const relay = (message) => {
-  socketService.emit('send_message', { ...message, chatId: props.chatId, to: String(getRecipientId()) })
+  socketService.emit('send_message', {
+    id: message.id || message._id,
+    content: message.content,
+    messageType: message.messageType,
+    mediaUrl: message.mediaUrl,
+    time: message.time || message.createdAt,
+    chatId: props.chatId,
+    from: String(myId),
+    to: String(getRecipientId())
+  })
 }
 
 const sendText = async () => {

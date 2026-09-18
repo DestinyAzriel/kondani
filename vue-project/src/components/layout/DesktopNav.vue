@@ -1,9 +1,9 @@
 <template>
   <nav class="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[320px] bg-night-950/95 backdrop-blur-2xl border-r border-white/5 z-50 overflow-hidden text-white" role="navigation">
     <!-- Brand -->
-    <div class="px-4 py-4 flex items-center justify-between border-b border-white/5">
+    <div class="px-4 py-3 flex items-center justify-between border-b border-white/5">
       <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity select-none group" @click="router.push('/encounters')" title="Go to Discover">
-        <KondaniMark :size="34" class="transition-transform group-hover:scale-105" />
+        <KondaniMark :size="32" class="transition-transform group-hover:scale-105" />
         <span class="k-serif text-2xl tracking-tight text-white group-hover:text-gold-300 transition-colors">Kondani</span>
       </div>
       <div class="flex items-center gap-0.5">
@@ -19,15 +19,15 @@
     </div>
 
     <!-- Profile strip -->
-    <div class="px-3.5 py-3 border-b border-white/5 bg-white/[0.02]">
+    <div class="px-3.5 py-2.5 border-b border-white/5 bg-white/[0.02]">
       <div class="flex items-center justify-between cursor-pointer group" @click="router.push('/profile')">
         <div class="flex items-center gap-2.5">
           <div class="relative">
-            <img v-if="profile?.photos?.[0]" :src="src(profile.photos[0])" class="w-9 h-9 rounded-full object-cover border-2 border-gold-400 shadow-sm" />
-            <div v-else class="w-9 h-9 rounded-full bg-night-900 flex items-center justify-center border border-white/10"><UserIcon size="18" class="text-white/40" /></div>
+            <img v-if="profile?.photos?.[0]" :src="src(profile.photos[0])" class="w-8 h-8 rounded-full object-cover border-2 border-gold-400 shadow-sm" />
+            <div v-else class="w-8 h-8 rounded-full bg-night-900 flex items-center justify-center border border-white/10"><UserIcon size="16" class="text-white/40" /></div>
           </div>
           <div class="flex flex-col">
-            <span class="k-serif text-[14px] font-semibold text-white group-hover:text-gold-300 transition-colors leading-tight">My Profile</span>
+            <span class="k-serif text-[13.5px] font-semibold text-white group-hover:text-gold-300 transition-colors leading-tight">My Profile</span>
             <span class="text-[10px] text-white/40">View & Edit</span>
           </div>
         </div>
@@ -35,9 +35,9 @@
         <div v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'moderator'">
           <button
             @click.stop="router.push('/admin')"
-            class="flex items-center gap-1 py-1 px-2.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-semibold hover:bg-amber-500/25 transition-all shadow-sm"
+            class="flex items-center gap-1 py-0.5 px-2 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-semibold hover:bg-amber-500/25 transition-all shadow-sm"
           >
-            <Shield :size="12" />
+            <Shield :size="11" />
             <span>Admin</span>
           </button>
         </div>
@@ -45,9 +45,9 @@
     </div>
 
     <!-- Search Bar (Tinder: Search N Matches) -->
-    <div class="px-3.5 py-2.5 border-b border-white/5 bg-white/[0.015]">
+    <div class="px-3.5 py-2 border-b border-white/5 bg-white/[0.015]">
       <div class="relative flex items-center">
-        <Search :size="14" class="absolute left-3 text-white/35 pointer-events-none" />
+        <Search :size="13" class="absolute left-3 text-white/35 pointer-events-none" />
         <input
           v-model="searchQuery"
           type="text"
@@ -60,28 +60,28 @@
     <!-- Unified Tinder Stream: MATCHES ON TOP, MESSAGES BELOW -->
     <div class="flex-1 overflow-y-auto scrollbar-hide flex flex-col">
       <!-- 1. NEW MATCHES SHELF (ON TOP) -->
-      <div class="pt-3 pb-2 border-b border-white/5 bg-white/[0.01]">
-        <div class="px-4 flex items-center justify-between mb-2">
-          <h2 class="text-[11px] font-bold uppercase tracking-wider text-white/50">New Matches</h2>
-          <span v-if="filteredNewMatches.length" class="text-[10px] bg-gold-400/15 text-gold-300 font-bold px-2 py-0.5 rounded-full border border-gold-400/30">
+      <div class="pt-2.5 pb-2 border-b border-white/5 bg-white/[0.01]">
+        <div class="px-4 flex items-center justify-between mb-1.5">
+          <h2 class="text-[10.5px] font-bold uppercase tracking-wider text-white/50">New Matches</h2>
+          <span v-if="filteredNewMatches.length" class="text-[9.5px] bg-gold-400/15 text-gold-300 font-bold px-1.5 py-0.5 rounded-full border border-gold-400/30">
             {{ filteredNewMatches.length }}
           </span>
         </div>
 
         <!-- Horizontal scroll shelf of compact portrait cards -->
-        <div v-if="likesCount > 0 || filteredNewMatches.length > 0" class="px-4">
-          <div class="flex items-start gap-3 overflow-x-auto scrollbar-hide py-1">
+        <div v-if="likesCount > 0 || filteredNewMatches.length > 0" class="px-3.5">
+          <div class="flex items-start gap-2.5 overflow-x-auto scrollbar-hide py-1">
             <!-- 1 Likes Gold Card (Tinder Screenshot 2 signature) -->
             <div v-if="likesCount > 0" @click="router.push('/likes')"
                  class="shrink-0 flex flex-col items-center cursor-pointer group"
                  title="View who likes you">
-              <div class="relative w-[76px] h-[100px] rounded-2xl overflow-hidden border-2 border-gold-400 bg-gradient-to-b from-gold-500/25 via-night-900 to-night-950 flex flex-col items-center justify-center p-2 shadow-md group-hover:scale-105 transition-transform">
-                <div class="w-10 h-10 rounded-full bg-gold-400/20 border border-gold-400/40 flex items-center justify-center text-gold-400 mb-1">
-                  <Heart :size="18" class="fill-current animate-pulse" />
+              <div class="relative w-[70px] h-[92px] rounded-xl overflow-hidden border-2 border-gold-400 bg-gradient-to-b from-gold-500/25 via-night-900 to-night-950 flex flex-col items-center justify-center p-2 shadow-md group-hover:scale-105 transition-transform">
+                <div class="w-8 h-8 rounded-full bg-gold-400/20 border border-gold-400/40 flex items-center justify-center text-gold-400 mb-1">
+                  <Heart :size="15" class="fill-current animate-pulse" />
                 </div>
                 <span class="text-xs font-bold text-gold-300">{{ likesCount }}</span>
               </div>
-              <span class="mt-1.5 text-xs font-semibold text-white/90 truncate max-w-[76px] text-center">
+              <span class="mt-1 text-[11px] font-semibold text-white/90 truncate max-w-[70px] text-center">
                 {{ likesCount }} {{ likesCount === 1 ? 'Like' : 'Likes' }}
               </span>
             </div>
@@ -90,36 +90,36 @@
             <div v-for="match in filteredNewMatches" :key="match.id"
                  class="shrink-0 flex flex-col items-center cursor-pointer group"
                  @click="openChatWith(match)">
-              <div class="relative w-[76px] h-[100px] rounded-2xl overflow-hidden border border-white/10 group-hover:border-gold-400/80 group-hover:scale-105 transition-all bg-night-900 shadow-md">
+              <div class="relative w-[70px] h-[92px] rounded-xl overflow-hidden border border-white/10 group-hover:border-gold-400/80 group-hover:scale-105 transition-all bg-night-900 shadow-md">
                 <img :src="src(match.photo)" class="w-full h-full object-cover" />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none"></div>
 
                 <!-- Online status dot -->
-                <div v-if="match.online" class="absolute top-1.5 left-1.5 w-2.5 h-2.5 bg-lagoon-400 rounded-full border border-night-950 shadow-sm"></div>
+                <div v-if="match.online" class="absolute top-1.5 left-1.5 w-2 h-2 bg-lagoon-400 rounded-full border border-night-950 shadow-sm"></div>
 
                 <!-- Red unread dot (Tinder signature) -->
-                <div class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-night-950 shadow-sm"></div>
+                <div class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border border-night-950 shadow-sm"></div>
               </div>
 
               <!-- Name & Verified badge -->
-              <div class="mt-1.5 flex items-center justify-center gap-1 max-w-[76px]">
-                <span class="text-xs font-semibold text-white/90 truncate text-center">{{ match.name }}</span>
-                <BadgeCheck v-if="match.isVerified" :size="12" class="text-gold-400 shrink-0" />
+              <div class="mt-1 flex items-center justify-center gap-1 max-w-[70px]">
+                <span class="text-[11px] font-semibold text-white/90 truncate text-center">{{ match.name }}</span>
+                <BadgeCheck v-if="match.isVerified" :size="11" class="text-gold-400 shrink-0" />
               </div>
             </div>
           </div>
         </div>
 
-        <div v-else class="px-4 py-3 text-center">
-          <p class="text-white/35 text-xs">No uncontacted matches yet</p>
+        <div v-else class="px-4 py-2.5 text-center">
+          <p class="text-white/35 text-[11px]">No uncontacted matches yet</p>
         </div>
       </div>
 
       <!-- 2. MESSAGES LIST (BELOW MATCHES) -->
-      <div class="flex-1 flex flex-col pt-3">
-        <div class="px-4 flex items-center justify-between mb-2">
-          <h2 class="text-[11px] font-bold uppercase tracking-wider text-white/50">Messages</h2>
-          <span v-if="totalUnreadCount > 0" class="text-[10px] bg-rose-500 text-white font-bold px-2 py-0.5 rounded-full shadow-sm">
+      <div class="flex-1 flex flex-col pt-2.5">
+        <div class="px-4 flex items-center justify-between mb-1.5">
+          <h2 class="text-[10.5px] font-bold uppercase tracking-wider text-white/50">Messages</h2>
+          <span v-if="totalUnreadCount > 0" class="text-[9.5px] bg-rose-500 text-white font-bold px-1.5 py-0.5 rounded-full shadow-sm">
             {{ totalUnreadCount }}
           </span>
         </div>
@@ -127,52 +127,75 @@
         <!-- Conversations list -->
         <div v-if="filteredChats.length" class="divide-y divide-white/[0.04] flex-1">
           <div v-for="chat in filteredChats" :key="chat.id"
-               class="flex items-center gap-3.5 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors"
+               class="flex items-center gap-3 px-3.5 py-2.5 hover:bg-white/5 cursor-pointer transition-colors"
                :class="{ 'bg-white/[0.06] border-l-2 border-gold-400': isActiveChat(chat.id) }"
                @click="openChat(chat.id)">
             <div class="relative shrink-0">
-              <img :src="src(chat.photo)" class="w-12 h-12 rounded-full object-cover border border-white/10 ring-2 ring-transparent group-hover:ring-gold-400/40 transition-all" />
-              <div v-if="chat.online" class="absolute bottom-0 right-0 w-3 h-3 bg-lagoon-400 rounded-full border-2 border-night-950"></div>
+              <img :src="src(chat.photo)" class="w-11 h-11 rounded-full object-cover border border-white/10 ring-2 ring-transparent group-hover:ring-gold-400/40 transition-all" />
+              <div v-if="chat.online" class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-lagoon-400 rounded-full border-2 border-night-950"></div>
               <div v-if="chat.unread" class="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-night-950 shadow-sm"></div>
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2 mb-0.5">
                 <div class="flex items-center gap-1.5 min-w-0">
-                  <h3 class="k-serif text-[15px] font-semibold text-white truncate group-hover:text-gold-300 transition-colors leading-tight">
+                  <h3 class="k-serif text-[14.5px] font-semibold text-white truncate group-hover:text-gold-300 transition-colors leading-tight">
                     {{ chat.name }}
                   </h3>
-                  <BadgeCheck v-if="chat.isVerified" :size="14" class="text-gold-400 shrink-0" />
+                  <BadgeCheck v-if="chat.isVerified" :size="13" class="text-gold-400 shrink-0" />
                 </div>
-                <span class="text-[11px] text-white/40 shrink-0 font-normal">{{ formatTime(chat.lastMessageTime) }}</span>
+                <span class="text-[10.5px] text-white/40 shrink-0 font-normal">{{ formatTime(chat.lastMessageTime) }}</span>
               </div>
               <div class="flex items-center justify-between gap-2">
-                <p class="text-xs truncate flex-1 leading-normal" :class="chat.unread ? 'text-white font-semibold' : 'text-white/50'">
-                  {{ chat.lastMessage || 'Start chatting!' }}
-                </p>
-                <span v-if="chat.unread" class="px-2 py-0.5 text-[10px] font-bold bg-lagoon-400 text-night-950 rounded-full shrink-0">NEW</span>
-                <span v-else-if="chat.yourTurn" class="px-2 py-0.5 text-[10px] font-medium bg-white/10 text-white/80 rounded-full shrink-0">Your Turn</span>
+                <!-- Live Typing State -->
+                <div v-if="chat.typing" class="flex items-center gap-1.5 min-w-0 flex-1">
+                  <div class="flex gap-0.5">
+                    <span class="w-1.5 h-1.5 bg-lagoon-400 rounded-full animate-bounce"></span>
+                    <span class="w-1.5 h-1.5 bg-lagoon-400 rounded-full animate-bounce" style="animation-delay:.2s"></span>
+                    <span class="w-1.5 h-1.5 bg-lagoon-400 rounded-full animate-bounce" style="animation-delay:.4s"></span>
+                  </div>
+                  <span class="text-xs text-lagoon-300 font-medium">typing...</span>
+                </div>
+
+                <!-- Last message preview with WhatsApp ticks -->
+                <div v-else class="flex items-center gap-1 min-w-0 flex-1">
+                  <!-- WhatsApp Tick for messages sent by me -->
+                  <span v-if="chat.lastMessageFromMe && chat.lastMessage && chat.lastMessage !== 'Start chatting!'" class="shrink-0 flex items-center mr-0.5">
+                    <!-- Blue/Cyan double tick = Read -->
+                    <CheckCheckIcon v-if="chat.lastMessageRead" :size="13" class="text-sky-400 stroke-[2.5]" title="Read" />
+                    <!-- Grey double tick = Delivered -->
+                    <CheckCheckIcon v-else-if="chat.lastMessageDelivered" :size="13" class="text-white/55 stroke-[2]" title="Delivered" />
+                    <!-- Grey single tick = Sent / Recipient Offline -->
+                    <CheckIcon v-else :size="13" class="text-white/40 stroke-[2]" title="Sent" />
+                  </span>
+                  <p class="text-xs truncate leading-normal flex-1" :class="chat.unread ? 'text-white font-semibold' : 'text-white/50'">
+                    {{ chat.lastMessage || 'Start chatting!' }}
+                  </p>
+                </div>
+
+                <span v-if="chat.unread" class="px-2 py-0.5 text-[9.5px] font-bold bg-lagoon-400 text-night-950 rounded-full shrink-0">NEW</span>
+                <span v-else-if="chat.yourTurn" class="px-2 py-0.5 text-[9.5px] font-medium bg-white/10 text-white/80 rounded-full shrink-0">Your Turn</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-else class="py-12 px-6 text-center flex flex-col items-center gap-3">
-          <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-            <MessageCircle :size="22" :stroke-width="1.5" class="text-white/30" />
+        <div v-else class="py-10 px-6 text-center flex flex-col items-center gap-2.5">
+          <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+            <MessageCircle :size="18" :stroke-width="1.5" class="text-white/30" />
           </div>
-          <p class="text-white/60 text-sm font-medium">No messages yet</p>
-          <p class="text-white/35 text-xs max-w-[200px]">Click any match above to start chatting.</p>
+          <p class="text-white/60 text-xs font-medium">No messages yet</p>
+          <p class="text-white/35 text-[11px] max-w-[190px]">Click any match above to start chatting.</p>
         </div>
       </div>
     </div>
 
     <!-- Gold upsell footer -->
-    <div class="p-4 border-t border-white/5 bg-night-950 shrink-0">
-      <div class="bg-gradient-to-br from-white/[0.06] to-white/[0.02] rounded-2xl p-3.5 text-center border border-gold-400/20">
-        <p class="text-[11px] font-bold text-gold-300 uppercase tracking-widest mb-0.5">Kondani Gold</p>
-        <p v-if="likesCount > 0" class="text-xs text-gold-300 font-semibold mb-1">{{ likesCount }} {{ likesCount === 1 ? 'person likes you right now!' : 'people like you right now!' }}</p>
-        <p class="text-xs text-white/60 mb-2.5">{{ likesCount > 0 ? 'See who they are and match instantly.' : 'See who likes you and match faster.' }}</p>
-        <button @click="router.push(likesCount > 0 ? '/likes' : '/premium')" class="w-full py-2 bg-gradient-to-r from-gold-500 to-gold-300 text-night-950 rounded-xl text-xs font-bold transition-all hover:opacity-95 shadow-sm">
+    <div class="p-3 border-t border-white/5 bg-night-950 shrink-0">
+      <div class="bg-gradient-to-br from-white/[0.06] to-white/[0.02] rounded-xl p-2.5 text-center border border-gold-400/20">
+        <p class="text-[10px] font-bold text-gold-300 uppercase tracking-widest mb-0.5">Kondani Gold</p>
+        <p v-if="likesCount > 0" class="text-xs text-gold-300 font-semibold mb-0.5">{{ likesCount }} {{ likesCount === 1 ? 'person likes you' : 'people like you' }}</p>
+        <p class="text-[11px] text-white/60 mb-2">{{ likesCount > 0 ? 'See who they are and match instantly.' : 'See who likes you and match faster.' }}</p>
+        <button @click="router.push(likesCount > 0 ? '/likes' : '/premium')" class="w-full py-1.5 bg-gradient-to-r from-gold-500 to-gold-300 text-night-950 rounded-lg text-xs font-bold transition-all hover:opacity-95 shadow-sm">
           {{ likesCount > 0 ? 'View Likes' : 'Upgrade' }}
         </button>
       </div>
@@ -183,7 +206,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Flame, Sparkles, Star, User as UserIcon, Heart, MessageCircle, Shield, BadgeCheck, Search } from 'lucide-vue-next'
+import { Flame, Sparkles, Star, User as UserIcon, Heart, MessageCircle, Shield, BadgeCheck, Search, Check as CheckIcon, CheckCheck as CheckCheckIcon } from 'lucide-vue-next'
 import { useProfile } from '@/composables/useProfile'
 import { intentService } from '@/services/intentService'
 import { socketService } from '@/services/socketService'
@@ -328,11 +351,18 @@ const openChatWith = (m) => {
 
 const handleNewMessage = (message) => {
   const i = chats.value.findIndex(c => String(c.id) === String(message.chatId))
+  const myId = String(authStore.user?._id || authStore.user?.id || '')
+  const isMe = String(message.sender) === myId
+
   if (i !== -1) {
     const chat = chats.value[i]
     chat.lastMessage = message.content
     chat.lastMessageTime = new Date().toISOString()
-    if (!isActiveChat(chat.id)) {
+    chat.lastMessageFromMe = isMe
+    chat.lastMessageRead = Boolean(message.read)
+    chat.lastMessageDelivered = Boolean(message.delivered)
+    chat.typing = false
+    if (!isActiveChat(chat.id) && !isMe) {
       chat.unread = true
       chat.yourTurn = true
     }
@@ -340,6 +370,34 @@ const handleNewMessage = (message) => {
     chats.value.unshift(chat)
     setCached('kondani_desktop_chats', chats.value)
     setCached('kondani_chats', chats.value)
+  }
+}
+
+const handleUserTyping = ({ chatId, from, isTyping }) => {
+  const myId = String(authStore.user?._id || authStore.user?.id || '')
+  if (String(from) === myId) return
+  const chat = chats.value.find(c =>
+    String(c.id) === String(chatId) ||
+    String(c.userId) === String(from) ||
+    (typeof c.id === 'string' && c.id.includes(String(from)))
+  )
+  if (chat) {
+    chat.typing = Boolean(isTyping)
+  }
+}
+
+const handleMessageDelivered = ({ chatId }) => {
+  const chat = chats.value.find(c => String(c.id) === String(chatId))
+  if (chat && chat.lastMessageFromMe) {
+    chat.lastMessageDelivered = true
+  }
+}
+
+const handleMessagesRead = ({ chatId }) => {
+  const chat = chats.value.find(c => String(c.id) === String(chatId))
+  if (chat && chat.lastMessageFromMe) {
+    chat.lastMessageRead = true
+    chat.lastMessageDelivered = true
   }
 }
 
@@ -353,6 +411,9 @@ const handleUserStatus = ({ userId, isOnline }) => {
 onMounted(async () => {
   socketService.connect()
   socketService.on('new_message', handleNewMessage)
+  socketService.on('user_typing', handleUserTyping)
+  socketService.on('message_delivered', handleMessageDelivered)
+  socketService.on('messages_read', handleMessagesRead)
   socketService.on('user_status', handleUserStatus)
 
   try {
@@ -378,6 +439,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   socketService.off('new_message', handleNewMessage)
+  socketService.off('user_typing', handleUserTyping)
+  socketService.off('message_delivered', handleMessageDelivered)
+  socketService.off('messages_read', handleMessagesRead)
   socketService.off('user_status', handleUserStatus)
 })
 </script>

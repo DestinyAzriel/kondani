@@ -152,7 +152,10 @@ exports.getIntents = async (req, res) => {
                 query.gender = prefs.gender;
             }
         }
-        if (prefs.verifiedOnly) query.isVerified = true;
+        if (prefs.verifiedOnly) {
+            query.isVerified = true;
+            query['verification.id.status'] = 'approved';
+        }
         if (prefs.ageMin || prefs.ageMax) {
             query.age = {};
             if (prefs.ageMin) query.age.$gte = Number(prefs.ageMin);
@@ -217,7 +220,7 @@ exports.getIntents = async (req, res) => {
             bio: user.bio || '',
             photos: (user.photos && user.photos.length) ? user.photos : [],
             interests: user.interests || [],
-            isVerified: user.isVerified,
+            isVerified: Boolean(user.isVerified && user.verification?.id?.status === 'approved'),
             matchScore
         }));
 

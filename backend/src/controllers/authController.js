@@ -243,7 +243,7 @@ exports.googleAuth = async (req, res) => {
                 name,
                 photos: photo ? [photo] : [],
                 role: isAdmin ? 'admin' : 'user',
-                isVerified: true,
+                isVerified: false,
                 verification: {
                     email: { verified: true, verifiedAt: new Date() }
                 },
@@ -307,6 +307,13 @@ exports.getProfile = async (req, res) => {
         if (user.isPremium && user.premiumUntil && new Date(user.premiumUntil) < new Date()) {
             user.isPremium = false;
             user.subscriptionTier = 'free';
+            await user.save();
+        }
+
+        // Only grant verified status if selfie/ID verification has been genuinely approved
+        const idStatus = user.verification?.id?.status;
+        if (user.isVerified && idStatus !== 'approved') {
+            user.isVerified = false;
             await user.save();
         }
 

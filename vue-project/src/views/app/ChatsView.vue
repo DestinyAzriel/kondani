@@ -124,12 +124,20 @@
                     <div class="w-1.5 h-1.5 bg-lagoon-400 rounded-full animate-bounce" style="animation-delay:.2s"></div>
                     <div class="w-1.5 h-1.5 bg-lagoon-400 rounded-full animate-bounce" style="animation-delay:.4s"></div>
                   </div>
-                  <span class="text-xs text-lagoon-300">typing...</span>
+                  <span class="text-xs text-lagoon-300 font-medium">typing...</span>
                 </div>
 
-                <div v-else class="flex items-center gap-1.5 mt-0.5">
-                  <span v-if="chat.isLastSender" class="text-xs text-white/40">↩</span>
-                  <p class="text-sm truncate leading-snug" :class="chat.unread ? 'text-white font-medium' : 'text-white/55'">
+                <div v-else class="flex items-center gap-1.5 mt-0.5 min-w-0">
+                  <!-- WhatsApp Tick for messages sent by me -->
+                  <span v-if="(chat.lastMessageFromMe || chat.isLastSender) && chat.lastMessage && chat.lastMessage !== 'Start chatting!'" class="shrink-0 flex items-center">
+                    <!-- Blue/Cyan double tick = Read -->
+                    <CheckCheckIcon v-if="chat.lastMessageRead" :size="15" class="text-sky-400 stroke-[2.5]" title="Read" />
+                    <!-- Grey double tick = Delivered -->
+                    <CheckCheckIcon v-else-if="chat.lastMessageDelivered" :size="15" class="text-white/55 stroke-[2]" title="Delivered" />
+                    <!-- Grey single tick = Sent / Recipient Offline -->
+                    <CheckIcon v-else :size="15" class="text-white/40 stroke-[2]" title="Sent" />
+                  </span>
+                  <p class="text-sm truncate leading-snug flex-1" :class="chat.unread ? 'text-white font-medium' : 'text-white/55'">
                     {{ chat.lastMessage || 'Start chatting!' }}
                   </p>
                 </div>
@@ -158,7 +166,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { intentService } from '@/services/intentService'
 import { socketService } from '@/services/socketService'
-import { Check as CheckIcon, BadgeCheck, MessageCircle as MessageCircleIcon, Shield, Smile, Search, Heart } from 'lucide-vue-next'
+import { Check as CheckIcon, CheckCheck as CheckCheckIcon, BadgeCheck, MessageCircle as MessageCircleIcon, Shield, Smile, Search, Heart } from 'lucide-vue-next'
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ChatPanel from '@/components/feature/ChatPanel.vue'
@@ -259,11 +267,18 @@ const onResize = () => { isDesktop.value = window.innerWidth >= 768 }
 
 const handleNewMessage = (message) => {
   const i = chats.value.findIndex(c => String(c.id) === String(message.chatId))
+  const myId = String(authStore.user?._id || authStore.user?.id || '')
+  const isMe = String(message.sender) === myId
+
   if (i !== -1) {
     const chat = chats.value[i]
     chat.lastMessage = message.content
     chat.lastMessageTime = new Date().toISOString()
-    if (String(message.chatId) !== activeChatId.value) {
+    chat.lastMessageFromMe = isMe
+    chat.lastMessageRead = Boolean(message.read)
+    chat.lastMessageDelivered = Boolean(message.delivered)
+    chat.typing = false
+    if (String(message.chatId) !== activeChatId.value && !isMe) {
       chat.unread = true
       chat.yourTurn = true
     }
@@ -271,6 +286,34 @@ const handleNewMessage = (message) => {
     chats.value.unshift(chat)
     setCached('kondani_chats', chats.value)
     setCached('kondani_desktop_chats', chats.value)
+  }
+}
+
+const handleUserTyping = ({ chatId, from, isTyping }) => {
+  const myId = String(authStore.user?._id || authStore.user?.id || '')
+  if (String(from) === myId) return
+  const chat = chats.value.find(c =>
+    String(c.id) === String(chatId) ||
+    String(c.userId) === String(from) ||
+    (typeof c.id === 'string' && c.id.includes(String(from)))
+  )
+  if (chat) {
+    chat.typing = Boolean(isTyping)
+  }
+}
+
+const handleMessageDelivered = ({ chatId }) => {
+  const chat = chats.value.find(c => String(c.id) === String(chatId))
+  if (chat && chat.lastMessageFromMe) {
+    chat.lastMessageDelivered = true
+  }
+}
+
+const handleMessagesRead = ({ chatId }) => {
+  const chat = chats.value.find(c => String(c.id) === String(chatId))
+  if (chat && chat.lastMessageFromMe) {
+    chat.lastMessageRead = true
+    chat.lastMessageDelivered = true
   }
 }
 
@@ -331,6 +374,9 @@ onMounted(async () => {
   window.addEventListener('resize', onResize)
   socketService.connect()
   socketService.on('new_message', handleNewMessage)
+  socketService.on('user_typing', handleUserTyping)
+  socketService.on('message_delivered', handleMessageDelivered)
+  socketService.on('messages_read', handleMessagesRead)
   socketService.on('user_status', handleUserStatus)
 
   try {
@@ -363,6 +409,9 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
   socketService.off('new_message', handleNewMessage)
+  socketService.off('user_typing', handleUserTyping)
+  socketService.off('message_delivered', handleMessageDelivered)
+  socketService.off('messages_read', handleMessagesRead)
   socketService.off('user_status', handleUserStatus)
   intentService.setUserOffline()
 })

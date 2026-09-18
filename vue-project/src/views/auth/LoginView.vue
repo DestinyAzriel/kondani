@@ -496,4 +496,15 @@ onMounted(() => {
 }
 
 .text-gold-300 { color: #ffd98a; }
+
+@media (min-width: 1024px) and (max-height: 860px) {
+  .form-side { padding: 20px 24px; }
+  .heading { font-size: 28px; margin-bottom: 4px; }
+  .sub { font-size: 13px; margin-bottom: 14px; }
+  .perks { gap: 8px; margin-bottom: 14px; padding: 12px 14px; }
+  .perk { font-size: 12px; gap: 8px; }
+  .auth-card { padding: 16px; margin-bottom: 12px; }
+  .trust-badge { padding: 10px 12px; margin-bottom: 12px; }
+  .switch { margin-bottom: 6px; }
+}
 </style>

@@ -43,7 +43,7 @@ exports.getLikes = async (req, res) => {
                 id: intent.user._id,
                 name: intent.user.name,
                 photo: intent.user.photos[0] || '',
-                isVerified: intent.user.isVerified,
+                isVerified: Boolean(intent.user.isVerified && intent.user.verification?.id?.status === 'approved'),
                 isSuper: (intent.superLikes || []).some(id => String(id) === String(currentUserId))
             }))
             : [];
@@ -53,7 +53,7 @@ exports.getLikes = async (req, res) => {
             id: user._id,
             name: user.name,
             photo: user.photos[0] || '',
-            isVerified: user.isVerified
+            isVerified: Boolean(user.isVerified && user.verification?.id?.status === 'approved')
         })) : [];
 
         res.json({ newLikes, mutualLikes, likesCount, isPremium });

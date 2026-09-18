@@ -219,10 +219,54 @@ io.on('connection', (socket) => {
     if (data && data.to) io.to(data.to).emit('call_ended');
   });
 
-  // Chat Messages
-  socket.on('send_message', (data) => {
-    // data: { to, from, content, type }
-    io.to(data.to).emit('new_message', data);
+  // Chat Messages: Real-time WhatsApp-style delivery & tick tracking
+  socket.on('send_message', async (data) => {
+    // data: { id, to, from, content, messageType, mediaUrl, chatId }
+    const toId = String(data?.to);
+    const fromId = String(data?.from);
+    const isRecipientOnline = onlineUsers.has(toId);
+
+    if (isRecipientOnline) {
+      // Recipient is online -> mark delivered in DB and emit double gray tick to sender
+      try {
+        if (data.id) {
+          const Message = require('./src/models/Message');
+          await Message.findByIdAndUpdate(data.id, { delivered: true });
+        }
+      } catch (e) {
+        console.error('Error marking message delivered:', e);
+      }
+
+      io.to(toId).emit('new_message', { ...data, delivered: true });
+      io.to(fromId).emit('message_delivered', { messageId: data.id, chatId: data.chatId });
+    } else {
+      // Recipient is offline -> message remains single tick (✓)
+      io.to(toId).emit('new_message', { ...data, delivered: false });
+    }
+  });
+
+  // Read receipts: Turn double gray ticks -> double blue/cyan ticks (✓✓)
+  socket.on('mark_read', async (data) => {
+    // data: { chatId, readerId, senderId }
+    if (!data?.chatId || !data?.senderId) return;
+    try {
+      const Message = require('./src/models/Message');
+      await Message.updateMany(
+        { chatId: data.chatId, sender: data.senderId, read: false },
+        { read: true, delivered: true }
+      );
+      io.to(String(data.senderId)).emit('messages_read', { chatId: data.chatId });
+    } catch (e) {
+      console.error('Error in socket mark_read:', e);
+    }
+  });
+
+  // Real-time live typing indicator
+  socket.on('typing', (data) => {
+    // data: { chatId, to, from, isTyping }
+    if (data?.to) {
+      io.to(String(data.to)).emit('user_typing', data);
+    }
   });
 
   // Client subscribes to a specific WhatsApp verification session code

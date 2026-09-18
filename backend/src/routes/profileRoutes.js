@@ -203,7 +203,7 @@ function scoreCandidate(currentUser, candidate, cycleDate) {
     const shared = myInterests.filter(i => theirInterests.includes(i));
     score += Math.min(20, shared.length * 10);
 
-    if (candidate.isVerified) score += 8;
+    if (candidate.isVerified && candidate.verification?.id?.status === 'approved') score += 8;
     if (candidate.photos && candidate.photos.length >= 2) score += 5;
     if (candidate.bio && candidate.bio.trim().length > 15) score += 4;
 
@@ -228,7 +228,7 @@ function scoreCandidate(currentUser, candidate, cycleDate) {
         district: candidate.district || '',
         photos: (candidate.photos && candidate.photos.length) ? candidate.photos : [],
         interests: theirInterests,
-        isVerified: Boolean(candidate.isVerified),
+        isVerified: Boolean(candidate.isVerified && candidate.verification?.id?.status === 'approved'),
         matchScore: Math.min(98, score),
         distance: candidate.district ? candidate.district : 'Nearby'
     };
@@ -283,7 +283,7 @@ router.get('/daily-picks', auth, async (req, res) => {
                 role: { $nin: ['admin', 'moderator'] },
                 isProfileComplete: { $ne: false }
             })
-                .select('_id name age birthdate gender bio district location photos interests isVerified')
+                .select('_id name age birthdate gender bio district location photos interests isVerified verification')
                 .lean();
 
             const formatted = candidateUsers.map(c => scoreCandidate(currentUser, c, cycleDate));
@@ -327,7 +327,7 @@ router.get('/daily-picks', auth, async (req, res) => {
         }
 
         let candidates = await User.find(query)
-            .select('_id name age birthdate gender bio district location photos interests isVerified')
+            .select('_id name age birthdate gender bio district location photos interests isVerified verification')
             .limit(50)
             .lean();
 
@@ -335,7 +335,7 @@ router.get('/daily-picks', auth, async (req, res) => {
         if (candidates.length === 0 && query.gender) {
             delete query.gender;
             candidates = await User.find(query)
-                .select('_id name age birthdate gender bio district location photos interests isVerified')
+                .select('_id name age birthdate gender bio district location photos interests isVerified verification')
                 .limit(50)
                 .lean();
         }

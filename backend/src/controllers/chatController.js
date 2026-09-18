@@ -64,9 +64,12 @@ exports.getChats = async (req, res) => {
                 intent: match.relationshipIntent || '',
                 interests: match.interests || [],
                 occupation: match.occupation || match.job || '',
-                isVerified: match.isVerified,
+                isVerified: Boolean(match.isVerified && match.verification?.id?.status === 'approved'),
                 lastMessage: lastMessage ? lastMessage.content : 'Start chatting!',
                 lastMessageTime: lastMessage ? lastMessage.createdAt : match.createdAt, // fallback
+                lastMessageFromMe: lastMessage ? lastMessage.sender.toString() === currentUserId : false,
+                lastMessageRead: lastMessage ? Boolean(lastMessage.read) : false,
+                lastMessageDelivered: lastMessage ? Boolean(lastMessage.delivered) : false,
                 unread: lastMessage ? (!lastMessage.read && lastMessage.sender.toString() !== currentUserId) : false,
                 online: isOnline,
                 typing: typingIndicators.get(chatId) || false
@@ -256,6 +259,12 @@ exports.getChatProfile = async (req, res) => {
         const otherUser = await User.findById(otherUserId).select('-password');
         if (!otherUser) {
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Auto-correct any legacy unverified users
+        if (otherUser.isVerified && otherUser.verification?.id?.status !== 'approved') {
+            otherUser.isVerified = false;
+            await otherUser.save();
         }
 
         res.json({ user: otherUser });
