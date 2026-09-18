@@ -5,7 +5,7 @@
       <img :src="heroImg" alt="" />
       <div class="ob-scrim"></div>
       <div class="ob-aside-copy">
-        <div class="brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/encounters')" title="Kondani Encounters"><KondaniMark :size="40" /><b>Kondani</b></div>
+        <div class="brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/')" title="Kondani Home"><KondaniMark :size="40" /><b>Kondani</b></div>
         <h2 class="serif">You're almost in.</h2>
         <p>A few quick details and you'll start meeting verified Malawians near you.</p>
         <ul class="steps-list">
@@ -22,7 +22,7 @@
       <div class="ob-stars"></div>
 
       <header class="ob-head">
-        <div class="brand mob-brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/encounters')" title="Kondani Encounters"><KondaniMark :size="30" /><b>Kondani</b></div>
+        <div class="brand mob-brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/')" title="Kondani Home"><KondaniMark :size="30" /><b>Kondani</b></div>
         <span class="stepcount">Step {{ step }} of 4</span>
       </header>
       <div class="ob-progress"><div class="bar" :style="{ width: `${(step / 4) * 100}%` }"></div></div>

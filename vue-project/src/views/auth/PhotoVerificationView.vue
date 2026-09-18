@@ -22,7 +22,13 @@
           <div class="flex items-start gap-2 text-sm text-white/70"><span class="text-lagoon-300 mt-0.5">✓</span>Just you in the frame</div>
         </div>
 
-        <button class="btn-gold w-full" @click="startCamera">Take a selfie</button>
+        <div class="space-y-3">
+          <button class="btn-gold w-full" @click="startCamera">Take a selfie</button>
+          <button type="button" @click="triggerFileUpload" class="w-full py-3 px-4 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-sm font-semibold transition flex items-center justify-center gap-2">
+            <UploadIcon size="16" class="text-lagoon-300" />
+            Upload a selfie photo instead
+          </button>
+        </div>
       </div>
 
       <!-- Camera -->
@@ -41,7 +47,12 @@
 
         <canvas ref="canvas" class="hidden"></canvas>
 
-        <p v-if="errorMsg" class="text-sm text-[#ff7a6b] mb-4">{{ errorMsg }}</p>
+        <div v-if="errorMsg" class="mb-4 space-y-2">
+          <p class="text-sm text-[#ff7a6b]">{{ errorMsg }}</p>
+          <button type="button" @click="triggerFileUpload" class="text-xs text-gold-300 underline hover:text-gold-200">
+            Upload a selfie from your photo library instead
+          </button>
+        </div>
 
         <button class="btn-gold w-full" :disabled="busy || loadingModels" @click="capture">
           <span v-if="busy" class="spinner"></span>{{ busy ? 'Checking…' : 'Capture' }}
@@ -61,6 +72,9 @@
         <button class="btn-gold w-full" @click="router.push('/profile')">Back to profile</button>
         <button v-if="!resultVerified" class="text-white/45 text-sm mt-3 hover:text-white" @click="retry">Try again</button>
       </div>
+
+      <!-- Hidden file input for photo upload fallback -->
+      <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelected" />
     </div>
   </div>
 </template>
@@ -70,7 +84,7 @@ import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '@/services/auth'
 import { useAuthStore } from '@/stores/auth'
-import { ArrowLeft as ArrowLeftIcon, ShieldCheck as ShieldCheckIcon, Check as CheckIcon, Clock as ClockIcon } from 'lucide-vue-next'
+import { ArrowLeft as ArrowLeftIcon, ShieldCheck as ShieldCheckIcon, Check as CheckIcon, Clock as ClockIcon, Upload as UploadIcon } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -86,7 +100,35 @@ const resultMessage = ref('')
 
 const video = ref(null)
 const canvas = ref(null)
+const fileInput = ref(null)
 let stream = null
+
+const triggerFileUpload = () => {
+  if (fileInput.value) fileInput.value.click()
+}
+
+const onFileSelected = async (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  busy.value = true
+  errorMsg.value = ''
+  try {
+    const result = await authService.submitSelfie(file, { poseChallenge: 'Uploaded photo' })
+    resultVerified.value = !!result.verified
+    resultMessage.value = result.message || (result.verified ? 'Your gold badge is active.' : 'Selfie received and is under review.')
+    if (result.verified) {
+      authStore.user = { ...authStore.user, isVerified: true }
+    }
+    stopCamera()
+    step.value = 'result'
+  } catch (err) {
+    console.error('Verification upload failed', err)
+    errorMsg.value = err.response?.data?.message || 'Failed to upload selfie. Please try again.'
+  } finally {
+    busy.value = false
+    if (fileInput.value) fileInput.value.value = ''
+  }
+}
 
 const startCamera = async () => {
   step.value = 'camera'
@@ -97,7 +139,7 @@ const startCamera = async () => {
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
     if (video.value) video.value.srcObject = stream
   } catch (e) {
-    errorMsg.value = 'Could not access your camera. Please allow camera access.'
+    errorMsg.value = 'Could not access your camera. Please allow camera access or upload a photo directly.'
   } finally {
     loadingModels.value = false
   }
@@ -118,12 +160,12 @@ const capture = async () => {
     c.height = v.videoHeight || 480
     c.getContext('2d').drawImage(v, 0, 0, c.width, c.height)
 
-    // Server (AWS Rekognition) does the real face match — selfie just gets sent up.
+    // Server (AWS Rekognition or Admin Review) handles face verification
     const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9))
     const result = await authService.submitSelfie(blob, { poseChallenge: pose.value })
 
     resultVerified.value = !!result.verified
-    resultMessage.value = result.message || (result.verified ? 'Your gold badge is active.' : 'Please try again.')
+    resultMessage.value = result.message || (result.verified ? 'Your gold badge is active.' : 'Selfie received and is under review.')
     if (result.verified) {
       authStore.user = { ...authStore.user, isVerified: true }
     }

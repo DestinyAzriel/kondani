@@ -5,7 +5,7 @@
       <img :src="heroImg" alt="Kondani Love" />
       <div class="photo-scrim"></div>
       <div class="photo-copy">
-        <div class="brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/encounters')" title="Kondani Encounters"><KondaniMark :size="40" /><b>Kondani</b></div>
+        <div class="brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/')" title="Kondani Home"><KondaniMark :size="40" /><b>Kondani</b></div>
         <template v-if="isSignup">
           <h2 class="serif">Find <em>love</em> in the warm heart of Africa.</h2>
           <p>Kondani means love. Join thousands of verified Malawians looking for meaningful connections.</p>
@@ -23,7 +23,7 @@
       <div class="glow-orb"></div>
 
       <div class="form-inner">
-        <div class="brand mob-brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/encounters')" title="Kondani Encounters">
+        <div class="brand mob-brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/')" title="Kondani Home">
           <KondaniMark :size="36" />
           <b>Kondani</b>
         </div>

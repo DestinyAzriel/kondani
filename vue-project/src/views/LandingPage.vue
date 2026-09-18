@@ -3,10 +3,10 @@
     <!-- NAV -->
     <nav class="nav">
       <div class="nav-in">
-        <div class="logo-row cursor-pointer select-none hover:opacity-85 transition-opacity" @click="refreshPage" title="Refresh Kondani">
+        <router-link to="/" class="logo-row cursor-pointer select-none hover:opacity-85 transition-opacity" @click="handleLogoClick" title="Kondani">
           <KondaniMark :size="36" />
           <b>Kondani</b>
-        </div>
+        </router-link>
         <div class="nav-r">
           <a class="link" href="#how" @click.prevent="scrollTo('how')">How it works</a>
           <a class="link" href="#stories" @click.prevent="scrollTo('stories')">Stories</a>
@@ -107,10 +107,10 @@
     <!-- FOOTER -->
     <footer class="footer">
       <div class="foot">
-        <div class="logo-row cursor-pointer select-none hover:opacity-85 transition-opacity" @click="refreshPage" title="Refresh Kondani">
+        <router-link to="/" class="logo-row cursor-pointer select-none hover:opacity-85 transition-opacity" @click="handleLogoClick" title="Kondani">
           <KondaniMark :size="30" />
           <b>Kondani</b>
-        </div>
+        </router-link>
         <div class="foot-links">
           <router-link to="/terms">Terms of Service</router-link>
           <router-link to="/privacy">Privacy Policy</router-link>
@@ -125,7 +125,9 @@
 <script setup>
 import KondaniMark from '@/components/ui/KondaniMark.vue'
 
-const refreshPage = () => { window.location.reload() }
+const handleLogoClick = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 const img = (id, w) => `https://images.unsplash.com/${id}?w=${w}&q=80&fit=crop`
 const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 </script>

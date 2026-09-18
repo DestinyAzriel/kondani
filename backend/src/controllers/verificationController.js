@@ -68,7 +68,7 @@ exports.submitPhotoVerification = async (req, res) => {
         } else {
             // Verification not configured yet — leave pending, don't auto-decide.
             status = 'pending';
-            message = 'Selfie received — verification is being set up. Please check back soon.';
+            message = 'Selfie received! Your submission is under review. Our team will verify your badge shortly.';
         }
 
         const data = {

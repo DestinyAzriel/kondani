@@ -5,22 +5,30 @@ import { authService } from '@/services/auth'
 let initialUser = null
 try {
   const cached = localStorage.getItem('kondani_user')
-  if (cached) initialUser = JSON.parse(cached)
+  if (cached && cached !== 'undefined' && cached !== 'null') {
+    initialUser = JSON.parse(cached)
+  }
 } catch (e) {
   initialUser = null
+}
+
+let initialToken = localStorage.getItem('kondani_token')
+if (!initialToken || initialToken === 'undefined' || initialToken === 'null') {
+  initialToken = null
+  localStorage.removeItem('kondani_token')
 }
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: initialUser,
-    token: localStorage.getItem('kondani_token') || null,
+    token: initialToken,
     loading: false,
     error: null
   }),
 
   getters: {
-    isAuthenticated: (state) => !!state.token,
-    isVerified: (state) => state.user?.idVerified || false
+    isAuthenticated: (state) => !!state.token && state.token !== 'null' && state.token !== 'undefined',
+    isVerified: (state) => state.user?.idVerified || state.user?.isVerified || false
   },
 
   actions: {

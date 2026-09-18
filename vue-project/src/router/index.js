@@ -69,8 +69,14 @@ const routes = [
       }
     }
   },
-  // Catch-all route: any unknown or legacy path redirects safely to encounters
-  { path: '/:pathMatch(.*)*', redirect: '/encounters' }
+  // Catch-all route: unauthenticated users redirect to '/', authenticated users to '/encounters'
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: () => {
+      const authStore = useAuthStore()
+      return authStore.isAuthenticated ? '/encounters' : '/'
+    }
+  }
 ]
 
 const router = createRouter({
@@ -87,17 +93,25 @@ const publicRoutes = ['/', '/login', '/register', '/privacy', '/terms', '/safety
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  const isPublic = publicRoutes.includes(to.path)
+
+  // Clean up corrupted storage values if present
+  if (authStore.token === 'null' || authStore.token === 'undefined' || !authStore.token) {
+    authStore.token = null
+    authStore.user = null
+    localStorage.removeItem('kondani_token')
+    localStorage.removeItem('kondani_user')
+  }
 
   // Rehydrate user from backend if we have a token but no user object
-  if (authStore.isAuthenticated && !authStore.user) {
+  if (authStore.token && !authStore.user) {
     try {
       await authStore.fetchUser()
     } catch (e) {
-      console.warn('Could not restore user profile:', e)
+      console.warn('Could not restore user profile, invalid session:', e)
+      await authStore.logout()
     }
   }
-
-  const isPublic = publicRoutes.includes(to.path)
 
   // Unauthenticated user trying to access a protected route
   if (!authStore.isAuthenticated && !isPublic) {
