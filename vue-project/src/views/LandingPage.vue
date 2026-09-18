@@ -112,8 +112,9 @@
           <b>Kondani</b>
         </div>
         <div class="foot-links">
-          <router-link to="/privacy">Privacy</router-link>
-          <router-link to="/safety-center">Safety</router-link>
+          <router-link to="/terms">Terms of Service</router-link>
+          <router-link to="/privacy">Privacy Policy</router-link>
+          <router-link to="/safety-center">Safety Center</router-link>
           <router-link to="/support">Support</router-link>
         </div>
       </div>

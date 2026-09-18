@@ -6,11 +6,16 @@
 
     <!-- Header -->
     <nav class="relative z-10 bg-night-950/80 backdrop-blur-xl border-b border-white/5 p-4">
-      <div class="max-w-5xl mx-auto">
+      <div class="max-w-5xl mx-auto flex items-center justify-between">
         <router-link to="/encounters" class="flex items-center gap-3 hover:opacity-80 transition-opacity w-fit" title="Kondani Encounters">
           <KondaniMark :size="38" />
           <span class="k-serif text-2xl">Kondani</span>
         </router-link>
+        <div class="flex items-center gap-4 text-xs">
+          <router-link to="/terms" class="text-white/60 hover:text-white transition-colors">Terms</router-link>
+          <router-link to="/safety-center" class="text-white/60 hover:text-white transition-colors">Safety</router-link>
+          <router-link to="/support" class="text-white/60 hover:text-white transition-colors">Support</router-link>
+        </div>
       </div>
     </nav>
 

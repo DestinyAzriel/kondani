@@ -8,6 +8,7 @@ const routes = [
   { path: '/onboarding', component: () => import('@/views/auth/OnboardingView.vue') },
   { path: '/verify-photo', component: () => import('@/views/auth/PhotoVerificationView.vue') },
   { path: '/privacy', component: () => import('@/views/PrivacyPolicy.vue') },
+  { path: '/terms', component: () => import('@/views/TermsOfService.vue') },
   { path: '/safety-center', component: () => import('@/views/SafetyCenterPublic.vue') },
   { path: '/support', component: () => import('@/views/SupportPage.vue') },
   { path: '/test', component: () => import('@/views/TestView.vue') }, // Test route
@@ -82,7 +83,7 @@ const router = createRouter({
   }
 })
 
-const publicRoutes = ['/', '/login', '/register', '/privacy', '/safety-center', '/support', '/test']
+const publicRoutes = ['/', '/login', '/register', '/privacy', '/terms', '/safety-center', '/support', '/test']
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()

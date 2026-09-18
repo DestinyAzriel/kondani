@@ -111,7 +111,8 @@
 
         <p class="terms">
           By continuing you agree to Kondani's
-          <router-link to="/privacy">Terms of Service &amp; Privacy Policy</router-link>
+          <router-link to="/terms">Terms of Service</router-link> &amp;
+          <router-link to="/privacy">Privacy Policy</router-link>
         </p>
       </div>
     </div>
