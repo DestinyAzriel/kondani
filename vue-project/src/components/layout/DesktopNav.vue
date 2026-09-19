@@ -472,7 +472,13 @@ const handleUserStatus = ({ userId, isOnline }) => {
   const m = newMatches.value.find(match => String(match.id) === String(userId))
   if (m) m.online = isOnline
   const c = chats.value.find(chat => String(chat.userId) === String(userId))
-  if (c) c.online = isOnline
+  if (c) {
+    c.online = isOnline
+    // When recipient comes online, immediately upgrade sidebar tick to double grey
+    if (isOnline && c.lastMessageFromMe && !c.lastMessageRead) {
+      c.lastMessageDelivered = true
+    }
+  }
 }
 
 onMounted(async () => {
@@ -488,6 +494,12 @@ onMounted(async () => {
     const c = await intentService.getChats()
     if (c?.chats) {
       chats.value = c.chats
+      // For any chat where recipient is online & last msg is mine, show double tick immediately
+      chats.value.forEach(chat => {
+        if (chat.online && chat.lastMessageFromMe && !chat.lastMessageRead) {
+          chat.lastMessageDelivered = true
+        }
+      })
       clearActiveChatUnread()
       setCached('kondani_desktop_chats', chats.value)
       setCached('kondani_chats', chats.value)

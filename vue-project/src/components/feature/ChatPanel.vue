@@ -566,6 +566,12 @@ async function loadChat() {
     const data = await intentService.getChatMessages(props.chatId)
     messages.value = data?.messages || []
 
+    // If recipient is online right now, mark all my sent messages as delivered in the UI
+    // (DB is updated by socket join handler; this just syncs the visible ticks immediately)
+    if (chatUser.value?.online) {
+      markSentMessagesDelivered()
+    }
+
     // Acknowledge read upon opening chat & clear local unread badge
     socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
     clearSidebarUnread()
@@ -579,9 +585,22 @@ async function loadChat() {
 
 watch(() => props.chatId, (id) => { if (id) loadChat() })
 
+// Mark all my sent messages (that haven't been read yet) as delivered in the UI
+const markSentMessagesDelivered = () => {
+  messages.value.forEach(m => {
+    if (m.isMe && !m.read) {
+      m.delivered = true
+    }
+  })
+}
+
 const handleUserStatus = ({ userId, isOnline }) => {
   if (String(chatUser.value?.userId) === String(userId) || String(getRecipientId()) === String(userId)) {
     chatUser.value = { ...chatUser.value, online: isOnline }
+    // When recipient comes online, immediately show double ticks on all sent messages
+    if (isOnline) {
+      markSentMessagesDelivered()
+    }
   }
 }
 
