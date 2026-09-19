@@ -2,6 +2,18 @@ const Plan = require('../models/Plan');
 const User = require('../models/User');
 const Intent = require('../models/Intent');
 const Message = require('../models/Message');
+const IDVerification = require('../models/IDVerification');
+
+// Helper: bulk fetch approved IDVerification user IDs
+async function getApprovedVerifiedSet(userIds) {
+    if (!userIds || userIds.length === 0) return new Set();
+    const records = await IDVerification.find({
+        userId: { $in: userIds },
+        status: 'approved',
+        selfieUrl: { $exists: true, $ne: '' }
+    }).select('userId');
+    return new Set(records.map(r => r.userId.toString()));
+}
 
 /**
  * Fallback seed plans for launch in Malawi
@@ -133,6 +145,16 @@ exports.getPlans = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(50);
 
+        // Bulk check IDVerification for gold tick across all authors + applicants
+        const allPlanUserIds = [];
+        plans.forEach(p => {
+            if (p.user?._id) allPlanUserIds.push(p.user._id);
+            (p.interestedUsers || []).forEach(iu => {
+                if (iu.user?._id) allPlanUserIds.push(iu.user._id);
+            });
+        });
+        const approvedVerifSet = await getApprovedVerifiedSet(allPlanUserIds);
+
         const hostTier = currentUser.subscriptionTier || (currentUser.isPremium ? 'gold' : 'free');
         const isPremiumHost = hostTier === 'gold' || hostTier === 'platinum';
 
@@ -174,7 +196,7 @@ exports.getPlans = async (req, res) => {
                             name: item.user?.name || 'Kondani Member',
                             age: item.user?.age || null,
                             photo: item.user?.photos?.[0] || '',
-                            isVerified: Boolean(item.user?.isVerified && item.user?.verification?.id?.status === 'approved'),
+                            isVerified: approvedVerifSet.has(String(item.user?._id || item.user)),
                             joinedAt: item.joinedAt,
                             isLocked: false
                         }));
@@ -188,7 +210,7 @@ exports.getPlans = async (req, res) => {
                                     name: item.user?.name || 'Kondani Member',
                                     age: item.user?.age || null,
                                     photo: item.user?.photos?.[0] || '',
-                                    isVerified: Boolean(item.user?.isVerified && item.user?.verification?.id?.status === 'approved'),
+                                    isVerified: approvedVerifSet.has(String(item.user?._id || item.user)),
                                     joinedAt: item.joinedAt,
                                     isLocked: false
                                 };
@@ -198,7 +220,7 @@ exports.getPlans = async (req, res) => {
                                 name: 'Interested Member',
                                 age: null,
                                 photo: item.user?.photos?.[0] || '',
-                                isVerified: Boolean(item.user?.isVerified && item.user?.verification?.id?.status === 'approved'),
+                                isVerified: approvedVerifSet.has(String(item.user?._id || item.user)),
                                 joinedAt: item.joinedAt,
                                 isLocked: true
                             };
@@ -227,7 +249,7 @@ exports.getPlans = async (req, res) => {
                         name: author.name || 'Kondani Member',
                         age: author.age || null,
                         photo: author.photos?.[0] || '',
-                        isVerified: Boolean(author.isVerified && author.verification?.id?.status === 'approved'),
+                        isVerified: approvedVerifSet.has(String(author._id)),
                         location: author.location?.city || author.district || plan.location,
                         tier: author.subscriptionTier || (author.isPremium ? 'gold' : 'free')
                     }
@@ -313,6 +335,7 @@ exports.createPlan = async (req, res) => {
             .populate('user', 'name age photos isVerified verification location district bio');
 
         const author = populated.user;
+        const authorVerifSet = await getApprovedVerifiedSet([author._id]);
         res.status(201).json({
             success: true,
             plan: {
@@ -335,7 +358,7 @@ exports.createPlan = async (req, res) => {
                     name: author.name,
                     age: author.age,
                     photo: author.photos?.[0] || '',
-                    isVerified: Boolean(author.isVerified && author.verification?.id?.status === 'approved'),
+                    isVerified: authorVerifSet.has(String(author._id)),
                     location: author.district || populated.location
                 }
             }

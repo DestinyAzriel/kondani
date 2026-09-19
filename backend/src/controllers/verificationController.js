@@ -127,14 +127,15 @@ exports.getVerificationStatus = async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('verification isVerified');
         const record = await IDVerification.findOne({ userId: req.user.id });
+        const isVerified = Boolean(record && record.status === 'approved' && record.selfieUrl);
         res.json({
-            isVerified: user?.isVerified || false,
+            isVerified,
             phone: user?.verification?.phone,
             selfie: {
-                status: user?.verification?.id?.status || 'none',
+                status: record?.status || user?.verification?.id?.status || 'none',
                 faceMatchScore: record?.faceMatchScore,
-                submittedAt: user?.verification?.id?.submittedAt,
-                rejectionReason: user?.verification?.id?.rejectionReason
+                submittedAt: record?.createdAt || user?.verification?.id?.submittedAt,
+                rejectionReason: record?.rejectionReason || user?.verification?.id?.rejectionReason
             }
         });
     } catch (error) {

@@ -193,9 +193,12 @@ exports.login = async (req, res) => {
             { expiresIn: '30d' }
         );
         
-        // Ensure isVerified is strictly synced with approved selfie verification
-        if (user.isVerified && user.verification?.id?.status !== 'approved') {
-            user.isVerified = false;
+        // Strict: isVerified is ONLY true if user has an approved selfie in IDVerification collection
+        const IDVerification = require('../models/IDVerification');
+        const verRecord = await IDVerification.findOne({ userId: user._id, status: 'approved', selfieUrl: { $exists: true, $ne: '' } });
+        const shouldBeVerified = Boolean(verRecord);
+        if (user.isVerified !== shouldBeVerified) {
+            user.isVerified = shouldBeVerified;
             await user.save();
         }
 
@@ -289,9 +292,12 @@ exports.googleAuth = async (req, res) => {
             { expiresIn: '30d' }
         );
 
-        // Ensure isVerified is strictly synced with approved selfie verification
-        if (user.isVerified && user.verification?.id?.status !== 'approved') {
-            user.isVerified = false;
+        // Strict: isVerified is ONLY true if user has an approved selfie in IDVerification collection
+        const IDVerification = require('../models/IDVerification');
+        const verRecord = await IDVerification.findOne({ userId: user._id, status: 'approved', selfieUrl: { $exists: true, $ne: '' } });
+        const shouldBeVerified = Boolean(verRecord);
+        if (user.isVerified !== shouldBeVerified) {
+            user.isVerified = shouldBeVerified;
             await user.save();
         }
 
@@ -322,10 +328,12 @@ exports.getProfile = async (req, res) => {
             await user.save();
         }
 
-        // Only grant verified status if selfie/ID verification has been genuinely approved
-        const idStatus = user.verification?.id?.status;
-        if (user.isVerified && idStatus !== 'approved') {
-            user.isVerified = false;
+        // Strict: isVerified is ONLY true if user has an approved selfie in IDVerification collection
+        const IDVerification = require('../models/IDVerification');
+        const verRecord = await IDVerification.findOne({ userId: user._id, status: 'approved', selfieUrl: { $exists: true, $ne: '' } });
+        const shouldBeVerified = Boolean(verRecord);
+        if (user.isVerified !== shouldBeVerified) {
+            user.isVerified = shouldBeVerified;
             await user.save();
         }
 

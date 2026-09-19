@@ -154,7 +154,6 @@ exports.getIntents = async (req, res) => {
         }
         if (prefs.verifiedOnly) {
             query.isVerified = true;
-            query['verification.id.status'] = 'approved';
         }
         if (prefs.ageMin || prefs.ageMax) {
             query.age = {};
@@ -211,6 +210,16 @@ exports.getIntents = async (req, res) => {
         const start = (page - 1) * limit;
         const pageItems = scored.slice(start, start + limit);
 
+        // Bulk check IDVerification for gold tick - more efficient than N queries
+        const IDVerification = require('../models/IDVerification');
+        const pageItemIds = pageItems.map(({ user }) => user._id);
+        const approvedVerifs = await IDVerification.find({
+            userId: { $in: pageItemIds },
+            status: 'approved',
+            selfieUrl: { $exists: true, $ne: '' }
+        }).select('userId');
+        const approvedVerifSet = new Set(approvedVerifs.map(v => v.userId.toString()));
+
         const intents = pageItems.map(({ user, matchScore, distanceKm }) => ({
             id: user._id,
             name: user.name || 'New User',
@@ -220,7 +229,7 @@ exports.getIntents = async (req, res) => {
             bio: user.bio || '',
             photos: (user.photos && user.photos.length) ? user.photos : [],
             interests: user.interests || [],
-            isVerified: Boolean(user.isVerified && user.verification?.id?.status === 'approved'),
+            isVerified: approvedVerifSet.has(user._id.toString()),
             matchScore
         }));
 
