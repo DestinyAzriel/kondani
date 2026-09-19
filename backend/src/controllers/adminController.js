@@ -130,6 +130,18 @@ exports.updateUser = async (req, res) => {
             if (!isPremium) user.subscriptionTier = 'free';
         }
 
+        if (req.body.isVerified !== undefined) {
+            user.isVerified = Boolean(req.body.isVerified);
+            if (user.verification && user.verification.id) {
+                user.verification.id.verified = user.isVerified;
+                user.verification.id.status = user.isVerified ? 'approved' : 'none';
+            }
+            if (!user.isVerified) {
+                const IDVerification = require('../models/IDVerification');
+                await IDVerification.deleteMany({ userId: user._id });
+            }
+        }
+
         await user.save();
 
         res.json({ message: 'User updated successfully', user });

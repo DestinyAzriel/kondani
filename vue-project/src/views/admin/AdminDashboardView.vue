@@ -365,6 +365,18 @@
                         {{ user.isPremium ? 'Demote' : 'Make Gold' }}
                       </button>
 
+                      <!-- Toggle Verification (Gold Tick) -->
+                      <button
+                        @click="handleToggleVerify(user)"
+                        class="px-2.5 py-1 text-[11px] rounded-lg border transition-colors"
+                        :class="user.isVerified
+                          ? 'border-amber-400/40 text-amber-300 hover:bg-amber-400/20'
+                          : 'border-white/10 text-white/60 hover:bg-white/10'"
+                        :title="user.isVerified ? 'Revoke Gold Tick' : 'Grant Gold Tick'"
+                      >
+                        {{ user.isVerified ? 'Unverify' : 'Verify' }}
+                      </button>
+
                       <!-- Toggle Ban -->
                       <button
                         @click="handleToggleBan(user)"
@@ -717,6 +729,19 @@ const handleToggleBan = async (user) => {
     success(`User ${user.name || ''} has been ${newBanned ? 'banned' : 'unbanned'}`)
   } catch (err) {
     error('Failed to update ban status')
+  }
+}
+
+const handleToggleVerify = async (user) => {
+  const newVerified = !user.isVerified
+  try {
+    await adminService.updateUser(user._id, {
+      isVerified: newVerified
+    })
+    user.isVerified = newVerified
+    success(`User ${user.name || ''} verification ${newVerified ? 'granted' : 'revoked'}`)
+  } catch (err) {
+    error('Failed to update verification status')
   }
 }
 

@@ -18,6 +18,7 @@ scp -i $KEY backend\src\controllers\intentController.js       "${VPS}:${DEST}/ba
 scp -i $KEY backend\src\controllers\likesController.js        "${VPS}:${DEST}/backend/src/controllers/likesController.js"
 scp -i $KEY backend\src\controllers\planController.js         "${VPS}:${DEST}/backend/src/controllers/planController.js"
 scp -i $KEY backend\src\controllers\verificationController.js "${VPS}:${DEST}/backend/src/controllers/verificationController.js"
+scp -i $KEY backend\src\controllers\adminController.js        "${VPS}:${DEST}/backend/src/controllers/adminController.js"
 scp -i $KEY backend\server.js                                 "${VPS}:${DEST}/backend/server.js"
 scp -i $KEY backend\fix_production_gold_ticks.js              "${VPS}:${DEST}/backend/fix_production_gold_ticks.js"
 
@@ -25,6 +26,7 @@ Write-Host "`n[2/4] Uploading updated frontend components..." -ForegroundColor G
 scp -i $KEY vue-project\src\components\feature\ChatPanel.vue "${VPS}:${DEST}/vue-project/src/components/feature/ChatPanel.vue"
 scp -i $KEY vue-project\src\views\app\ChatsView.vue          "${VPS}:${DEST}/vue-project/src/views/app/ChatsView.vue"
 scp -i $KEY vue-project\src\components\layout\DesktopNav.vue "${VPS}:${DEST}/vue-project/src/components/layout/DesktopNav.vue"
+scp -i $KEY vue-project\src\views\admin\AdminDashboardView.vue "${VPS}:${DEST}/vue-project/src/views/admin/AdminDashboardView.vue"
 
 Write-Host "`n[3/4] Running DB audit & repair on Linode (removing unverified gold ticks)..." -ForegroundColor Green
 ssh -i $KEY $VPS "cd ${DEST}/backend && node fix_production_gold_ticks.js"
