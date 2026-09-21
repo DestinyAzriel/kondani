@@ -59,23 +59,100 @@
             <button v-else class="edit-pill edit-pill-on edit-pill-wide mt-2.5" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done editing' }}</button>
           </div>
 
-          <!-- promos -->
+          <!-- promos & monetization banner -->
           <div class="mt-3 space-y-2">
+            <!-- Out of Likes Banner (Tinder style high-converting funnel) -->
+            <div v-if="isOutOfLikes"
+                 @click="router.push('/premium')"
+                 class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#991b1b] via-[#b91c1c] to-[#7f1d1d] p-3.5 text-white shadow-xl border border-red-500/40 cursor-pointer hover:brightness-110 active:scale-[0.99] transition-all group">
+              <div class="absolute -right-6 -top-6 w-24 h-24 bg-red-400/20 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between gap-3 relative z-10">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="bg-white text-[#991b1b] font-black tracking-wider text-[10px] px-2.5 py-0.5 rounded-full uppercase shadow-sm">
+                      KONDANI PLUS
+                    </span>
+                    <span class="font-bold text-xs tracking-tight text-white/95">Unlimited Likes</span>
+                  </div>
+                  <p class="text-[11px] text-white/90 font-medium leading-snug">You are out of Likes. Unlock more now.</p>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 group-hover:bg-white/30 transition-all shadow-sm">
+                  <ArrowRight :size="15" class="text-white" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Normal verification & gold promo cards -->
             <button v-if="!isUserVerified" class="promo" @click="router.push('/verify-photo')">
               <span class="promo-ic"><ShieldCheck :size="16" /></span>
               <span class="promo-txt"><b>Get verified</b><i>Quick selfie for the gold badge.</i></span>
               <ChevronRight :size="16" class="text-white/35" />
             </button>
-            <button v-if="!profile.isPremium" class="promo promo-gold" @click="router.push('/premium')">
+            <button v-if="!profile.isPremium && !isOutOfLikes" class="promo promo-gold" @click="router.push('/premium')">
               <span class="promo-ic"><Crown :size="16" /></span>
               <span class="promo-txt"><b style="color:var(--k-gold-l)">Try Kondani Gold</b><i>See who likes you & match faster.</i></span>
               <ChevronRight :size="16" class="text-white/35" />
             </button>
+
+            <!-- Tinder-style Quick Action Shortcuts (Super Likes, Boosts, Subscriptions) -->
+            <div class="grid grid-cols-3 gap-1.5 pt-1">
+              <button @click="router.push('/premium')" class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-white/[0.04] border border-white/5 hover:bg-white/[0.08] active:scale-95 transition-all group" title="Get Super Likes">
+                <div class="flex items-center gap-1 text-[11.5px] font-bold text-sky-400 mb-0.5">
+                  <Star :size="13" class="fill-sky-400 text-sky-400" />
+                  <span>{{ superLikesCount }}</span>
+                </div>
+                <span class="text-[10px] text-white/45 group-hover:text-white/70 transition-colors">Super Likes</span>
+              </button>
+
+              <button @click="router.push('/premium')" class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-white/[0.04] border border-white/5 hover:bg-white/[0.08] active:scale-95 transition-all group" title="Get Boosts">
+                <div class="flex items-center gap-1 text-[11.5px] font-bold text-purple-400 mb-0.5">
+                  <Zap :size="13" class="fill-purple-400 text-purple-400" />
+                  <span>{{ boostsCount }}</span>
+                </div>
+                <span class="text-[10px] text-white/45 group-hover:text-white/70 transition-colors">Boosts</span>
+              </button>
+
+              <button @click="router.push('/premium')" class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-white/[0.04] border border-white/5 hover:bg-white/[0.08] active:scale-95 transition-all group" title="Manage Subscription">
+                <div class="flex items-center gap-1 text-[11.5px] font-bold text-amber-400 mb-0.5">
+                  <Crown :size="13" class="fill-amber-400 text-amber-400" />
+                  <span class="truncate max-w-[55px] uppercase">{{ profile.subscriptionTier || (profile.isPremium ? 'GOLD' : 'FREE') }}</span>
+                </div>
+                <span class="text-[10px] text-white/45 group-hover:text-white/70 transition-colors">Subscriptions</span>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- RIGHT content -->
         <div class="mt-5 lg:mt-0 min-w-0 space-y-3.5">
+          <!-- Mobile Out of Likes Banner -->
+          <div v-if="isOutOfLikes"
+               @click="router.push('/premium')"
+               class="lg:hidden relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#991b1b] via-[#b91c1c] to-[#7f1d1d] p-3.5 text-white shadow-xl border border-red-500/40 cursor-pointer active:scale-[0.99] transition-all flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="bg-white text-[#991b1b] font-black text-[10px] px-2 py-0.5 rounded-full uppercase">KONDANI PLUS</span>
+                <span class="font-bold text-xs text-white/95">Unlimited Likes</span>
+              </div>
+              <p class="text-[11px] text-white/90">You are out of Likes. Unlock more now.</p>
+            </div>
+            <div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <ArrowRight :size="14" class="text-white" />
+            </div>
+          </div>
+
+          <!-- Free Daily Likes Remaining Bar (when likes still remaining) -->
+          <div v-else-if="!profile.isPremium"
+               @click="router.push('/premium')"
+               class="rounded-xl bg-white/[0.03] border border-white/10 px-3.5 py-2.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-white/[0.06] transition-all">
+            <div class="flex items-center gap-2 text-xs">
+              <Flame :size="14" class="text-amber-400" />
+              <span class="text-white/80"><strong class="text-amber-300">{{ likesRemaining }}</strong> free likes left today</span>
+            </div>
+            <span class="text-[11px] text-amber-400/90 font-medium hover:underline flex items-center gap-0.5">
+              Get Unlimited <ChevronRight :size="12" />
+            </span>
+          </div>
           <!-- photos -->
           <div>
             <div class="flex items-center justify-between mb-2">
@@ -129,19 +206,53 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useProfile } from '@/composables/useProfile'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import PhotoUpload from '@/components/feature/PhotoUpload.vue'
-import { Check, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ChevronRight, LogOut, Image as ImageIcon } from 'lucide-vue-next'
+import { Check, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ChevronRight, ArrowRight, Star, Zap, Flame, LogOut, Image as ImageIcon } from 'lucide-vue-next'
 import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { success, error: toastError } = useToast()
-const { profile, saveProfile } = useProfile()
+const { profile, saveProfile, loadProfile } = useProfile()
+
+onMounted(() => {
+  loadProfile().catch(() => {})
+})
+
+const isOutOfLikes = computed(() => {
+  if (profile.value.isPremium) return false
+  if (profile.value.isOutOfLikes !== undefined) return Boolean(profile.value.isOutOfLikes)
+  const today = new Date().toISOString().slice(0, 10)
+  const count = profile.value.likesTodayDate === today ? (profile.value.likesToday || 0) : 0
+  return count >= (profile.value.freeLikesDaily || 20)
+})
+
+const likesRemaining = computed(() => {
+  if (profile.value.isPremium) return 'Unlimited'
+  if (profile.value.likesRemaining !== undefined && profile.value.likesRemaining !== null) {
+    return profile.value.likesRemaining
+  }
+  const today = new Date().toISOString().slice(0, 10)
+  const count = profile.value.likesTodayDate === today ? (profile.value.likesToday || 0) : 0
+  return Math.max(0, (profile.value.freeLikesDaily || 20) - count)
+})
+
+const superLikesCount = computed(() => {
+  const tier = profile.value.subscriptionTier || (profile.value.isPremium ? 'gold' : 'free')
+  const caps = { free: 1, plus: 2, gold: 5, platinum: 10 }
+  return caps[tier] || 1
+})
+
+const boostsCount = computed(() => {
+  const tier = profile.value.subscriptionTier || (profile.value.isPremium ? 'gold' : 'free')
+  const caps = { free: 0, plus: 0, gold: 1, platinum: 3 }
+  return caps[tier] || 0
+})
 
 const mediaSrc = (u) => mediaUrl(u)
 const photoList = computed(() => profile.value.photos || [])

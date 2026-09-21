@@ -586,7 +586,7 @@ async function loadChat() {
 watch(() => props.chatId, (id) => { if (id) loadChat() })
 
 // Mark all my sent messages (that haven't been read yet) as delivered in the UI
-const markSentMessagesDelivered = () => {
+function markSentMessagesDelivered() {
   messages.value.forEach(m => {
     if (m.isMe && !m.read) {
       m.delivered = true

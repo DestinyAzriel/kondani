@@ -337,7 +337,20 @@ exports.getProfile = async (req, res) => {
             await user.save();
         }
 
-        res.json(user);
+        // Daily likes quota calculation
+        const today = new Date().toISOString().slice(0, 10);
+        const likesTodayCount = user.likesTodayDate === today ? (user.likesToday || 0) : 0;
+        const FREE_DAILY_LIKES = 20;
+        const isOutOfLikes = !user.isPremium && likesTodayCount >= FREE_DAILY_LIKES;
+        const likesRemaining = user.isPremium ? null : Math.max(0, FREE_DAILY_LIKES - likesTodayCount);
+
+        const userObj = user.toObject();
+        userObj.likesToday = likesTodayCount;
+        userObj.likesRemaining = likesRemaining;
+        userObj.isOutOfLikes = isOutOfLikes;
+        userObj.freeLikesDaily = FREE_DAILY_LIKES;
+
+        res.json(userObj);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
