@@ -11,13 +11,13 @@
           class="p-1.5 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all relative"
           :class="{ 'text-gold-400 bg-gold-500/10': isActive(item.route) }" :title="item.label">
           <component :is="item.icon" :size="18" />
-          <!-- Tinder-style little red dot for Plans when new plans exist in vicinity -->
+          <!-- Kondani theme golden dot for Plans when new plans exist in vicinity -->
           <span v-if="item.name === 'plans' && item.badge > 0"
-                class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border border-night-950 shadow-sm shadow-rose-500/60 animate-pulse pointer-events-none">
+                class="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-br from-gold-300 via-gold-400 to-amber-500 rounded-full border border-night-950 shadow-sm shadow-gold-400/60 animate-pulse pointer-events-none">
           </span>
-          <!-- Tinder-style red count badge for Likes (e.g. 1, 2) -->
+          <!-- Kondani theme gold badge for Likes (e.g. 1, 2) -->
           <span v-else-if="item.name === 'likes' && item.badge > 0"
-                class="absolute -top-1 -right-1 text-[9.5px] font-extrabold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-md bg-rose-500 text-white shadow-rose-500/60 animate-pulse pointer-events-none">
+                class="absolute -top-1 -right-1 text-[9.5px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-md bg-gradient-to-r from-gold-300 via-gold-400 to-amber-500 text-night-950 shadow-gold-400/40 border border-gold-300/40 animate-pulse pointer-events-none">
             {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
         </button>

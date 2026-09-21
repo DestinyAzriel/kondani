@@ -23,16 +23,16 @@
         <component :is="item.icon" :size="23" stroke-width="2" class="transition-transform duration-300 group-active:scale-90" />
         <span class="text-[10px] mt-1 font-medium tracking-wide">{{ item.label }}</span>
 
-        <!-- Tinder-style red dot for Plans -->
+        <!-- Kondani theme golden dot for Plans -->
         <span
           v-if="item.name === 'plans' && item.badge > 0"
-          class="absolute top-2 right-4 w-2.5 h-2.5 bg-rose-500 rounded-full border border-night-950 shadow-sm shadow-rose-500/60 animate-pulse pointer-events-none"
+          class="absolute top-2 right-4 w-2.5 h-2.5 bg-gradient-to-br from-gold-300 via-gold-400 to-amber-500 rounded-full border border-night-950 shadow-sm shadow-gold-400/60 animate-pulse pointer-events-none"
         ></span>
 
-        <!-- Tinder-style red count pill for Likes (1, 2, etc.) -->
+        <!-- Kondani theme gold badge for Likes (1, 2, etc.) -->
         <span
           v-else-if="item.badge && item.badge > 0"
-          class="absolute top-1 right-2.5 bg-rose-500 text-white text-[10px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-night-950 shadow-sm shadow-rose-500/60 animate-pulse pointer-events-none"
+          class="absolute top-1 right-2.5 bg-gradient-to-r from-gold-300 via-gold-400 to-amber-500 text-night-950 text-[10px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-gold-300/40 shadow-sm shadow-gold-400/40 animate-pulse pointer-events-none"
         >
           {{ item.badge > 99 ? '99+' : item.badge }}
         </span>
