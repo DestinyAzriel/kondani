@@ -475,7 +475,7 @@ const updateSidebarLastMessage = (content) => {
             chat.lastMessageTime = new Date().toISOString()
             chat.unread = false
             chat.yourTurn = false
-            chat.lastMessageDelivered = true
+            chat.lastMessageDelivered = Boolean(chatUser.value?.online)
             chat.lastMessageRead = false
             arr.splice(idx, 1)
             arr.unshift(chat)

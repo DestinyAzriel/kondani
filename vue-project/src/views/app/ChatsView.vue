@@ -202,6 +202,13 @@ const setCached = (key, val) => {
 }
 
 const chats = ref(getCached('kondani_chats', []))
+if (Array.isArray(chats.value)) {
+  chats.value.forEach(c => {
+    if (!c.online && !c.lastMessageRead) {
+      c.lastMessageDelivered = false
+    }
+  })
+}
 const newMatches = ref(getCached('kondani_matches', []))
 const likesCount = ref(getCached('kondani_likes_count', 0))
 const contactedUserIds = ref(new Set(getCached('kondani_contacted_matches', [])))
@@ -430,10 +437,12 @@ onMounted(async () => {
     const chatData = await intentService.getChats()
     if (chatData?.chats) {
       chats.value = chatData.chats
-      // For any chat where recipient is online & last msg is mine, show double tick immediately
+      // Sync delivery state based on online status and read state
       chats.value.forEach(c => {
         if (c.online && c.lastMessageFromMe && !c.lastMessageRead) {
           c.lastMessageDelivered = true
+        } else if (!c.online && !c.lastMessageRead) {
+          c.lastMessageDelivered = false
         }
       })
       setCached('kondani_chats', chats.value)

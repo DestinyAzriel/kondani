@@ -246,6 +246,14 @@ const setCached = (key, val) => {
 }
 
 const chats = ref(getCached('kondani_desktop_chats', []))
+// Ensure any stale delivered flags for offline contacts are cleared
+if (Array.isArray(chats.value)) {
+  chats.value.forEach(c => {
+    if (!c.online && !c.lastMessageRead) {
+      c.lastMessageDelivered = false
+    }
+  })
+}
 const newMatches = ref(getCached('kondani_desktop_matches', []))
 const likesCount = ref(getCached('kondani_desktop_likes_count', 0))
 const contactedUserIds = ref(new Set(getCached('kondani_contacted_matches', [])))
@@ -354,6 +362,11 @@ const clearActiveChatUnread = () => {
 const syncFromStorage = () => {
   const cached = getCached('kondani_desktop_chats') || getCached('kondani_chats')
   if (cached && Array.isArray(cached)) {
+    cached.forEach(c => {
+      if (!c.online && !c.lastMessageRead) {
+        c.lastMessageDelivered = false
+      }
+    })
     chats.value = cached
     clearActiveChatUnread()
   }
@@ -494,10 +507,12 @@ onMounted(async () => {
     const c = await intentService.getChats()
     if (c?.chats) {
       chats.value = c.chats
-      // For any chat where recipient is online & last msg is mine, show double tick immediately
+      // Sync delivery state based on online status and read state
       chats.value.forEach(chat => {
         if (chat.online && chat.lastMessageFromMe && !chat.lastMessageRead) {
           chat.lastMessageDelivered = true
+        } else if (!chat.online && !chat.lastMessageRead) {
+          chat.lastMessageDelivered = false
         }
       })
       clearActiveChatUnread()
