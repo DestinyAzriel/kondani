@@ -506,13 +506,24 @@ onMounted(async () => {
   try {
     const c = await intentService.getChats()
     if (c?.chats) {
-      chats.value = c.chats
-      // Sync delivery state based on online status and read state
-      chats.value.forEach(chat => {
-        if (chat.online && chat.lastMessageFromMe && !chat.lastMessageRead) {
-          chat.lastMessageDelivered = true
-        } else if (!chat.online && !chat.lastMessageRead) {
-          chat.lastMessageDelivered = false
+      const cachedList = getCached('kondani_desktop_chats') || chats.value || []
+      chats.value = c.chats.map(chat => {
+        const cached = cachedList.find(x => String(x.id) === String(chat.id) || String(x.userId) === String(chat.userId))
+        const fromMe = chat.lastMessageFromMe !== undefined
+          ? Boolean(chat.lastMessageFromMe)
+          : (cached && cached.lastMessage === chat.lastMessage ? Boolean(cached.lastMessageFromMe) : false)
+        const delivered = chat.lastMessageDelivered !== undefined
+          ? Boolean(chat.lastMessageDelivered)
+          : Boolean(chat.online && fromMe)
+        const read = chat.lastMessageRead !== undefined
+          ? Boolean(chat.lastMessageRead)
+          : (cached && cached.lastMessage === chat.lastMessage ? Boolean(cached.lastMessageRead) : false)
+
+        return {
+          ...chat,
+          lastMessageFromMe: fromMe,
+          lastMessageDelivered: delivered,
+          lastMessageRead: read
         }
       })
       clearActiveChatUnread()

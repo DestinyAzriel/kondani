@@ -436,13 +436,24 @@ onMounted(async () => {
     await intentService.setUserOnline()
     const chatData = await intentService.getChats()
     if (chatData?.chats) {
-      chats.value = chatData.chats
-      // Sync delivery state based on online status and read state
-      chats.value.forEach(c => {
-        if (c.online && c.lastMessageFromMe && !c.lastMessageRead) {
-          c.lastMessageDelivered = true
-        } else if (!c.online && !c.lastMessageRead) {
-          c.lastMessageDelivered = false
+      const cachedList = getCached('kondani_chats') || chats.value || []
+      chats.value = chatData.chats.map(chat => {
+        const cached = cachedList.find(x => String(x.id) === String(chat.id) || String(x.userId) === String(chat.userId))
+        const fromMe = chat.lastMessageFromMe !== undefined
+          ? Boolean(chat.lastMessageFromMe)
+          : (cached && cached.lastMessage === chat.lastMessage ? Boolean(cached.lastMessageFromMe) : false)
+        const delivered = chat.lastMessageDelivered !== undefined
+          ? Boolean(chat.lastMessageDelivered)
+          : Boolean(chat.online && fromMe)
+        const read = chat.lastMessageRead !== undefined
+          ? Boolean(chat.lastMessageRead)
+          : (cached && cached.lastMessage === chat.lastMessage ? Boolean(cached.lastMessageRead) : false)
+
+        return {
+          ...chat,
+          lastMessageFromMe: fromMe,
+          lastMessageDelivered: delivered,
+          lastMessageRead: read
         }
       })
       setCached('kondani_chats', chats.value)

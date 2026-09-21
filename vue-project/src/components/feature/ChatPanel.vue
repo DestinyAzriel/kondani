@@ -575,6 +575,32 @@ async function loadChat() {
     // Acknowledge read upon opening chat & clear local unread badge
     socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
     clearSidebarUnread()
+
+    // Sync actual last message metadata to sidebar cache so tick is always preserved
+    if (messages.value.length > 0) {
+      const lastMsg = messages.value[messages.value.length - 1]
+      const rId = String(getRecipientId() || '')
+      const cId = String(props.chatId || '')
+      ;['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
+        const stored = localStorage.getItem(key)
+        if (stored) {
+          try {
+            let arr = JSON.parse(stored)
+            if (Array.isArray(arr)) {
+              const idx = arr.findIndex(c => String(c.id) === cId || (c.userId && String(c.userId) === rId) || (typeof c.id === 'string' && (c.id.includes(rId) || c.id.includes(cId))))
+              if (idx !== -1) {
+                arr[idx].lastMessage = lastMsg.content
+                arr[idx].lastMessageFromMe = Boolean(lastMsg.isMe)
+                arr[idx].lastMessageDelivered = Boolean(lastMsg.delivered || (chatUser.value?.online && lastMsg.isMe))
+                arr[idx].lastMessageRead = Boolean(lastMsg.read)
+                localStorage.setItem(key, JSON.stringify(arr))
+              }
+            }
+          } catch (err) {}
+        }
+      })
+      window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId: props.chatId } }))
+    }
   } catch (e) {
     messages.value = []
   } finally {
