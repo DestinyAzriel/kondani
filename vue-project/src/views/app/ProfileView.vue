@@ -67,12 +67,12 @@
                  :class="isOutOfLikes
                    ? 'bg-gradient-to-r from-[#8b1515] via-[#a81c1c] to-[#6b1010] border border-red-500/50 shadow-red-950/40'
                    : (profile.isPremium
-                     ? 'bg-gradient-to-r from-night-900 via-amber-950/40 to-night-900 border border-gold-400/40 shadow-gold-500/10'
-                     : 'bg-gradient-to-r from-[#7a1414] via-[#941c1c] to-[#631010] border border-red-500/35 shadow-red-950/30')">
-              
-              <!-- Subtle glowing background accent -->
+                     ? 'bg-gradient-to-r from-amber-900/60 via-yellow-900/50 to-amber-900/60 border border-gold-400/50 shadow-gold-500/20'
+                     : 'bg-gradient-to-r from-amber-900/70 via-yellow-800/50 to-amber-900/70 border border-amber-500/50 shadow-amber-950/30')">
+
+              <!-- Glowing background accent -->
               <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-xl pointer-events-none"
-                   :class="isOutOfLikes ? 'bg-red-400/30' : (profile.isPremium ? 'bg-gold-400/20' : 'bg-red-400/20')"></div>
+                   :class="isOutOfLikes ? 'bg-red-400/30' : (profile.isPremium ? 'bg-gold-400/20' : 'bg-amber-400/20')"></div>
 
               <div class="flex items-center justify-between gap-3 relative z-10">
                 <div class="min-w-0">
@@ -80,14 +80,18 @@
                     <span class="font-black tracking-wider text-[10.5px] px-2.5 py-0.5 rounded-full uppercase shadow-sm"
                           :class="isOutOfLikes
                             ? 'bg-white text-[#991b1b]'
-                            : (profile.isPremium ? 'bg-gradient-to-r from-gold-300 to-gold-500 text-night-950' : 'bg-white text-[#991b1b]')">
-                      {{ profile.isPremium ? (profile.subscriptionTier ? 'KONDANI ' + profile.subscriptionTier.toUpperCase() : 'KONDANI VIP') : (isOutOfLikes ? 'KONDANI PLUS' : 'KONDANI PLUS') }}
+                            : 'bg-gradient-to-r from-amber-300 to-yellow-400 text-night-950'">
+                      {{ profile.isPremium
+                          ? (profile.subscriptionTier ? 'KONDANI ' + profile.subscriptionTier.toUpperCase() : 'KONDANI VIP')
+                          : (isOutOfLikes ? 'KONDANI PLUS' : 'KONDANI PLUS') }}
                     </span>
-                    <span class="font-bold text-xs tracking-tight text-white/95">
-                      {{ profile.isPremium ? 'VIP Benefits Active' : 'Unlimited Likes' }}
+                    <span class="font-bold text-xs tracking-tight"
+                          :class="isOutOfLikes ? 'text-white/95' : 'text-amber-200'">
+                      {{ isOutOfLikes ? 'Unlimited Likes' : (profile.isPremium ? 'VIP Benefits Active' : 'Unlimited Likes') }}
                     </span>
                   </div>
-                  <p class="text-[11.5px] text-white/90 font-medium leading-snug">
+                  <p class="text-[11.5px] font-medium leading-snug"
+                     :class="isOutOfLikes ? 'text-white/90' : 'text-amber-100/90'">
                     {{ isOutOfLikes
                          ? 'You are out of Likes. Unlock more now.'
                          : (profile.isPremium
@@ -95,8 +99,9 @@
                              : likesRemaining + ' free likes left today. Unlock unlimited now.') }}
                   </p>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 group-hover:bg-white/30 transition-all shadow-sm">
-                  <ArrowRight :size="15" class="text-white" />
+                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-all shadow-sm"
+                     :class="isOutOfLikes ? 'bg-white/20 group-hover:bg-white/30' : 'bg-amber-400/30 group-hover:bg-amber-400/50'">
+                  <ArrowRight :size="15" :class="isOutOfLikes ? 'text-white' : 'text-amber-200'" />
                 </div>
               </div>
             </div>

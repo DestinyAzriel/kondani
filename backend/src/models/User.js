@@ -144,6 +144,8 @@ const userSchema = new mongoose.Schema({
     // Free-tier daily like cap (Gold members are unlimited)
     likesToday: { type: Number, default: 0 },
     likesTodayDate: { type: String, default: '' }, // YYYY-MM-DD
+    isOutOfLikes: { type: Boolean, default: false },
+    likesRemaining: { type: Number, default: 20 },
     // Super Likes per day (Free 1 / Gold 5)
     superLikesToday: { type: Number, default: 0 },
     superLikesTodayDate: { type: String, default: '' },

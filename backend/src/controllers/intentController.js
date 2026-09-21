@@ -261,15 +261,26 @@ exports.likeIntent = async (req, res) => {
         // Enforce the free daily like cap — only counts brand-new likes.
         if (!alreadyLiked && !me.isPremium) {
             const today = new Date().toISOString().slice(0, 10);
-            if (me.likesTodayDate !== today) { me.likesToday = 0; me.likesTodayDate = today; }
+            if (me.likesTodayDate !== today) {
+                me.likesToday = 0;
+                me.likesTodayDate = today;
+                me.isOutOfLikes = false;
+                me.likesRemaining = FREE_DAILY_LIKES;
+            }
             if (me.likesToday >= FREE_DAILY_LIKES) {
+                me.isOutOfLikes = true;
+                me.likesRemaining = 0;
+                await me.save();
                 return res.status(429).json({
                     limitReached: true,
+                    isOutOfLikes: true,
                     likesRemaining: 0,
                     message: `You've used your ${FREE_DAILY_LIKES} free likes for today. They reset tomorrow — or go Gold for unlimited likes.`
                 });
             }
             me.likesToday += 1;
+            me.likesRemaining = Math.max(0, FREE_DAILY_LIKES - me.likesToday);
+            me.isOutOfLikes = me.likesToday >= FREE_DAILY_LIKES;
             await me.save();
         }
 

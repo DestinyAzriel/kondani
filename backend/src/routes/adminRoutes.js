@@ -81,4 +81,20 @@ router.post('/verifications/:verificationId/review', adminController.reviewVerif
 router.get('/reports', adminController.getReports);
 router.post('/reports/:reportId/review', adminController.reviewReport);
 
+// Remote deploy: git pull + npm install + pm2 restart (admin-only, VPS only)
+router.post('/deploy', (req, res) => {
+    const { exec } = require('child_process');
+    const cwd = process.cwd();
+    exec(
+        'git pull origin main && npm install --omit=dev && pm2 restart kondani-backend',
+        { cwd, timeout: 120000 },
+        (err, stdout, stderr) => {
+            if (err) {
+                return res.status(500).json({ error: err.message, stderr });
+            }
+            res.json({ success: true, stdout: stdout.slice(-2000), stderr: stderr.slice(-500) });
+        }
+    );
+});
+
 module.exports = router;

@@ -337,19 +337,30 @@ exports.getProfile = async (req, res) => {
             await user.save();
         }
 
-        // Daily likes quota calculation
+        // Daily likes quota calculation & DB persistence
         const today = new Date().toISOString().slice(0, 10);
-        const likesTodayCount = user.likesTodayDate === today ? (user.likesToday || 0) : 0;
-        const FREE_DAILY_LIKES = 20;
-        const isOutOfLikes = !user.isPremium && likesTodayCount >= FREE_DAILY_LIKES;
-        const likesRemaining = user.isPremium ? null : Math.max(0, FREE_DAILY_LIKES - likesTodayCount);
+        let updatedDb = false;
+        if (user.likesTodayDate !== today) {
+            user.likesToday = 0;
+            user.likesTodayDate = today;
+            user.isOutOfLikes = false;
+            user.likesRemaining = user.isPremium ? null : 20;
+            updatedDb = true;
+        } else {
+            const isOut = !user.isPremium && (user.likesToday || 0) >= 20;
+            const remaining = user.isPremium ? null : Math.max(0, 20 - (user.likesToday || 0));
+            if (user.isOutOfLikes !== isOut || user.likesRemaining !== remaining) {
+                user.isOutOfLikes = isOut;
+                user.likesRemaining = remaining;
+                updatedDb = true;
+            }
+        }
+        if (updatedDb) {
+            await user.save();
+        }
 
         const userObj = user.toObject();
-        userObj.likesToday = likesTodayCount;
-        userObj.likesRemaining = likesRemaining;
-        userObj.isOutOfLikes = isOutOfLikes;
-        userObj.freeLikesDaily = FREE_DAILY_LIKES;
-
+        userObj.freeLikesDaily = 20;
         res.json(userObj);
     } catch (err) {
         console.error(err);
