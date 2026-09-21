@@ -11,8 +11,14 @@
           class="p-1.5 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all relative"
           :class="{ 'text-gold-400 bg-gold-500/10': isActive(item.route) }" :title="item.label">
           <component :is="item.icon" :size="18" />
-          <span v-if="item.badge && item.badge > 0" class="absolute -top-1 -right-1 bg-gold-400 text-night-950 text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
-            {{ item.badge > 9 ? '9+' : item.badge }}
+          <!-- Tinder-style little red dot for Plans when new plans exist in vicinity -->
+          <span v-if="item.name === 'plans' && item.badge > 0"
+                class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border border-night-950 shadow-sm shadow-rose-500/60 animate-pulse pointer-events-none">
+          </span>
+          <!-- Tinder-style red count badge for Likes (e.g. 1, 2) -->
+          <span v-else-if="item.name === 'likes' && item.badge > 0"
+                class="absolute -top-1 -right-1 text-[9.5px] font-extrabold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-md bg-rose-500 text-white shadow-rose-500/60 animate-pulse pointer-events-none">
+            {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
         </button>
       </div>
@@ -163,7 +169,7 @@
                     <PhoneMissedIcon :size="12" />
                   </span>
                   <!-- WhatsApp Tick for messages sent by me -->
-                  <span v-else-if="(chat.lastMessageFromMe || chat.isLastSender) && chat.lastMessage && chat.lastMessage !== 'Start chatting!'" class="shrink-0 flex items-center mr-0.5">
+                  <span v-else-if="isMessageFromMe(chat) && chat.lastMessage && chat.lastMessage !== 'Start chatting!'" class="shrink-0 flex items-center mr-0.5">
                     <!-- Blue/Cyan double tick = Read -->
                     <CheckCheckIcon v-if="chat.lastMessageRead" :size="13" class="text-sky-400 stroke-[2.5]" title="Read" />
                     <!-- Grey double tick = Delivered -->
@@ -309,10 +315,23 @@ const totalUnreadCount = computed(() => {
   return chats.value.filter(c => c.unread).length
 })
 
+const plansCount = ref(getCached('kondani_desktop_plans_count', 0))
+
+const isMessageFromMe = (chat) => {
+  if (!chat || !chat.lastMessage || chat.lastMessage === 'Start chatting!') return false
+  if (chat.lastMessageFromMe === true) return true
+  if (chat.isLastSender === true) return true
+  const cid = String(chat.id || '')
+  if (localStorage.getItem('kondani_sent_' + cid) === chat.lastMessage) return true
+  // In a 1-on-1 chat, if not unread and strictly not your turn, you are the sender
+  if (!chat.unread && chat.yourTurn === false) return true
+  return false
+}
+
 const topNavItems = computed(() => [
   { name: 'discover', route: '/encounters', label: 'Discover', icon: Flame },
   { name: 'likes', route: '/likes', label: 'Likes', icon: Heart, badge: likesCount.value },
-  { name: 'plans', route: '/feed', label: 'Plans', icon: Sparkles },
+  { name: 'plans', route: '/feed', label: 'Plans', icon: Sparkles, badge: plansCount.value },
   { name: 'picks', route: '/daily-picks', label: 'Picks', icon: Star }
 ])
 
@@ -494,6 +513,26 @@ const handleUserStatus = ({ userId, isOnline }) => {
   }
 }
 
+// Real-time badge handlers
+const handleNewLike = () => {
+  likesCount.value += 1
+  setCached('kondani_desktop_likes_count', likesCount.value)
+  setCached('kondani_likes_count', likesCount.value)
+}
+
+const handleNewMatch = (data) => {
+  if (data && data.matchData) {
+    newMatches.value.unshift({ id: data.matchData.id, name: data.matchData.name, photo: data.matchData.avatar })
+    setCached('kondani_desktop_matches', newMatches.value)
+    setCached('kondani_matches', newMatches.value)
+  }
+}
+
+const handleNewPlan = () => {
+  plansCount.value += 1
+  setCached('kondani_desktop_plans_count', plansCount.value)
+}
+
 onMounted(async () => {
   window.addEventListener('kondani:chats_changed', syncFromStorage)
   socketService.connect()
@@ -502,6 +541,9 @@ onMounted(async () => {
   socketService.on('message_delivered', handleMessageDelivered)
   socketService.on('messages_read', handleMessagesRead)
   socketService.on('user_status', handleUserStatus)
+  socketService.on('new_like', handleNewLike)
+  socketService.on('new_match', handleNewMatch)
+  socketService.on('new_plan', handleNewPlan)
 
   try {
     const c = await intentService.getChats()
@@ -539,6 +581,14 @@ onMounted(async () => {
       setCached('kondani_matches', newMatches.value)
       setCached('kondani_likes_count', likesCount.value)
     }
+    // Fetch nearby plans count
+    try {
+      const p = await intentService.getPlans()
+      if (p) {
+        plansCount.value = p?.total || p?.plans?.length || 0
+        setCached('kondani_desktop_plans_count', plansCount.value)
+      }
+    } catch (_) {}
   } catch (e) {
     // Keep cached state if API fails
   }
@@ -551,6 +601,9 @@ onUnmounted(() => {
   socketService.off('message_delivered', handleMessageDelivered)
   socketService.off('messages_read', handleMessagesRead)
   socketService.off('user_status', handleUserStatus)
+  socketService.off('new_like', handleNewLike)
+  socketService.off('new_match', handleNewMatch)
+  socketService.off('new_plan', handleNewPlan)
 })
 </script>
 

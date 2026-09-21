@@ -135,5 +135,11 @@ export const intentService = {
   async reportUser(reportedUserId, reason, description = '') {
     const response = await api.post('/moderation/report', { reportedUserId, reason, description })
     return response.data
+  },
+
+  // Get plans in user vicinity
+  async getPlans() {
+    const response = await api.get('/plans')
+    return response.data
   }
 }

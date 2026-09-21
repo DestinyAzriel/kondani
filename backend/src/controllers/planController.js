@@ -363,6 +363,16 @@ exports.createPlan = async (req, res) => {
                 }
             }
         });
+
+        const io = req.app?.get('io');
+        if (io) {
+            io.emit('new_plan', {
+                planId: populated._id,
+                activity: populated.activity,
+                location: populated.location,
+                authorId: author._id
+            });
+        }
     } catch (err) {
         console.error('createPlan error:', err);
         res.status(500).json({ error: 'Failed to create plan' });

@@ -23,11 +23,18 @@
         <component :is="item.icon" :size="23" stroke-width="2" class="transition-transform duration-300 group-active:scale-90" />
         <span class="text-[10px] mt-1 font-medium tracking-wide">{{ item.label }}</span>
 
+        <!-- Tinder-style red dot for Plans -->
         <span
-          v-if="item.badge && item.badge > 0"
-          class="absolute top-1 right-3 bg-lagoon-400 text-night-950 text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center border border-night-950"
+          v-if="item.name === 'plans' && item.badge > 0"
+          class="absolute top-2 right-4 w-2.5 h-2.5 bg-rose-500 rounded-full border border-night-950 shadow-sm shadow-rose-500/60 animate-pulse pointer-events-none"
+        ></span>
+
+        <!-- Tinder-style red count pill for Likes (1, 2, etc.) -->
+        <span
+          v-else-if="item.badge && item.badge > 0"
+          class="absolute top-1 right-2.5 bg-rose-500 text-white text-[10px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-night-950 shadow-sm shadow-rose-500/60 animate-pulse pointer-events-none"
         >
-          {{ item.badge > 9 ? '9+' : item.badge }}
+          {{ item.badge > 99 ? '99+' : item.badge }}
         </span>
       </button>
     </div>
@@ -36,19 +43,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Flame, Sparkles, Star, MessageCircle, User, Heart } from 'lucide-vue-next'
 import { intentService } from '@/services/intentService'
+import { socketService } from '@/services/socketService'
 
 const router = useRouter()
 const route = useRoute()
 const likesCount = ref(0)
+const plansCount = ref(0)
 
 const navItems = computed(() => [
   { name: 'discover', route: '/encounters', label: 'Discover', icon: Flame },
   { name: 'likes', route: '/likes', label: 'Likes', icon: Heart, badge: likesCount.value },
-  { name: 'plans', route: '/feed', label: 'Plans', icon: Sparkles },
+  { name: 'plans', route: '/feed', label: 'Plans', icon: Sparkles, badge: plansCount.value },
   { name: 'chats', route: '/chats', label: 'Chats', icon: MessageCircle },
   { name: 'you', route: '/profile', label: 'You', icon: User }
 ])
@@ -56,13 +65,36 @@ const navItems = computed(() => [
 const isActive = (routePath) => route.path === routePath || route.path.startsWith(routePath + '/')
 const navigate = (routePath) => router.push(routePath)
 
+const handleNewLike = () => {
+  likesCount.value = (Number(likesCount.value) || 0) + 1
+}
+
+const handleNewPlan = () => {
+  plansCount.value = (Number(plansCount.value) || 0) + 1
+}
+
 onMounted(async () => {
+  socketService.on('new_like', handleNewLike)
+  socketService.on('new_plan', handleNewPlan)
+
   try {
     const l = await intentService.getLikes()
-    likesCount.value = l?.likesCount || 0
+    likesCount.value = l?.likesCount || (l?.newLikes?.length || 0)
   } catch (e) {
     likesCount.value = 0
   }
+
+  try {
+    const p = await intentService.getPlans()
+    plansCount.value = p?.count || p?.plans?.length || 0
+  } catch (e) {
+    plansCount.value = 0
+  }
+})
+
+onUnmounted(() => {
+  socketService.off('new_like', handleNewLike)
+  socketService.off('new_plan', handleNewPlan)
 })
 </script>
 

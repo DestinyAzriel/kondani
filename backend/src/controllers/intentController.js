@@ -316,6 +316,16 @@ exports.likeIntent = async (req, res) => {
             };
         }
 
+        const io = req.app?.get('io');
+        if (io) {
+            if (isMatch) {
+                io.to(String(targetUserId)).emit('new_match', { match: matchData, by: currentUserId });
+                io.to(String(currentUserId)).emit('new_match', { match: matchData, by: targetUserId });
+            } else {
+                io.to(String(targetUserId)).emit('new_like', { from: currentUserId });
+            }
+        }
+
         const likesRemaining = me.isPremium ? null : Math.max(0, FREE_DAILY_LIKES - me.likesToday);
         res.json({ isMatch, matchData, likesRemaining });
     } catch (err) {

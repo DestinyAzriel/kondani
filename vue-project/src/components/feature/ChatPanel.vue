@@ -484,6 +484,8 @@ const updateSidebarLastMessage = (content) => {
         }
       }
     })
+    // Track that I sent this specific message so the tick survives a refresh
+    localStorage.setItem('kondani_sent_' + cId, content)
     window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId: props.chatId } }))
   } catch (e) {}
 }
@@ -599,6 +601,9 @@ async function loadChat() {
           } catch (err) {}
         }
       })
+      if (lastMsg.isMe) {
+        localStorage.setItem('kondani_sent_' + cId, lastMsg.content)
+      }
       window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId: props.chatId } }))
     }
   } catch (e) {
