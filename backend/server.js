@@ -147,7 +147,6 @@ app.set('io', io);
 const { onlineUsers } = require('./src/controllers/chatController');
 const User = require('./src/models/User');
 const Message = require('./src/models/Message');
-const mongoose = require('mongoose');
 
 // Track in-flight call attempts: key = sorted(caller_callee), value = { callerId, calleeId, mode, answered: false, createdAt }
 const activeCalls = new Map();
