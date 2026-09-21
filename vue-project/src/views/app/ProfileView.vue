@@ -59,22 +59,41 @@
             <button v-else class="edit-pill edit-pill-on edit-pill-wide mt-2.5" :disabled="isSaving" @click="saveChanges">{{ isSaving ? 'Saving…' : 'Done editing' }}</button>
           </div>
 
-          <!-- promos & monetization banner -->
-          <div class="mt-3 space-y-2">
-            <!-- Out of Likes Banner (Tinder style high-converting funnel) -->
-            <div v-if="isOutOfLikes"
-                 @click="router.push('/premium')"
-                 class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#991b1b] via-[#b91c1c] to-[#7f1d1d] p-3.5 text-white shadow-xl border border-red-500/40 cursor-pointer hover:brightness-110 active:scale-[0.99] transition-all group">
-              <div class="absolute -right-6 -top-6 w-24 h-24 bg-red-400/20 rounded-full blur-xl pointer-events-none"></div>
+          <!-- promos & Tinder-style monetization card -->
+          <div class="mt-3 space-y-2.5">
+            <!-- TINDER-STYLE PROMO / OUT OF LIKES BANNER -->
+            <div @click="router.push('/premium')"
+                 class="relative overflow-hidden rounded-2xl p-4 text-white shadow-xl cursor-pointer hover:brightness-110 active:scale-[0.99] transition-all group"
+                 :class="isOutOfLikes
+                   ? 'bg-gradient-to-r from-[#8b1515] via-[#a81c1c] to-[#6b1010] border border-red-500/50 shadow-red-950/40'
+                   : (profile.isPremium
+                     ? 'bg-gradient-to-r from-night-900 via-amber-950/40 to-night-900 border border-gold-400/40 shadow-gold-500/10'
+                     : 'bg-gradient-to-r from-[#7a1414] via-[#941c1c] to-[#631010] border border-red-500/35 shadow-red-950/30')">
+              
+              <!-- Subtle glowing background accent -->
+              <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-xl pointer-events-none"
+                   :class="isOutOfLikes ? 'bg-red-400/30' : (profile.isPremium ? 'bg-gold-400/20' : 'bg-red-400/20')"></div>
+
               <div class="flex items-center justify-between gap-3 relative z-10">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="bg-white text-[#991b1b] font-black tracking-wider text-[10px] px-2.5 py-0.5 rounded-full uppercase shadow-sm">
-                      KONDANI PLUS
+                    <span class="font-black tracking-wider text-[10.5px] px-2.5 py-0.5 rounded-full uppercase shadow-sm"
+                          :class="isOutOfLikes
+                            ? 'bg-white text-[#991b1b]'
+                            : (profile.isPremium ? 'bg-gradient-to-r from-gold-300 to-gold-500 text-night-950' : 'bg-white text-[#991b1b]')">
+                      {{ profile.isPremium ? (profile.subscriptionTier ? 'KONDANI ' + profile.subscriptionTier.toUpperCase() : 'KONDANI VIP') : (isOutOfLikes ? 'KONDANI PLUS' : 'KONDANI PLUS') }}
                     </span>
-                    <span class="font-bold text-xs tracking-tight text-white/95">Unlimited Likes</span>
+                    <span class="font-bold text-xs tracking-tight text-white/95">
+                      {{ profile.isPremium ? 'VIP Benefits Active' : 'Unlimited Likes' }}
+                    </span>
                   </div>
-                  <p class="text-[11px] text-white/90 font-medium leading-snug">You are out of Likes. Unlock more now.</p>
+                  <p class="text-[11.5px] text-white/90 font-medium leading-snug">
+                    {{ isOutOfLikes
+                         ? 'You are out of Likes. Unlock more now.'
+                         : (profile.isPremium
+                             ? 'Unlimited likes, priority matching & boosts active.'
+                             : likesRemaining + ' free likes left today. Unlock unlimited now.') }}
+                  </p>
                 </div>
                 <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 group-hover:bg-white/30 transition-all shadow-sm">
                   <ArrowRight :size="15" class="text-white" />
@@ -82,20 +101,8 @@
               </div>
             </div>
 
-            <!-- Normal verification & gold promo cards -->
-            <button v-if="!isUserVerified" class="promo" @click="router.push('/verify-photo')">
-              <span class="promo-ic"><ShieldCheck :size="16" /></span>
-              <span class="promo-txt"><b>Get verified</b><i>Quick selfie for the gold badge.</i></span>
-              <ChevronRight :size="16" class="text-white/35" />
-            </button>
-            <button v-if="!profile.isPremium && !isOutOfLikes" class="promo promo-gold" @click="router.push('/premium')">
-              <span class="promo-ic"><Crown :size="16" /></span>
-              <span class="promo-txt"><b style="color:var(--k-gold-l)">Try Kondani Gold</b><i>See who likes you & match faster.</i></span>
-              <ChevronRight :size="16" class="text-white/35" />
-            </button>
-
             <!-- Tinder-style Quick Action Shortcuts (Super Likes, Boosts, Subscriptions) -->
-            <div class="grid grid-cols-3 gap-1.5 pt-1">
+            <div class="grid grid-cols-3 gap-1.5 pt-0.5">
               <button @click="router.push('/premium')" class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-white/[0.04] border border-white/5 hover:bg-white/[0.08] active:scale-95 transition-all group" title="Get Super Likes">
                 <div class="flex items-center gap-1 text-[11.5px] font-bold text-sky-400 mb-0.5">
                   <Star :size="13" class="fill-sky-400 text-sky-400" />
@@ -120,6 +127,13 @@
                 <span class="text-[10px] text-white/45 group-hover:text-white/70 transition-colors">Subscriptions</span>
               </button>
             </div>
+
+            <!-- Verification Promo -->
+            <button v-if="!isUserVerified" class="promo mt-1" @click="router.push('/verify-photo')">
+              <span class="promo-ic"><ShieldCheck :size="16" /></span>
+              <span class="promo-txt"><b>Get verified</b><i>Quick selfie for the gold badge.</i></span>
+              <ChevronRight :size="16" class="text-white/35" />
+            </button>
           </div>
         </div>
 

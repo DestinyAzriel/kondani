@@ -303,7 +303,7 @@ const handleNewMessage = (message) => {
     chat.lastMessageTime = new Date().toISOString()
     chat.lastMessageFromMe = isMe
     chat.lastMessageRead = Boolean(message.read)
-    chat.lastMessageDelivered = Boolean(message.delivered || isMe)
+    chat.lastMessageDelivered = Boolean(message.delivered || (chat.online && isMe))
     chat.typing = false
     if (String(message.chatId) === activeChatId.value || isMe) {
       chat.unread = false
