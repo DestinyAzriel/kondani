@@ -16,6 +16,8 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const planRoutes = require('./src/routes/planRoutes');
 // const oauthRoutes = require('./src/routes/oauthRoutes'); // Temporarily disabled
 
+const Message = require('./src/models/Message');
+
 // Allowed CORS origins: localhost (dev) + CLIENT_ORIGIN env (comma-separated)
 // + any Render/Vercel/Netlify host.
 const envOrigins = (process.env.CLIENT_ORIGIN || '').split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
@@ -299,9 +301,10 @@ io.on('connection', (socket) => {
         });
 
         if (!recentMissed) {
+          const validSender = mongoose.Types.ObjectId.isValid(callerId) ? new mongoose.Types.ObjectId(callerId) : callerId;
           const missedMsg = await Message.create({
             chatId,
-            sender: callerId,
+            sender: validSender,
             content,
             messageType,
             read: false,

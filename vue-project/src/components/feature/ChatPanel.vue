@@ -560,8 +560,15 @@ const handleClickOutside = (e) => {
 async function loadChat() {
   isLoading.value = true
   messages.value = []
-  chatUser.value = {}
   try {
+    const cachedChats = JSON.parse(localStorage.getItem('kondani_desktop_chats') || localStorage.getItem('kondani_chats') || '[]')
+    const cachedUser = cachedChats.find(c => String(c.id) === String(props.chatId) || (c.userId && String(c.userId) === String(props.chatId)))
+    if (cachedUser) {
+      chatUser.value = { ...cachedUser }
+    } else {
+      chatUser.value = {}
+    }
+
     const chatData = await intentService.getChats()
     const found = (chatData?.chats || []).find(c => String(c.id) === String(props.chatId))
     if (found) chatUser.value = found

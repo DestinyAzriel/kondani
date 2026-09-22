@@ -323,8 +323,6 @@ const isMessageFromMe = (chat) => {
   if (chat.isLastSender === true) return true
   const cid = String(chat.id || '')
   if (localStorage.getItem('kondani_sent_' + cid) === chat.lastMessage) return true
-  // In a 1-on-1 chat, if not unread and strictly not your turn, you are the sender
-  if (!chat.unread && chat.yourTurn === false) return true
   return false
 }
 
