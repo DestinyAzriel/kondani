@@ -408,13 +408,30 @@ const reportReasons = [
   'Other'
 ]
 
-const myId = authStore.user?._id || authStore.user?.id
+const getMyId = () => {
+  if (authStore.user?._id) return String(authStore.user._id)
+  if (authStore.user?.id) return String(authStore.user.id)
+  try {
+    const raw = localStorage.getItem('kondani_user')
+    if (raw) {
+      const u = JSON.parse(raw)
+      return String(u._id || u.id || '')
+    }
+  } catch (_) {}
+  return ''
+}
+
+const myId = computed(() => getMyId())
 
 const getRecipientId = () => {
-  const id = props.chatId
-  return String(id).includes('_')
-    ? String(id).split('_').find(x => x !== String(myId))
-    : id
+  const id = String(props.chatId || '')
+  const mId = myId.value
+  if (id.includes('_')) {
+    const parts = id.split('_')
+    const other = parts.find(x => x && x !== mId)
+    return other || parts[0]
+  }
+  return id
 }
 
 const scrollToBottom = () => nextTick(() => {
@@ -492,7 +509,7 @@ const updateSidebarLastMessage = (content) => {
 
 const handleNewMessage = (message) => {
   if (String(message.chatId) !== String(props.chatId)) return
-  const isMe = Boolean(message.isMe || String(message.sender || message.from) === String(myId))
+  const isMe = Boolean(message.isMe || String(message.sender || message.from) === String(myId.value))
   messages.value.push({ ...message, isMe })
 
   if (!isMe) {
@@ -507,7 +524,7 @@ const handleNewMessage = (message) => {
 
   scrollToBottom()
   // Acknowledge read immediately since user is actively viewing
-  socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
+  socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId.value), senderId: String(getRecipientId()) })
   clearSidebarUnread()
 }
 
@@ -543,10 +560,10 @@ const handleUserTyping = (data) => {
 
 const handleTyping = () => {
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
-  socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId), isTyping: true })
+  socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId.value), isTyping: true })
   intentService.setTyping(props.chatId, true).catch(() => {})
   typingTimeout.value = setTimeout(() => {
-    socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId), isTyping: false })
+    socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId.value), isTyping: false })
     intentService.setTyping(props.chatId, false).catch(() => {})
   }, 1800)
 }
@@ -559,30 +576,56 @@ const handleClickOutside = (e) => {
 
 async function loadChat() {
   isLoading.value = true
-  messages.value = []
+  const cId = String(props.chatId || '')
+
+  const matchUser = (c) => {
+    if (!c) return false
+    const r = String(getRecipientId() || '')
+    const cid = String(c.id || '')
+    const uid = String(c.userId || '')
+    return cid === cId || uid === cId || uid === r || (cid && cId.includes(cid)) || (cId && cid.includes(cId))
+  }
+
   try {
     const cachedChats = JSON.parse(localStorage.getItem('kondani_desktop_chats') || localStorage.getItem('kondani_chats') || '[]')
-    const cachedUser = cachedChats.find(c => String(c.id) === String(props.chatId) || (c.userId && String(c.userId) === String(props.chatId)))
+    const cachedUser = cachedChats.find(matchUser)
     if (cachedUser) {
       chatUser.value = { ...cachedUser }
-    } else {
-      chatUser.value = {}
+    }
+    const cachedMsgs = localStorage.getItem('kondani_msgs_' + cId)
+    if (cachedMsgs) {
+      messages.value = JSON.parse(cachedMsgs)
+    }
+  } catch (_) {}
+
+  try {
+    const chatData = await intentService.getChats()
+    const found = (chatData?.chats || []).find(matchUser)
+    if (found) {
+      chatUser.value = found
+    }
+    if (!chatUser.value?.name) {
+      const profileData = await intentService.getChatProfile(cId)
+      if (profileData?.user) {
+        chatUser.value = { ...profileData.user }
+      }
     }
 
-    const chatData = await intentService.getChats()
-    const found = (chatData?.chats || []).find(c => String(c.id) === String(props.chatId))
-    if (found) chatUser.value = found
     const data = await intentService.getChatMessages(props.chatId)
-    messages.value = data?.messages || []
+    if (data?.messages) {
+      messages.value = data.messages
+      try {
+        localStorage.setItem('kondani_msgs_' + cId, JSON.stringify(data.messages))
+      } catch (_) {}
+    }
 
     // If recipient is online right now, mark all my sent messages as delivered in the UI
-    // (DB is updated by socket join handler; this just syncs the visible ticks immediately)
     if (chatUser.value?.online) {
       markSentMessagesDelivered()
     }
 
     // Acknowledge read upon opening chat & clear local unread badge
-    socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId), senderId: String(getRecipientId()) })
+    socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId.value), senderId: String(getRecipientId()) })
     clearSidebarUnread()
 
     // Sync actual last message metadata to sidebar cache so tick is always preserved
@@ -644,7 +687,7 @@ const handleUserStatus = ({ userId, isOnline }) => {
 
 onMounted(() => {
   socketService.connect()
-  if (myId) socketService.emit('join', String(myId))
+  if (myId.value) socketService.emit('join', String(myId.value))
   socketService.on('new_message', handleNewMessage)
   socketService.on('message_delivered', handleMessageDelivered)
   socketService.on('messages_read', handleMessagesRead)
@@ -660,7 +703,7 @@ onUnmounted(() => {
   socketService.off('messages_read', handleMessagesRead)
   socketService.off('user_typing', handleUserTyping)
   socketService.off('user_status', handleUserStatus)
-  socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId), isTyping: false })
+  socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId.value), isTyping: false })
   document.removeEventListener('click', handleClickOutside)
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
   if (otherTypingTimer.value) clearTimeout(otherTypingTimer.value)
@@ -676,7 +719,7 @@ const relay = (message) => {
     mediaUrl: message.mediaUrl,
     time: message.time || message.createdAt,
     chatId: props.chatId,
-    from: String(myId),
+    from: String(myId.value),
     to: String(getRecipientId())
   })
 }

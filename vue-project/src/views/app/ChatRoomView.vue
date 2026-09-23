@@ -400,11 +400,33 @@ const reportReasons = [
   'Other'
 ]
 
-const chatId = route.params.id
-const myId = authStore.user?._id || authStore.user?.id
-const recipientId = String(chatId).includes('_')
-  ? String(chatId).split('_').find(id => id !== String(myId))
-  : chatId
+const chatId = computed(() => String(route.params.id || ''))
+
+const getMyId = () => {
+  if (authStore.user?._id) return String(authStore.user._id)
+  if (authStore.user?.id) return String(authStore.user.id)
+  try {
+    const raw = localStorage.getItem('kondani_user')
+    if (raw) {
+      const u = JSON.parse(raw)
+      return String(u._id || u.id || '')
+    }
+  } catch (_) {}
+  return ''
+}
+
+const myId = computed(() => getMyId())
+
+const recipientId = computed(() => {
+  const cId = chatId.value
+  const mId = myId.value
+  if (cId.includes('_')) {
+    const parts = cId.split('_')
+    const other = parts.find(id => id && id !== mId)
+    return other || parts[0]
+  }
+  return cId
+})
 
 const scrollToBottom = () => nextTick(() => {
   if (messagesContainer.value) messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
@@ -415,8 +437,8 @@ const otherTypingTimer = ref(null)
 
 const clearSidebarUnread = () => {
   try {
-    const rId = String(recipientId || '')
-    const cId = String(chatId || '')
+    const rId = String(recipientId.value || '')
+    const cId = String(chatId.value || '')
     ;['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
       const stored = localStorage.getItem(key)
       if (stored) {
@@ -439,14 +461,14 @@ const clearSidebarUnread = () => {
         }
       }
     })
-    window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId } }))
+    window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId: chatId.value } }))
   } catch (e) {}
 }
 
 const updateSidebarLastMessage = (content) => {
   try {
-    const rId = String(recipientId || '')
-    const cId = String(chatId || '')
+    const rId = String(recipientId.value || '')
+    const cId = String(chatId.value || '')
     ;['kondani_chats', 'kondani_desktop_chats'].forEach(key => {
       const stored = localStorage.getItem(key)
       if (stored) {
@@ -473,7 +495,7 @@ const updateSidebarLastMessage = (content) => {
         }
       }
     })
-    window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId } }))
+    window.dispatchEvent(new CustomEvent('kondani:chats_changed', { detail: { chatId: chatId.value } }))
   } catch (e) {}
 }
 
@@ -545,14 +567,78 @@ const handleClickOutside = (e) => {
 }
 
 const handleUserStatus = ({ userId, isOnline }) => {
-  if (String(chatUser.value?.userId) === String(userId) || String(recipientId) === String(userId)) {
+  if (String(chatUser.value?.userId) === String(userId) || String(recipientId.value) === String(userId)) {
     chatUser.value = { ...chatUser.value, online: isOnline }
+  }
+}
+
+async function loadChat() {
+  const cId = chatId.value
+  const rId = recipientId.value
+  if (!cId) return
+  isLoading.value = true
+
+  const matchUser = (c) => {
+    if (!c) return false
+    const cid = String(c.id || '')
+    const uid = String(c.userId || '')
+    return cid === cId || uid === cId || uid === rId || (cid && cId.includes(cid)) || (cId && cid.includes(cId)) || (cid && rId.includes(cid))
+  }
+
+  // 1. Instantly restore chatUser & messages from local cache to prevent blank screen / offline flicker
+  try {
+    const cachedChats = JSON.parse(localStorage.getItem('kondani_desktop_chats') || localStorage.getItem('kondani_chats') || '[]')
+    const cached = cachedChats.find(matchUser)
+    if (cached) {
+      chatUser.value = { ...cached }
+    }
+    const cachedMsgs = localStorage.getItem('kondani_msgs_' + cId)
+    if (cachedMsgs) {
+      messages.value = JSON.parse(cachedMsgs)
+    }
+  } catch (_) {}
+
+  // 2. Fetch fresh data from server
+  try {
+    const chatData = await intentService.getChats()
+    const found = (chatData?.chats || []).find(matchUser)
+    if (found) {
+      chatUser.value = found
+    }
+    if (!chatUser.value?.name) {
+      const profileData = await intentService.getChatProfile(cId)
+      if (profileData?.user) {
+        chatUser.value = { ...profileData.user }
+      }
+    }
+
+    const data = await intentService.getChatMessages(cId)
+    if (data?.messages) {
+      messages.value = data.messages
+      try {
+        localStorage.setItem('kondani_msgs_' + cId, JSON.stringify(data.messages))
+      } catch (_) {}
+    }
+
+    if (chatUser.value?.online) {
+      messages.value.forEach(m => {
+        if (m.isMe) m.delivered = true
+      })
+    }
+
+    socketService.emit('mark_read', { chatId: cId, readerId: String(myId.value), senderId: String(recipientId.value) })
+    clearSidebarUnread()
+  } catch (e) {
+    console.error('Failed to load chat', e)
+  } finally {
+    isLoading.value = false
+    scrollToBottom()
   }
 }
 
 onMounted(async () => {
   socketService.connect()
-  if (myId) socketService.emit('join', String(myId))
+  if (myId.value) socketService.emit('join', String(myId.value))
   socketService.on('new_message', handleNewMessage)
   socketService.on('message_delivered', handleMessageDelivered)
   socketService.on('messages_read', handleMessagesRead)
@@ -560,23 +646,12 @@ onMounted(async () => {
   socketService.on('user_status', handleUserStatus)
   document.addEventListener('click', handleClickOutside)
 
-  // Acknowledge read upon opening the chat & clear local unread badge
-  socketService.emit('mark_read', { chatId, readerId: String(myId), senderId: String(recipientId) })
-  clearSidebarUnread()
+  await loadChat()
+})
 
-  try {
-    const chatData = await intentService.getChats()
-    const found = (chatData?.chats || []).find(c => String(c.id) === String(chatId))
-    if (found) chatUser.value = found
-
-    const data = await intentService.getChatMessages(chatId)
-    messages.value = data?.messages || []
-  } catch (e) {
-    console.error('Failed to load chat', e)
-    messages.value = []
-  } finally {
-    isLoading.value = false
-    scrollToBottom()
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    loadChat()
   }
 })
 
@@ -586,11 +661,11 @@ onUnmounted(() => {
   socketService.off('messages_read', handleMessagesRead)
   socketService.off('user_typing', handleUserTyping)
   socketService.off('user_status', handleUserStatus)
-  socketService.emit('typing', { chatId, to: String(recipientId), from: String(myId), isTyping: false })
+  socketService.emit('typing', { chatId: chatId.value, to: String(recipientId.value), from: String(myId.value), isTyping: false })
   document.removeEventListener('click', handleClickOutside)
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
   if (otherTypingTimer.value) clearTimeout(otherTypingTimer.value)
-  intentService.setTyping(chatId, false).catch(() => {})
+  intentService.setTyping(chatId.value, false).catch(() => {})
   stopTracks()
 })
 
@@ -601,9 +676,9 @@ const relay = (message) => {
     messageType: message.messageType,
     mediaUrl: message.mediaUrl,
     time: message.time || message.createdAt,
-    chatId,
-    from: String(myId),
-    to: String(recipientId)
+    chatId: chatId.value,
+    from: String(myId.value),
+    to: String(recipientId.value)
   })
 }
 
@@ -616,7 +691,7 @@ const sendText = async () => {
   scrollToBottom()
   updateSidebarLastMessage(content)
   try {
-    const res = await intentService.sendMessage(chatId, content)
+    const res = await intentService.sendMessage(chatId.value, content)
     const i = messages.value.findIndex(m => m.id === tempId)
     if (i !== -1) messages.value[i] = res.message
     relay(res.message)
@@ -630,7 +705,7 @@ const sendText = async () => {
 const openProfilePreview = async () => {
   showMenu.value = false
   try {
-    const data = await intentService.getChatProfile(chatId)
+    const data = await intentService.getChatProfile(chatId.value)
     profileUser.value = data?.user || chatUser.value
   } catch (e) {
     console.warn('Could not load full profile, using chat data', e)
@@ -686,13 +761,13 @@ const executeConfirmedAction = async () => {
   confirmDialog.value.show = false
   try {
     if (action === 'unmatch') {
-      await intentService.unmatchUser(chatId)
+      await intentService.unmatchUser(chatId.value)
       router.replace('/chats')
     } else if (action === 'delete') {
-      await intentService.deleteChat(chatId)
+      await intentService.deleteChat(chatId.value)
       router.replace('/chats')
     } else if (action === 'block') {
-      await intentService.blockUser(recipientId)
+      await intentService.blockUser(recipientId.value)
       router.replace('/chats')
     }
   } catch (e) {
@@ -704,7 +779,7 @@ const submitReport = async () => {
   if (!selectedReportReason.value) return
   showReportDialog.value = false
   try {
-    await intentService.reportUser(recipientId, selectedReportReason.value, reportDescription.value)
+    await intentService.reportUser(recipientId.value, selectedReportReason.value, reportDescription.value)
   } catch (e) {
     console.error('Report failed', e)
   }
@@ -795,7 +870,7 @@ const uploadAndSendVoice = async (blob, filename = 'voice.webm') => {
   scrollToBottom()
   try {
     const { url } = await intentService.uploadChatMedia(blob, filename)
-    const res = await intentService.sendMessage(chatId, '', 'voice', url)
+    const res = await intentService.sendMessage(chatId.value, '', 'voice', url)
     const i = messages.value.findIndex(m => m.id === tempId)
     if (i !== -1) messages.value[i] = res.message
     relay(res.message)
@@ -808,8 +883,8 @@ const uploadAndSendVoice = async (blob, filename = 'voice.webm') => {
 
 const startCall = (mode) => {
   router.push({
-    path: `/video-call/${chatId}`,
-    query: { mode, name: chatUser.value.name || '', photo: chatUser.value.photo || '', to: String(recipientId), initiator: 'true' }
+    path: `/video-call/${chatId.value}`,
+    query: { mode, name: chatUser.value.name || '', photo: chatUser.value.photo || '', to: String(recipientId.value), initiator: 'true' }
   })
 }
 </script>

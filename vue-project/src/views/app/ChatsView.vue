@@ -363,6 +363,12 @@ const formatTime = (timestamp) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+watch([isDesktop, chats], ([desktop, list]) => {
+  if (desktop && list.length && !activeChatId.value) {
+    activeChatId.value = String(list[0].id)
+  }
+}, { immediate: true })
+
 const openChat = (id) => {
   const chat = chats.value.find(c => String(c.id) === String(id))
   if (chat) {
