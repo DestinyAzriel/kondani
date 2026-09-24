@@ -10,7 +10,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 25 * 1024 * 1024 // 25MB limit to match nginx
   },
   fileFilter: (req, file, cb) => {
     // Allow images only
@@ -58,8 +58,20 @@ router.get('/whatsapp-poll/:code', (req, res) => {
 });
 
 router.get('/profile', authMiddleware, authController.getProfile);
-// Add the profile update route with file upload support
-router.put('/profile', authMiddleware, upload.array('photos', 6), authController.updateProfile);
+// Add the profile update route with file upload support and clean error handling
+router.put('/profile', authMiddleware, (req, res, next) => {
+  upload.array('photos', 6)(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'One of your photos is too large. Maximum size is 25MB.' });
+      }
+      return res.status(400).json({ error: `Photo upload error: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ error: err.message || 'File upload failed' });
+    }
+    next();
+  });
+}, authController.updateProfile);
 // Permanently delete the account
 router.delete('/profile', authMiddleware, authController.deleteAccount);
 // Health check endpoint (no authentication required)

@@ -202,9 +202,64 @@ const isStep1Valid = computed(() => form.name && form.dob && form.gender)
 const isStep2Valid = computed(() => form.photos.filter(Boolean).length >= 1)
 const isStep3Valid = computed(() => form.interests.length >= 3 && form.bio.trim().length > 0)
 
-const handlePhoto = (e, index) => {
+const compressImage = (file, maxWidth = 1400, quality = 0.82) => {
+  return new Promise((resolve) => {
+    if (!file || !file.type || !file.type.startsWith('image/') || file.type === 'image/gif') {
+      return resolve(file)
+    }
+    const img = new Image()
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxWidth || height > maxWidth) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width)
+            width = maxWidth
+          } else {
+            width = Math.round((width * maxWidth) / height)
+            height = maxWidth
+          }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob(
+          (blob) => {
+            if (!blob || blob.size >= file.size) {
+              resolve(file)
+            } else {
+              const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              })
+              resolve(compressedFile)
+            }
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = () => resolve(file)
+      img.src = e.target.result
+    }
+    reader.onerror = () => resolve(file)
+    reader.readAsDataURL(file)
+  })
+}
+
+const handlePhoto = async (e, index) => {
   const file = e.target.files[0]
-  if (file) form.photos[index] = { file, preview: URL.createObjectURL(file) }
+  if (file) {
+    const preview = URL.createObjectURL(file)
+    form.photos[index] = { file, preview }
+    try {
+      const compressed = await compressImage(file)
+      form.photos[index] = { file: compressed, preview }
+    } catch (_) {}
+  }
 }
 const removePhoto = (i) => { form.photos[i] = null }
 const toggleInterest = (interest) => {
@@ -255,7 +310,8 @@ const finish = async () => {
   errorMsg.value = ''
   loading.value = true
   try {
-    const filesToUpload = form.photos.filter(Boolean).filter(p => p.file).map(p => p.file)
+    const rawFiles = form.photos.filter(Boolean).filter(p => p.file).map(p => p.file)
+    const filesToUpload = await Promise.all(rawFiles.map(f => compressImage(f)))
     const existingUrls = form.photos.filter(Boolean).filter(p => !p.file && p.url).map(p => p.url)
 
     const profileData = {
