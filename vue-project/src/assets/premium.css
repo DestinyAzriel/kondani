@@ -69,12 +69,14 @@
 .k-ver { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--k-gold-l); background: rgba(244,183,64,.14); border: 1px solid rgba(244,183,64,.3); padding: 3px 9px; border-radius: 7px; }
 
 /* heavy swipe action buttons */
-.k-act { display: flex; justify-content: center; gap: 18px; }
-.k-act .b { width: 58px; height: 58px; border-radius: 50%; background: #15242e; border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 10px 26px rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-.k-act .b svg { stroke-width: 2.4; }
+.k-act { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.k-act .b { width: 46px; height: 46px; border-radius: 50%; background: #15242e; border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 6px 18px rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.k-act .b:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.55); }
+.k-act .b:active { transform: scale(.93); }
+.k-act .b svg { stroke-width: 2.2; }
 .k-act .b.pass { border-color: rgba(255,122,107,.45); color: var(--k-coral); }
 .k-act .b.sup { border-color: rgba(244,183,64,.45); color: var(--k-gold-l); }
-.k-act .b.like { width: 68px; height: 68px; background: var(--k-gold); color: var(--k-night); border: none; box-shadow: 0 12px 30px rgba(244,183,64,.5); }
+.k-act .b.like { width: 56px; height: 56px; background: var(--k-gold); color: var(--k-night); border: none; box-shadow: 0 8px 22px rgba(244,183,64,.45); }
 
 /* starfield + glow helpers */
 .k-stars { position: absolute; inset: 0; pointer-events: none; background:

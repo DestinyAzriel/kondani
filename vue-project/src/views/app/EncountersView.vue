@@ -58,11 +58,11 @@
 
           <!-- Heavy action buttons -->
           <div v-if="!isLoading && profiles.length > 0" class="k-act mt-7 sm:mt-9">
-            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="20" /></button>
-            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="28" /></button>
-            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="22" class="fill-current" /></button>
-            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="30" class="fill-current" /></button>
-            <button class="b" @click="handleBoost" title="Boost"><Zap :size="20" /></button>
+            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
+            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
+            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
+            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="25" class="fill-current" /></button>
+            <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
           </div>
 
           <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-4">

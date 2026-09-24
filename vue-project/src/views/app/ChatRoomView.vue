@@ -500,12 +500,30 @@ const updateSidebarLastMessage = (content) => {
 }
 
 const handleNewMessage = (message) => {
-  if (String(message.chatId) !== String(chatId)) return
-  const isMe = Boolean(message.isMe || String(message.sender || message.from) === String(myId))
-  messages.value.push({ ...message, isMe })
+  const currentChatId = chatId.value
+  const currentRecipientId = recipientId.value
+  const currentMyId = myId.value
+
+  const msgChatId = String(message.chatId || '')
+  const fromUserId = String(message.from || message.sender || '')
+  const toUserId = String(message.to || message.recipient || '')
+
+  const matches = msgChatId === currentChatId ||
+                  (currentChatId && (msgChatId.includes(currentRecipientId) || currentChatId.includes(fromUserId))) ||
+                  (fromUserId && fromUserId === currentRecipientId)
+
+  if (!matches) return
+
+  const isMe = Boolean(message.isMe || fromUserId === currentMyId)
+
+  const existingIdx = messages.value.findIndex(m => m.id && String(m.id) === String(message.id || message._id))
+  if (existingIdx !== -1) {
+    messages.value[existingIdx] = { ...messages.value[existingIdx], ...message, isMe }
+  } else {
+    messages.value.push({ ...message, isMe })
+  }
 
   if (!isMe) {
-    // When the other party messages or replies, previous sent messages are delivered & read!
     messages.value.forEach(m => {
       if (m.isMe) {
         m.delivered = true
@@ -515,13 +533,12 @@ const handleNewMessage = (message) => {
   }
 
   scrollToBottom()
-  // Recipient is actively inside this room — immediately notify sender of read status!
-  socketService.emit('mark_read', { chatId, readerId: String(myId), senderId: String(recipientId) })
+  socketService.emit('mark_read', { chatId: currentChatId, readerId: currentMyId, senderId: currentRecipientId })
   clearSidebarUnread()
 }
 
 const handleMessageDelivered = ({ messageId, chatId: cId }) => {
-  if (String(cId) !== String(chatId)) return
+  if (String(cId) !== chatId.value && !chatId.value.includes(String(cId))) return
   const msg = messages.value.find(m => String(m.id) === String(messageId))
   if (msg) msg.delivered = true
   else {
@@ -531,7 +548,7 @@ const handleMessageDelivered = ({ messageId, chatId: cId }) => {
 }
 
 const handleMessagesRead = ({ chatId: cId }) => {
-  if (String(cId) !== String(chatId)) return
+  if (String(cId) !== chatId.value && !chatId.value.includes(String(cId))) return
   messages.value.forEach(m => {
     if (m.isMe) {
       m.read = true
@@ -541,7 +558,9 @@ const handleMessagesRead = ({ chatId: cId }) => {
 }
 
 const handleUserTyping = (data) => {
-  if (String(data?.chatId) !== String(chatId) || String(data?.from) !== String(recipientId)) return
+  const cId = chatId.value
+  const rId = recipientId.value
+  if ((String(data?.chatId) !== cId && !cId.includes(String(data?.chatId))) || String(data?.from) !== rId) return
   otherTyping.value = !!data.isTyping
   if (data.isTyping) {
     scrollToBottom()
@@ -552,11 +571,11 @@ const handleUserTyping = (data) => {
 
 const handleTyping = () => {
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
-  socketService.emit('typing', { chatId, to: String(recipientId), from: String(myId), isTyping: true })
-  intentService.setTyping(chatId, true).catch(() => {})
+  socketService.emit('typing', { chatId: chatId.value, to: recipientId.value, from: myId.value, isTyping: true })
+  intentService.setTyping(chatId.value, true).catch(() => {})
   typingTimeout.value = setTimeout(() => {
-    socketService.emit('typing', { chatId, to: String(recipientId), from: String(myId), isTyping: false })
-    intentService.setTyping(chatId, false).catch(() => {})
+    socketService.emit('typing', { chatId: chatId.value, to: recipientId.value, from: myId.value, isTyping: false })
+    intentService.setTyping(chatId.value, false).catch(() => {})
   }, 1800)
 }
 
