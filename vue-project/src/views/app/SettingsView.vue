@@ -118,11 +118,18 @@
       <section>
         <p class="k-label mb-3">Discovery</p>
         <div class="k-card overflow-hidden">
-          <div class="k-row">
+          <div class="k-row" style="cursor: pointer" @click="showDistrictModal = true">
             <div class="k-row-ic"><MapPin :size="16" /></div>
             <div class="grow">
-              <div class="t">Location</div>
-              <div class="d">{{ district || 'Set your location' }}</div>
+              <div class="t">District / Location</div>
+              <div class="d">{{ district || 'Select your district' }}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click.stop="useDeviceLocation" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/15 text-gold-300 flex items-center gap-1 transition-all" :disabled="locating">
+                <MapPin :size="12" />
+                <span>{{ locating ? 'Locating…' : 'Use GPS' }}</span>
+              </button>
+              <ChevronRight :size="16" class="text-white/40" />
             </div>
           </div>
           
@@ -333,6 +340,33 @@
 
       <p class="text-center text-white/30 text-xs settings-foot">Kondani v1.0 · Made in Malawi 🇲🇼</p>
     </div>
+
+    <!-- District Selection Modal -->
+    <div v-if="showDistrictModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="showDistrictModal = false">
+      <div class="k-card w-full max-w-sm max-h-[80vh] flex flex-col p-5 bg-[#0b1720] border border-white/15 rounded-2xl shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-white/10">
+          <div class="flex items-center gap-2">
+            <MapPin :size="18" class="text-gold-400" />
+            <h3 class="font-bold text-white text-base">Select Your District</h3>
+          </div>
+          <button @click="showDistrictModal = false" class="p-1 rounded-lg text-white/60 hover:text-white bg-white/5">
+            <X :size="18" />
+          </button>
+        </div>
+        <div class="overflow-y-auto py-2 my-2 space-y-1 flex-1 pr-1">
+          <button
+            v-for="d in malawiDistricts"
+            :key="d.name"
+            @click="selectDistrict(d)"
+            class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between"
+            :class="district === d.name ? 'bg-gold-500/20 text-gold-300 font-bold border border-gold-400/40' : 'text-white/80 hover:bg-white/5'"
+          >
+            <span>{{ d.name }}</span>
+            <span v-if="district === d.name" class="text-xs text-gold-300">Selected</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -344,7 +378,7 @@ import { useToast } from '@/composables/useToast'
 import {
   ArrowLeft, Smartphone, UserPen, MapPin, Users, BadgeCheck, Sparkles, MessageCircle,
   Heart, Star, Eye, CircleDot, CheckCheck, Shield, Crown, LifeBuoy, ScrollText,
-  FileText, LogOut, Trash2, ChevronRight, Zap
+  FileText, LogOut, Trash2, ChevronRight, Zap, X
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -570,6 +604,78 @@ const confirmDelete = async () => {
   } catch (e) {
     toastError('Could not delete your account. Please try again.')
   }
+}
+// District & GPS Location Handling
+const showDistrictModal = ref(false)
+const locating = ref(false)
+const malawiDistricts = [
+  { name: 'Chitipa', lon: 33.27, lat: -9.70 }, { name: 'Karonga', lon: 33.93, lat: -9.93 },
+  { name: 'Rumphi', lon: 33.86, lat: -11.02 }, { name: 'Nkhata Bay', lon: 34.30, lat: -11.60 },
+  { name: 'Mzimba', lon: 33.60, lat: -11.90 }, { name: 'Mzuzu', lon: 34.02, lat: -11.46 },
+  { name: 'Likoma', lon: 34.73, lat: -12.07 }, { name: 'Kasungu', lon: 33.48, lat: -13.03 },
+  { name: 'Nkhotakota', lon: 34.30, lat: -12.92 }, { name: 'Ntchisi', lon: 34.00, lat: -13.37 },
+  { name: 'Dowa', lon: 33.93, lat: -13.65 }, { name: 'Salima', lon: 34.46, lat: -13.78 },
+  { name: 'Lilongwe', lon: 33.78, lat: -13.98 }, { name: 'Mchinji', lon: 32.88, lat: -13.80 },
+  { name: 'Dedza', lon: 34.33, lat: -14.38 }, { name: 'Ntcheu', lon: 34.64, lat: -14.82 },
+  { name: 'Mangochi', lon: 35.27, lat: -14.48 }, { name: 'Balaka', lon: 34.96, lat: -14.98 },
+  { name: 'Machinga', lon: 35.30, lat: -15.17 }, { name: 'Zomba', lon: 35.32, lat: -15.39 },
+  { name: 'Neno', lon: 34.65, lat: -15.40 }, { name: 'Mwanza', lon: 34.52, lat: -15.60 },
+  { name: 'Blantyre', lon: 35.01, lat: -15.79 }, { name: 'Chiradzulu', lon: 35.18, lat: -15.70 },
+  { name: 'Phalombe', lon: 35.65, lat: -15.80 }, { name: 'Mulanje', lon: 35.50, lat: -16.03 },
+  { name: 'Thyolo', lon: 35.14, lat: -16.07 }, { name: 'Chikwawa', lon: 34.80, lat: -16.03 },
+  { name: 'Nsanje', lon: 35.26, lat: -16.92 }
+]
+
+const selectDistrict = async (d) => {
+  showDistrictModal.value = false
+  try {
+    await authStore.updateUserProfile({
+      district: d.name,
+      location: { type: 'Point', coordinates: [d.lon, d.lat] }
+    })
+    success(`Location updated to ${d.name}`)
+  } catch (e) {
+    toastError('Could not update district')
+  }
+}
+
+const findNearestDistrict = (lat, lon) => {
+  let best = malawiDistricts[0], min = Infinity
+  for (const d of malawiDistricts) {
+    const dist = Math.hypot(d.lat - lat, d.lon - lon)
+    if (dist < min) { min = dist; best = d }
+  }
+  return best
+}
+
+const useDeviceLocation = () => {
+  if (!navigator.geolocation) {
+    toastError('Geolocation is not supported by your browser')
+    return
+  }
+  locating.value = true
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const coords = [pos.coords.longitude, pos.coords.latitude]
+        const nearest = findNearestDistrict(pos.coords.latitude, pos.coords.longitude)
+        await authStore.updateUserProfile({
+          district: nearest.name,
+          location: { type: 'Point', coordinates: coords }
+        })
+        success(`Location updated: ${nearest.name}`)
+      } catch (err) {
+        toastError('Failed to save location coordinates')
+      } finally {
+        locating.value = false
+      }
+    },
+    (err) => {
+      locating.value = false
+      toastError('Could not get GPS position. Please pick your district.')
+    },
+    { enableHighAccuracy: true, timeout: 12000 }
+  )
 }
 </script>
 

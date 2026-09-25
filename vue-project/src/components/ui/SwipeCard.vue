@@ -80,7 +80,7 @@
 
           <div v-if="profile.district || profile.distance" class="flex items-center gap-1.5 text-xs sm:text-sm font-medium drop-shadow-md mb-2 text-white/85">
             <MapPinIcon size="14" class="text-lagoon-400" />
-            <span>{{ profile.district || profile.distance }}</span>
+            <span>{{ profile.district && profile.distance ? `${profile.district} · ${profile.distance}` : (profile.district || profile.distance) }}</span>
           </div>
 
           <p v-if="profile.bio" class="text-sm text-white/90 drop-shadow-md line-clamp-2 mb-3 leading-relaxed">{{ profile.bio }}</p>

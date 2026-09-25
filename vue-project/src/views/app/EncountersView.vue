@@ -81,7 +81,7 @@
             </div>
             <div v-if="topProfile.district || topProfile.distance" class="flex items-center gap-1.5 text-sm text-white/60 mt-2">
               <MapPin :size="15" style="color:var(--k-lagoon)" />
-              <span>{{ topProfile.district || topProfile.distance }}</span>
+              <span>{{ topProfile.district && topProfile.distance ? `${topProfile.district} · ${topProfile.distance}` : (topProfile.district || topProfile.distance) }}</span>
             </div>
 
             <div v-if="topProfile.bio" class="mt-5">

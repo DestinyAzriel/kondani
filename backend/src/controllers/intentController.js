@@ -224,6 +224,7 @@ exports.getIntents = async (req, res) => {
             id: user._id,
             name: user.name || 'New User',
             age: user.age || null,
+            district: user.district || '',
             distance: formatDistance(distanceKm),
             distanceKm: distanceKm == null ? null : Math.round(distanceKm),
             bio: user.bio || '',

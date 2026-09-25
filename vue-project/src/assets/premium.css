@@ -68,15 +68,85 @@
 /* verified pill */
 .k-ver { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--k-gold-l); background: rgba(244,183,64,.14); border: 1px solid rgba(244,183,64,.3); padding: 3px 9px; border-radius: 7px; }
 
-/* heavy swipe action buttons */
-.k-act { display: flex; justify-content: center; align-items: center; gap: 12px; }
-.k-act .b { width: 46px; height: 46px; border-radius: 50%; background: #15242e; border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 6px 18px rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .15s, box-shadow .15s; }
-.k-act .b:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.55); }
-.k-act .b:active { transform: scale(.93); }
-.k-act .b svg { stroke-width: 2.2; }
+/* heavy swipe action buttons - dynamic, glowing, sleek */
+.k-act { display: flex; justify-content: center; align-items: center; gap: 14px; }
+.k-act .b {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #14232c;
+  border: 1.5px solid rgba(255,255,255,.18);
+  box-shadow: 0 6px 16px rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: rgba(255,255,255,.8);
+}
+.k-act .b svg { stroke-width: 2.2; transition: transform 0.22s ease, filter 0.22s ease; }
+
+/* Rewind button glow */
+.k-act .b:first-child:hover {
+  transform: translateY(-4px) scale(1.12);
+  border-color: rgba(255,255,255,.75);
+  background: #1c3240;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255,255,255,.35), 0 10px 24px rgba(0,0,0,.6);
+}
+.k-act .b:first-child:hover svg { transform: rotate(-25deg) scale(1.08); filter: drop-shadow(0 0 6px rgba(255,255,255,.7)); }
+
+/* Pass button (coral) glow */
 .k-act .b.pass { border-color: rgba(255,122,107,.45); color: var(--k-coral); }
+.k-act .b.pass:hover {
+  transform: translateY(-4px) scale(1.12);
+  border-color: #ff7a6b;
+  background: rgba(255,122,107,.18);
+  color: #ff9183;
+  box-shadow: 0 0 22px rgba(255,122,107,.6), 0 0 40px rgba(255,122,107,.25), 0 10px 24px rgba(0,0,0,.6);
+}
+.k-act .b.pass:hover svg { transform: scale(1.1); filter: drop-shadow(0 0 6px rgba(255,122,107,.8)); }
+
+/* Superlike button (star / gold-l) glow */
 .k-act .b.sup { border-color: rgba(244,183,64,.45); color: var(--k-gold-l); }
-.k-act .b.like { width: 56px; height: 56px; background: var(--k-gold); color: var(--k-night); border: none; box-shadow: 0 8px 22px rgba(244,183,64,.45); }
+.k-act .b.sup:hover {
+  transform: translateY(-4px) scale(1.12);
+  border-color: #f4b740;
+  background: rgba(244,183,64,.18);
+  color: #ffe099;
+  box-shadow: 0 0 24px rgba(244,183,64,.65), 0 0 45px rgba(244,183,64,.28), 0 10px 24px rgba(0,0,0,.6);
+}
+.k-act .b.sup:hover svg { transform: scale(1.12) rotate(12deg); filter: drop-shadow(0 0 8px rgba(244,183,64,.85)); }
+
+/* Main Like button (gold gradient) glow */
+.k-act .b.like {
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, #f4b740 0%, #ffd98a 100%);
+  color: var(--k-night);
+  border: none;
+  box-shadow: 0 0 16px rgba(244,183,64,.4), 0 8px 22px rgba(0,0,0,.5);
+}
+.k-act .b.like:hover {
+  transform: translateY(-5px) scale(1.14);
+  box-shadow: 0 0 28px rgba(244,183,64,.85), 0 0 50px rgba(244,183,64,.4), 0 14px 30px rgba(0,0,0,.6);
+}
+.k-act .b.like:hover svg { transform: scale(1.12); filter: drop-shadow(0 0 6px rgba(244,183,64,.9)); }
+
+/* Boost button (purple / electric) glow */
+.k-act .b:last-child { color: #c084fc; border-color: rgba(192,132,252,.45); }
+.k-act .b:last-child:hover {
+  transform: translateY(-4px) scale(1.12);
+  border-color: #c084fc;
+  background: rgba(192,132,252,.18);
+  color: #e9d5ff;
+  box-shadow: 0 0 22px rgba(192,132,252,.65), 0 0 40px rgba(192,132,252,.25), 0 10px 24px rgba(0,0,0,.6);
+}
+.k-act .b:last-child:hover svg { transform: scale(1.12); filter: drop-shadow(0 0 6px rgba(192,132,252,.85)); }
+
+/* Click tap state */
+.k-act .b:active { transform: translateY(0) scale(0.92); transition-duration: 0.08s; }
 
 /* starfield + glow helpers */
 .k-stars { position: absolute; inset: 0; pointer-events: none; background:
