@@ -46,11 +46,12 @@
 
             <div v-else class="w-full h-full relative overflow-visible">
               <SwipeCard
-                v-for="(profile, index) in profiles"
+                v-for="(profile, index) in visibleProfiles"
                 :key="profile.id"
                 :profile="profile"
+                :index="index"
+                :total="visibleProfiles.length"
                 :ref="el => (cardRefs[index] = el)"
-                :style="cardStyle(index)"
                 @swipe="(dir) => handleSwipe(dir, index)"
               />
             </div>
@@ -164,6 +165,7 @@ const likesLeft = ref(null) // free-tier likes remaining today (null = premium /
 const superLikesLeft = ref(null)
 
 const topProfile = computed(() => profiles.value[0] || null)
+const visibleProfiles = computed(() => profiles.value.slice(0, 3))
 const currentUserPhoto = computed(() => authStore.user?.photos?.[0] || '')
 
 const activeFilters = ref({

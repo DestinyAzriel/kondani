@@ -68,8 +68,8 @@
           </div>
         </div>
 
-        <!-- Info -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white z-20 pointer-events-none">
+        <!-- Info (only rendered on active top card to prevent text overlapping) -->
+        <div v-if="index === 0" class="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white z-20 pointer-events-none">
           <div class="flex items-end gap-2 mb-1.5">
             <h2 class="text-3xl sm:text-4xl font-bold font-display drop-shadow-md tracking-tight leading-none">{{ profile.name }}</h2>
             <span v-if="profile.age" class="text-xl sm:text-2xl font-medium drop-shadow-md opacity-90 leading-none">{{ profile.age }}</span>
@@ -87,8 +87,8 @@
 
           <div v-if="profile.interests && profile.interests.length" class="flex flex-wrap gap-2">
             <span
-              v-for="(interest, index) in profile.interests.slice(0, 3)"
-              :key="index"
+              v-for="(interest, idx) in profile.interests.slice(0, 3)"
+              :key="idx"
               class="px-3 py-1 bg-white/10 backdrop-blur-md text-white text-[11px] font-semibold rounded-full border border-white/15"
             >{{ interest }}</span>
             <span v-if="profile.interests.length > 3" class="px-3 py-1 bg-white/10 backdrop-blur-md text-white text-[11px] font-semibold rounded-full border border-white/15">
@@ -98,16 +98,19 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <ReportModal
-    :show="showOptions"
-    :user-id="profile.id || profile._id"
-    :user-name="profile.name"
-    @close="showOptions = false"
-    @report-submitted="handleReportOrBlock"
-    @user-blocked="handleReportOrBlock"
-  />
+    <!-- Teleport modal directly to body to maintain single root node -->
+    <Teleport to="body">
+      <ReportModal
+        :show="showOptions"
+        :user-id="profile.id || profile._id"
+        :user-name="profile.name"
+        @close="showOptions = false"
+        @report-submitted="handleReportOrBlock"
+        @user-blocked="handleReportOrBlock"
+      />
+    </Teleport>
+  </div>
 </template>
 
 <script setup>
@@ -117,7 +120,9 @@ import ReportModal from '@/components/feature/modal/ReportModal.vue'
 import { mediaUrl } from '@/utils/media'
 
 const props = defineProps({
-  profile: { type: Object, required: true }
+  profile: { type: Object, required: true },
+  index: { type: Number, default: 0 },
+  total: { type: Number, default: 1 }
 })
 const emit = defineEmits(['swipe'])
 
@@ -141,11 +146,23 @@ const dragX = ref(0)
 const dragY = ref(0)
 
 const cardStyle = computed(() => {
-  if (!isDragging.value && dragX.value === 0 && dragY.value === 0) return {}
-  const rotation = dragX.value / 20
+  const z = (props.total - props.index) + 10
+  const scale = props.index < 3 ? 1 - props.index * 0.02 : 1
+  const translateY = props.index < 3 ? props.index * 10 : 0
+
+  if (isDragging.value || dragX.value !== 0 || dragY.value !== 0) {
+    const rotation = dragX.value / 20
+    return {
+      zIndex: 200 + z,
+      transform: `translate(${dragX.value}px, ${dragY.value}px) rotate(${rotation}deg) scale(${scale})`,
+      transition: isDragging.value ? 'none' : 'transform 0.3s ease-out'
+    }
+  }
+
   return {
-    transform: `translate(${dragX.value}px, ${dragY.value}px) rotate(${rotation}deg)`,
-    transition: isDragging.value ? 'none' : 'transform 0.3s ease-out'
+    zIndex: z,
+    transform: `scale(${scale}) translateY(${translateY}px)`,
+    transition: 'transform 0.3s ease-out'
   }
 })
 
