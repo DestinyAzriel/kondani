@@ -283,9 +283,10 @@ const handleJoinPlan = async (plan) => {
       plan.hasJoined = true
       plan.interestedCount = (plan.interestedCount || 0) + 1
       toast.success(`You joined ${plan.author?.name}'s plan! Chat conversation started.`)
-      if (res.chatId) {
+      const targetId = plan.author?.id || (res.chatId ? (String(res.chatId).includes('_') ? String(res.chatId).split('_').find(x => x !== authStore.user?._id) : res.chatId) : null)
+      if (targetId) {
         setTimeout(() => {
-          router.push(`/chats/${res.chatId}`)
+          router.push(`/chats/${targetId}`)
         }, 800)
       }
     }

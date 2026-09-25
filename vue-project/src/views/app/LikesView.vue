@@ -86,9 +86,8 @@ const { likes, activeTab, unreadCount, isLoading, setActiveTab, likesCount } = u
 const isPremium = computed(() => !!authStore.user?.isPremium)
 
 const handleSayHi = (like) => {
-  const myId = String(authStore.user?._id || authStore.user?.id || '')
-  const chatId = [myId, String(like.id)].sort().join('_')
-  router.push(`/chats/${chatId}`)
+  const targetId = String(like.id || like._id || '')
+  router.push(`/chats/${targetId}`)
 }
 </script>
 

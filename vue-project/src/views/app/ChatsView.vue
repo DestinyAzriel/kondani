@@ -370,14 +370,20 @@ watch([isDesktop, chats], ([desktop, list]) => {
 }, { immediate: true })
 
 const openChat = (id) => {
-  const chat = chats.value.find(c => String(c.id) === String(id))
+  const strId = String(id)
+  const myId = String(authStore.user?._id || authStore.user?.id || '')
+  let cleanId = strId
+  const chat = chats.value.find(c => String(c.id) === strId || (c.userId && String(c.userId) === strId) || (typeof c.id === 'string' && c.id.includes(strId)))
   if (chat) {
     chat.unread = false
     chat.yourTurn = false
+    cleanId = chat.userId || (String(chat.id).includes('_') ? String(chat.id).split('_').find(x => x && x !== myId) : chat.id)
     setCached('kondani_chats', chats.value)
     setCached('kondani_desktop_chats', chats.value)
+  } else if (strId.includes('_')) {
+    cleanId = strId.split('_').find(x => x && x !== myId) || strId
   }
-  router.push(`/chats/${id}`)
+  router.push(`/chats/${cleanId}`)
 }
 
 // Clicking a match: removes from New Matches, moves to Messages, and opens chat
@@ -412,7 +418,7 @@ const openChatWithUser = (m) => {
     setCached('kondani_desktop_chats', chats.value)
   }
 
-  router.push(`/chats/${chatId}`)
+  router.push(`/chats/${targetId}`)
 }
 
 const handleUserStatus = ({ userId, isOnline }) => {

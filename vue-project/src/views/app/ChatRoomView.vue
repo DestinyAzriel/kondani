@@ -400,7 +400,7 @@ const reportReasons = [
   'Other'
 ]
 
-const chatId = computed(() => String(route.params.id || ''))
+const routeId = computed(() => String(route.params.id || ''))
 
 const getMyId = () => {
   if (authStore.user?._id) return String(authStore.user._id)
@@ -418,14 +418,22 @@ const getMyId = () => {
 const myId = computed(() => getMyId())
 
 const recipientId = computed(() => {
-  const cId = chatId.value
+  const rId = routeId.value
   const mId = myId.value
-  if (cId.includes('_')) {
-    const parts = cId.split('_')
+  if (rId.includes('_')) {
+    const parts = rId.split('_')
     const other = parts.find(id => id && id !== mId)
     return other || parts[0]
   }
-  return cId
+  return rId
+})
+
+const chatId = computed(() => {
+  const rId = routeId.value
+  const mId = myId.value
+  if (rId.includes('_')) return rId
+  if (mId && rId) return [mId, rId].sort().join('_')
+  return rId
 })
 
 const scrollToBottom = () => nextTick(() => {
@@ -596,6 +604,11 @@ async function loadChat() {
   const rId = recipientId.value
   if (!cId) return
   isLoading.value = true
+
+  // If user arrives via composite URL (e.g. /chats/user1_user2), smoothly rewrite to clean recipient ID in address bar
+  if (route.params.id && String(route.params.id).includes('_') && rId) {
+    router.replace(`/chats/${rId}`)
+  }
 
   const matchUser = (c) => {
     if (!c) return false

@@ -434,6 +434,14 @@ const getRecipientId = () => {
   return id
 }
 
+const getInternalChatId = () => {
+  const id = String(props.chatId || '')
+  const mId = myId.value
+  if (id.includes('_')) return id
+  if (mId && id) return [mId, id].sort().join('_')
+  return id
+}
+
 const scrollToBottom = () => nextTick(() => {
   if (messagesContainer.value) messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
 })
@@ -611,7 +619,7 @@ async function loadChat() {
       }
     }
 
-    const data = await intentService.getChatMessages(props.chatId)
+    const data = await intentService.getChatMessages(getInternalChatId())
     if (data?.messages) {
       messages.value = data.messages
       try {
@@ -625,7 +633,7 @@ async function loadChat() {
     }
 
     // Acknowledge read upon opening chat & clear local unread badge
-    socketService.emit('mark_read', { chatId: props.chatId, readerId: String(myId.value), senderId: String(getRecipientId()) })
+    socketService.emit('mark_read', { chatId: getInternalChatId(), readerId: String(myId.value), senderId: String(getRecipientId()) })
     clearSidebarUnread()
 
     // Sync actual last message metadata to sidebar cache so tick is always preserved
@@ -703,11 +711,11 @@ onUnmounted(() => {
   socketService.off('messages_read', handleMessagesRead)
   socketService.off('user_typing', handleUserTyping)
   socketService.off('user_status', handleUserStatus)
-  socketService.emit('typing', { chatId: props.chatId, to: String(getRecipientId()), from: String(myId.value), isTyping: false })
+  socketService.emit('typing', { chatId: getInternalChatId(), to: String(getRecipientId()), from: String(myId.value), isTyping: false })
   document.removeEventListener('click', handleClickOutside)
   if (typingTimeout.value) clearTimeout(typingTimeout.value)
   if (otherTypingTimer.value) clearTimeout(otherTypingTimer.value)
-  intentService.setTyping(props.chatId, false).catch(() => {})
+  intentService.setTyping(getInternalChatId(), false).catch(() => {})
   stopTracks()
 })
 
@@ -718,7 +726,7 @@ const relay = (message) => {
     messageType: message.messageType,
     mediaUrl: message.mediaUrl,
     time: message.time || message.createdAt,
-    chatId: props.chatId,
+    chatId: getInternalChatId(),
     from: String(myId.value),
     to: String(getRecipientId())
   })
@@ -733,7 +741,7 @@ const sendText = async () => {
   scrollToBottom()
   updateSidebarLastMessage(content)
   try {
-    const res = await intentService.sendMessage(props.chatId, content)
+    const res = await intentService.sendMessage(getInternalChatId(), content)
     const i = messages.value.findIndex(m => m.id === tempId)
     if (i !== -1) {
       // If recipient is shown as online in the UI, optimistically set delivered=true
