@@ -20,8 +20,8 @@ exports.getLikes = async (req, res) => {
         const isPremium = Boolean(me?.isPremium && (!me.premiumUntil || new Date(me.premiumUntil) > new Date()));
         const tier = me?.subscriptionTier || (isPremium ? 'gold' : 'free');
 
-        // Identities are unlocked for GOLD and PLATINUM tiers. Free and Plus get the count.
-        const canSeeIdentities = isPremium && (tier === 'gold' || tier === 'platinum');
+        // Identities are unlocked for all active paid subscribers (Plus, Gold, Platinum)
+        const canSeeIdentities = Boolean(isPremium);
 
         // Get current user's intent to filter out already matched or passed users
         const myIntent = await Intent.findOne({ user: currentUserId }).populate('matches');

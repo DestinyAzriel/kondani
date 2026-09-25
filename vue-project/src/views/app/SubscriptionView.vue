@@ -461,11 +461,11 @@ const availablePlans = [
     btnGradient: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
     headline: 'Essential boost: Unlimited likes and rewinds for 7 days.',
     features: [
-      { text: 'Unlimited likes every day', included: true, highlight: true },
+      { text: 'See who likes you — full profiles revealed', included: true, highlight: true },
+      { text: 'Unlimited likes every day', included: true },
       { text: 'Rewind accidental left-swipes', included: true },
       { text: '2 Super Likes every day', included: true },
-      { text: 'See how many people liked you (count)', included: true },
-      { text: 'Unlock full profiles of who likes you', included: false },
+      { text: 'Exclusive Plus badge on profile', included: true },
       { text: 'Monthly profile boosts', included: false },
       { text: 'Priority Likes in swipe decks', included: false }
     ]

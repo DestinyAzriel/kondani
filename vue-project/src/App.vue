@@ -1,39 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
 import Toast from '@/components/ui/Toast.vue'
-import OnboardingWizard from '@/components/feature/OnboardingWizard.vue'
-import { useAuthStore } from '@/stores/auth'
-
-const authStore = useAuthStore()
-const showOnboarding = ref(false)
-
-onMounted(() => {
-  // Show onboarding if authenticated and not completed before
-  const completed = localStorage.getItem('onboarding_completed')
-  if (authStore.isAuthenticated && !completed && !authStore.user?.isProfileComplete) {
-    showOnboarding.value = true
-  }
-})
-
-const handleOnboardingComplete = () => {
-  showOnboarding.value = false
-  localStorage.setItem('onboarding_completed', 'true')
-}
-
-const handleOnboardingSkip = () => {
-  showOnboarding.value = false
-  localStorage.setItem('onboarding_completed', 'true')
-}
 </script>
 
 <template>
   <div id="app" class="min-h-screen font-sans bg-deep-950">
-    <!-- Onboarding Wizard -->
-    <OnboardingWizard 
-      :show="showOnboarding" 
-      @complete="handleOnboardingComplete"
-      @skip="handleOnboardingSkip"
-    />
 
     <router-view v-slot="{ Component, route }">
       <transition :name="route.meta.transition || 'page'" mode="out-in">

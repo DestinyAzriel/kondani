@@ -1,5 +1,5 @@
 <template>
-  <div class="chats-view k-page relative overflow-hidden" :class="{ 'desktop-layout': isDesktop }">
+  <div class="chats-view k-page relative overflow-hidden md:h-[100dvh]">
     <div class="k-stars"></div>
     <div class="fixed inset-0 pointer-events-none">
       <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[45%] rounded-full blur-[100px]"
@@ -7,7 +7,7 @@
     </div>
 
     <!-- ====== DESKTOP: Single clean chat panel (DesktopNav on left already handles list) ====== -->
-    <div v-if="isDesktop" class="h-full flex flex-col overflow-hidden">
+    <div class="hidden md:flex flex-col h-full overflow-hidden">
       <ChatPanel v-if="activeChatId" :key="activeChatId" :chatId="activeChatId" :embedded="true" class="h-full" />
       <div v-else class="flex-1 flex flex-col items-center justify-center text-center px-8">
         <div class="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
@@ -19,7 +19,7 @@
     </div>
 
     <!-- ====== MOBILE: Tinder-Grade Architecture (Screenshot 3) ====== -->
-    <div v-else class="pb-28 relative z-10">
+    <div class="block md:hidden pb-28 relative z-10">
       <!-- Top App Bar -->
       <div class="sticky top-0 z-20 bg-night-950/90 backdrop-blur-xl border-b border-white/5 px-4 pt-3 pb-2.5">
         <div class="flex items-center justify-between mb-2">
@@ -201,17 +201,20 @@ const setCached = (key, val) => {
   } catch (e) {}
 }
 
-const chats = ref(getCached('kondani_chats', []))
+const rawCachedChats = getCached('kondani_chats', [])
+const chats = ref(Array.isArray(rawCachedChats) ? rawCachedChats.filter(Boolean) : [])
 if (Array.isArray(chats.value)) {
   chats.value.forEach(c => {
-    if (!c.online && !c.lastMessageRead) {
+    if (c && !c.online && !c.lastMessageRead) {
       c.lastMessageDelivered = false
     }
   })
 }
-const newMatches = ref(getCached('kondani_matches', []))
-const likesCount = ref(getCached('kondani_likes_count', 0))
-const contactedUserIds = ref(new Set(getCached('kondani_contacted_matches', [])))
+const rawMatches = getCached('kondani_matches', [])
+const newMatches = ref(Array.isArray(rawMatches) ? rawMatches.filter(Boolean) : [])
+const likesCount = ref(Number(getCached('kondani_likes_count', 0)) || 0)
+const rawContacted = getCached('kondani_contacted_matches', [])
+const contactedUserIds = ref(new Set(Array.isArray(rawContacted) ? rawContacted : []))
 const isLoading = ref(chats.value.length === 0 && newMatches.value.length === 0)
 const activeChatId = ref(null)
 const searchQuery = ref('')
