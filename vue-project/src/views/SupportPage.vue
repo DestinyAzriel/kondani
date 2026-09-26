@@ -12,11 +12,6 @@
           <KondaniMark :size="38" />
           <span class="k-serif text-2xl">Kondani</span>
         </router-link>
-        <div class="flex items-center gap-4 text-xs">
-          <router-link to="/terms" class="text-white/60 hover:text-white transition-colors">Terms</router-link>
-          <router-link to="/privacy" class="text-white/60 hover:text-white transition-colors">Privacy</router-link>
-          <router-link to="/safety-center" class="text-white/60 hover:text-white transition-colors">Safety</router-link>
-        </div>
       </div>
     </nav>
 
@@ -55,8 +50,9 @@
           <div class="k-card" style="padding:20px">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:rgba(45,212,191,.13);color:var(--k-lagoon)"><MessageCircle :size="18" /></div>
             <h3 class="font-semibold mb-1">WhatsApp</h3>
+            <p class="text-white/70 text-xs font-mono mb-1">+265 989 503 152</p>
             <p class="text-white/50 text-xs mb-3">Mon–Fri, 8AM–5PM CAT</p>
-            <a href="https://wa.me/265991234567" target="_blank" class="k-btn k-btn-gold w-full" style="padding:11px;font-size:13px">Chat on WhatsApp</a>
+            <a href="https://wa.me/265989503152?text=Hello%20Kondani%20Support" target="_blank" class="k-btn k-btn-gold w-full text-center" style="padding:11px;font-size:13px">Chat on WhatsApp</a>
           </div>
         </div>
       </div>
