@@ -2,16 +2,8 @@
   <div class="sub k-page relative overflow-hidden">
     <!-- Header -->
     <div class="relative z-20 flex items-center justify-between px-4 py-4">
-      <button @click="router.back()" class="k-iconbtn"><X :size="20" /></button>
-      <div class="flex items-center gap-2">
-        <span class="font-semibold text-white">Kondani Premium</span>
-        <span
-          v-if="isAlreadyActive"
-          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30"
-        >
-          <Crown :size="12" /> {{ activeTierName }} Active
-        </span>
-      </div>
+      <button @click="router.back()" class="k-iconbtn cursor-pointer"><X :size="20" /></button>
+      <span class="font-semibold text-white text-sm sm:text-base">Kondani Memberships</span>
       <div style="width:40px"></div>
     </div>
 
@@ -20,21 +12,9 @@
       <img :src="heroImg" alt="Kondani Subscriptions" />
       <div class="hero-scrim"></div>
       <div class="hero-content">
-        <!-- Sleek Active VIP Badge inside Hero -->
-        <div
-          v-if="isAlreadyActive"
-          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 border border-amber-400/40 text-amber-300 text-xs font-semibold backdrop-blur-md shadow-lg shadow-amber-500/10 mb-3"
-        >
-          <Crown :size="14" class="text-amber-400" />
-          <span>You currently hold <strong>Kondani {{ activeTierName }}</strong></span>
-          <span v-if="authStore.user?.premiumUntil" class="text-white/60 text-[11px] hidden sm:inline">
-            · Until {{ new Date(authStore.user.premiumUntil).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }}
-          </span>
-        </div>
-
-        <div><span class="eyebrow"><KondaniMark :size="20" /> Kondani Memberships</span></div>
-        <h1 class="k-serif mt-3 text-white">Stand out. <span style="color:var(--k-gold-l)">Match faster.</span></h1>
-        <p>Unlock more likes, see who likes you, and get priority visibility — cancel anytime.</p>
+        <span class="eyebrow"><KondaniMark :size="20" /> Kondani Memberships</span>
+        <h1 class="k-serif mt-3 text-white text-3xl sm:text-4xl font-bold">Stand out. <span style="color:var(--k-gold-l)">Match faster.</span></h1>
+        <p class="text-white/80 text-sm max-w-md mx-auto mt-2">Unlock more likes, see who likes you, and get priority visibility — cancel anytime.</p>
       </div>
     </div>
 
@@ -57,7 +37,13 @@
         >
           <!-- Badge -->
           <span
-            v-if="p.badge"
+            v-if="userCurrentTier === p.tier"
+            class="plan-badge absolute -top-2.5 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-emerald-400 text-black shadow-md"
+          >
+            Active Plan
+          </span>
+          <span
+            v-else-if="p.badge"
             class="plan-badge absolute -top-2.5 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider text-black"
             :style="{ background: p.accentColor }"
           >
@@ -148,8 +134,20 @@
           @click="handleSubscribe"
         >
           <Crown :size="18" />
-          <span>Get {{ currentPlanData.subtitle }} — MWK {{ currentPlanData.price.toLocaleString() }}</span>
+          <span v-if="userCurrentTier === currentPlanData.tier">
+            Extend {{ currentPlanData.subtitle }} — MWK {{ currentPlanData.price.toLocaleString() }}
+          </span>
+          <span v-else-if="isAlreadyActive">
+            Switch to {{ currentPlanData.subtitle }} — MWK {{ currentPlanData.price.toLocaleString() }}
+          </span>
+          <span v-else>
+            Get {{ currentPlanData.subtitle }} — MWK {{ currentPlanData.price.toLocaleString() }}
+          </span>
         </button>
+
+        <p v-if="isAlreadyActive && userCurrentTier === currentPlanData.tier" class="text-center text-xs text-amber-300/80 mt-2.5 font-medium">
+          Your active {{ activeTierName }} pass is valid until {{ new Date(authStore.user.premiumUntil).toLocaleDateString(undefined, { dateStyle: 'long' }) }}
+        </p>
 
         <!-- Payment badges -->
         <div class="flex items-center justify-center flex-wrap gap-2 mt-4">
@@ -542,6 +540,11 @@ const activeTierName = computed(() => {
   if (tier === 'platinum') return 'VIP Platinum'
   if (tier === 'plus') return 'Plus'
   return 'Gold'
+})
+
+const userCurrentTier = computed(() => {
+  if (!isAlreadyActive.value) return 'free'
+  return authStore.user?.subscriptionTier || 'gold'
 })
 
 // Detailed feature comparison matrix
