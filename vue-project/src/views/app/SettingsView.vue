@@ -1,16 +1,17 @@
 <template>
-  <div class="settings k-page pb-28 relative">
+  <div class="settings k-page flex flex-col justify-between min-h-screen relative">
     <div class="k-stars"></div>
 
-    <!-- Header -->
-    <div class="sticky top-0 z-20 bg-night-950/90 backdrop-blur-md border-b border-white/5">
-      <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-        <button @click="router.back()" class="k-iconbtn"><ArrowLeft :size="20" /></button>
-        <h1 class="k-title" style="font-size:1.7rem">Settings</h1>
+    <div class="flex-1 w-full">
+      <!-- Header -->
+      <div class="sticky top-0 z-20 bg-night-950/90 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
+          <button @click="router.back()" class="k-iconbtn"><ArrowLeft :size="20" /></button>
+          <h1 class="k-title" style="font-size:1.7rem">Settings</h1>
+        </div>
       </div>
-    </div>
 
-    <div class="max-w-5xl mx-auto px-4 py-6 relative z-10 settings-grid">
+      <div class="max-w-5xl mx-auto px-4 py-6 relative z-10 settings-grid">
 
       <!-- Account -->
       <section>
@@ -338,9 +339,10 @@
         </div>
       </section>
     </div>
+  </div>
 
-    <!-- Very bottom page footer -->
-    <footer class="mt-4 pt-4 pb-8 text-center border-t border-white/5">
+    <!-- Very bottom page footer: pinned cleanly to the very bottom -->
+    <footer class="py-3 text-center border-t border-white/5 pb-20 md:pb-4 w-full">
       <p class="text-white/30 text-xs font-medium tracking-wider">© octotechglobal</p>
     </footer>
 
