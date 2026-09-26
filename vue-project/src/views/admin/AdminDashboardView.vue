@@ -136,35 +136,94 @@
           </div>
         </div>
 
-        <!-- WhatsApp Inbound Gateway Status Card -->
-        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Smartphone :size="20" />
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-white text-sm">WhatsApp Inbound Gateway</h3>
-                <span
-                  class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  :class="waStatus.connected ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'"
-                >
-                  {{ waStatus.connected ? 'Active & Ready' : 'Pairing Required' }}
-                </span>
+        <!-- Tier Breakdown + Gender Ratio + Engagement Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Subscription Tiers -->
+          <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10">
+            <h3 class="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Subscription Tiers</h3>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-white/60">Free</span>
+                <span class="text-xs font-bold text-white">{{ stats.users?.tiers?.free || 0 }}</span>
               </div>
-              <p class="text-xs text-white/50 mt-0.5">
-                Bot Number: +{{ waStatus.botNumber || '265989503152' }} · 1-Tap verification at zero SMS cost
-              </p>
+              <div class="w-full bg-white/5 rounded-full h-1.5"><div class="bg-white/30 h-1.5 rounded-full" :style="{ width: tierPercent('free') }"></div></div>
+
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-xs text-cyan-300">Plus</span>
+                <span class="text-xs font-bold text-cyan-300">{{ stats.users?.tiers?.plus || 0 }}</span>
+              </div>
+              <div class="w-full bg-white/5 rounded-full h-1.5"><div class="bg-cyan-400 h-1.5 rounded-full" :style="{ width: tierPercent('plus') }"></div></div>
+
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-xs text-amber-300">Gold</span>
+                <span class="text-xs font-bold text-amber-300">{{ stats.users?.tiers?.gold || 0 }}</span>
+              </div>
+              <div class="w-full bg-white/5 rounded-full h-1.5"><div class="bg-amber-400 h-1.5 rounded-full" :style="{ width: tierPercent('gold') }"></div></div>
+
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-xs text-purple-300">VIP</span>
+                <span class="text-xs font-bold text-purple-300">{{ stats.users?.tiers?.platinum || 0 }}</span>
+              </div>
+              <div class="w-full bg-white/5 rounded-full h-1.5"><div class="bg-purple-400 h-1.5 rounded-full" :style="{ width: tierPercent('platinum') }"></div></div>
             </div>
           </div>
 
-          <div v-if="!waStatus.connected && waStatus.qr" class="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/10">
-            <img :src="waStatus.qr" alt="Scan QR" class="w-24 h-24 rounded-lg bg-white p-1" />
-            <div class="text-xs text-white/70 max-w-xs space-y-1">
-              <div class="font-bold text-white">Link Device</div>
-              <div>1. Open WhatsApp on +{{ waStatus.botNumber || '265989503152' }}</div>
-              <div>2. Tap Linked Devices → Link a Device</div>
-              <div>3. Scan this QR code</div>
+          <!-- Gender Ratio -->
+          <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10">
+            <h3 class="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Gender Ratio</h3>
+            <div class="flex items-end gap-4 h-24">
+              <div class="flex-1 flex flex-col items-center gap-1">
+                <div class="text-lg font-bold text-blue-400">{{ stats.users?.genders?.men || 0 }}</div>
+                <div class="w-full bg-blue-500/30 rounded-t-lg" :style="{ height: genderBarHeight('men') }"></div>
+                <span class="text-[10px] text-white/50">Men</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-1">
+                <div class="text-lg font-bold text-pink-400">{{ stats.users?.genders?.women || 0 }}</div>
+                <div class="w-full bg-pink-500/30 rounded-t-lg" :style="{ height: genderBarHeight('women') }"></div>
+                <span class="text-[10px] text-white/50">Women</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-1">
+                <div class="text-lg font-bold text-white/60">{{ stats.users?.genders?.other || 0 }}</div>
+                <div class="w-full bg-white/10 rounded-t-lg" :style="{ height: genderBarHeight('other') }"></div>
+                <span class="text-[10px] text-white/50">Other</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Engagement Metrics -->
+          <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10">
+            <h3 class="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Platform Engagement</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                <span class="text-xs text-white/60">Total Matches</span>
+                <span class="text-sm font-bold text-rose-400">{{ stats.engagement?.totalMatches || 0 }}</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                <span class="text-xs text-white/60">Messages Sent</span>
+                <span class="text-sm font-bold text-blue-400">{{ stats.engagement?.totalMessages || 0 }}</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                <span class="text-xs text-white/60">Weekend Plans</span>
+                <span class="text-sm font-bold text-emerald-400">{{ stats.engagement?.totalPlans || 0 }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authentication Info Card (replaces WhatsApp Gateway) -->
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <ShieldCheck :size="20" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-white text-sm">Google Sign-In Authentication</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Active</span>
+              </div>
+              <p class="text-xs text-white/50 mt-0.5">
+                Secure 1-Tap Google OAuth 2.0 · Zero friction instant authentication
+              </p>
             </div>
           </div>
         </div>
@@ -355,20 +414,24 @@
                   </td>
 
                   <td class="px-4 py-3.5 text-right">
-                    <div class="flex items-center justify-end gap-1.5">
-                      <!-- Toggle Premium -->
-                      <button
-                        @click="handleTogglePremium(user)"
-                        class="px-2.5 py-1 text-[11px] rounded-lg border border-white/10 hover:bg-white/10 text-white/80 transition-colors"
-                        :title="user.isPremium ? 'Revoke Premium' : 'Grant Gold'"
+                    <div class="flex items-center justify-end gap-2">
+                      <!-- 3-Tier Selector Dropdown -->
+                      <select
+                        :value="user.subscriptionTier || (user.isPremium ? 'gold' : 'free')"
+                        @change="handleUpdateTier(user, $event.target.value)"
+                        class="px-2 py-1 text-[11px] font-semibold rounded-lg border border-white/10 bg-night-900 text-white cursor-pointer focus:outline-none focus:border-amber-400"
+                        title="Change Membership Tier"
                       >
-                        {{ user.isPremium ? 'Demote' : 'Make Gold' }}
-                      </button>
+                        <option value="free">Free</option>
+                        <option value="plus">✦ Plus</option>
+                        <option value="gold">★ Gold</option>
+                        <option value="platinum">💎 VIP</option>
+                      </select>
 
                       <!-- Toggle Verification (Gold Tick) -->
                       <button
                         @click="handleToggleVerify(user)"
-                        class="px-2.5 py-1 text-[11px] rounded-lg border transition-colors"
+                        class="px-2.5 py-1 text-[11px] rounded-lg border transition-colors cursor-pointer"
                         :class="user.isVerified
                           ? 'border-amber-400/40 text-amber-300 hover:bg-amber-400/20'
                           : 'border-white/10 text-white/60 hover:bg-white/10'"
@@ -380,12 +443,21 @@
                       <!-- Toggle Ban -->
                       <button
                         @click="handleToggleBan(user)"
-                        class="px-2.5 py-1 text-[11px] rounded-lg border transition-colors"
+                        class="px-2.5 py-1 text-[11px] rounded-lg border transition-colors cursor-pointer"
                         :class="user.isBanned
                           ? 'border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
                           : 'border-rose-500/30 text-rose-300 hover:bg-rose-500/20'"
                       >
                         {{ user.isBanned ? 'Unban' : 'Ban' }}
+                      </button>
+
+                      <!-- Inspect User Details -->
+                      <button
+                        @click="inspectUser(user)"
+                        class="px-2.5 py-1 text-[11px] rounded-lg border border-white/10 hover:bg-white/10 text-white/80 transition-colors cursor-pointer"
+                        title="View Full Profile Dossier"
+                      >
+                        Inspect
                       </button>
                     </div>
                   </td>
@@ -551,16 +623,148 @@
         </div>
       </section>
     </main>
+
+    <!-- 5. USER DOSSIER MODAL (Tinder/Bumble-Grade Inspector) -->
+    <div
+      v-if="selectedUser"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      @click.self="selectedUser = null"
+    >
+      <div class="w-full max-w-2xl bg-night-900 border border-white/15 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+          <div class="flex items-center gap-2">
+            <div class="font-bold text-white text-base flex items-center gap-1.5">
+              <span>{{ selectedUser.name || 'Unnamed Member' }}</span>
+              <BadgeCheck v-if="selectedUser.isVerified" :size="16" class="text-cyan-400" />
+            </div>
+            <span
+              class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+              :class="{
+                'bg-amber-400/20 text-amber-300 border border-amber-400/30': selectedUser.isPremium || selectedUser.subscriptionTier === 'gold',
+                'bg-purple-400/20 text-purple-300 border border-purple-400/30': selectedUser.subscriptionTier === 'platinum',
+                'bg-cyan-400/20 text-cyan-300 border border-cyan-400/30': selectedUser.subscriptionTier === 'plus',
+                'bg-white/10 text-white/60 border border-white/10': !selectedUser.isPremium && selectedUser.subscriptionTier === 'free'
+              }"
+            >
+              {{ selectedUser.subscriptionTier || (selectedUser.isPremium ? 'Gold' : 'Free') }}
+            </span>
+          </div>
+          <button @click="selectedUser = null" class="p-1 rounded-lg text-white/60 hover:text-white bg-white/5 cursor-pointer">
+            <X :size="18" />
+          </button>
+        </div>
+
+        <!-- Modal Body (Scrollable) -->
+        <div class="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+          <!-- Photos Gallery -->
+          <div>
+            <div class="text-[11px] font-bold text-white/50 uppercase tracking-wider mb-2">Profile Photos</div>
+            <div v-if="selectedUser.photos && selectedUser.photos.length" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <img
+                v-for="(photo, idx) in selectedUser.photos"
+                :key="idx"
+                :src="mediaUrl(photo)"
+                class="w-full h-28 object-cover rounded-xl border border-white/10 bg-black/40"
+                alt=""
+              />
+            </div>
+            <div v-else class="text-white/40 italic p-3 bg-white/[0.02] rounded-xl border border-white/5">
+              No photos uploaded yet.
+            </div>
+          </div>
+
+          <!-- Basic Info Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <span class="text-white/40 block">Email / Phone</span>
+              <span class="text-white font-mono mt-0.5 block truncate">{{ selectedUser.email || selectedUser.phoneNumber || '—' }}</span>
+            </div>
+            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <span class="text-white/40 block">District & Age</span>
+              <span class="text-white font-medium mt-0.5 block">{{ selectedUser.district || 'Unspecified' }} · {{ selectedUser.age || '—' }} yrs</span>
+            </div>
+            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <span class="text-white/40 block">Gender & Role</span>
+              <span class="text-white font-medium mt-0.5 block">{{ selectedUser.gender || '—' }} ({{ selectedUser.role || 'user' }})</span>
+            </div>
+          </div>
+
+          <!-- Bio & Interests -->
+          <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-3">
+            <div>
+              <span class="text-white/40 block text-[10px] uppercase font-bold tracking-wider mb-1">Bio</span>
+              <p class="text-white/80 leading-relaxed">{{ selectedUser.bio || 'No bio written yet.' }}</p>
+            </div>
+            <div v-if="selectedUser.interests && selectedUser.interests.length">
+              <span class="text-white/40 block text-[10px] uppercase font-bold tracking-wider mb-1.5">Interests</span>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="interest in selectedUser.interests"
+                  :key="interest"
+                  class="px-2.5 py-1 rounded-lg bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[11px]"
+                >
+                  {{ interest }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Meta -->
+          <div class="grid grid-cols-2 gap-3 text-white/50">
+            <div>Joined: <strong class="text-white/80">{{ formatDate(selectedUser.createdAt) }}</strong></div>
+            <div>Last Active: <strong class="text-white/80">{{ formatDate(selectedUser.lastActive || selectedUser.updatedAt) }}</strong></div>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="px-6 py-4 border-t border-white/10 bg-white/[0.02] flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-white/50 text-xs">Set Tier:</span>
+            <select
+              :value="selectedUser.subscriptionTier || (selectedUser.isPremium ? 'gold' : 'free')"
+              @change="handleUpdateTier(selectedUser, $event.target.value)"
+              class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-white/10 bg-night-950 text-white cursor-pointer"
+            >
+              <option value="free">Free</option>
+              <option value="plus">✦ Plus</option>
+              <option value="gold">★ Gold</option>
+              <option value="platinum">💎 VIP Platinum</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              @click="handleToggleVerify(selectedUser)"
+              class="px-3 py-1.5 text-xs rounded-xl border transition-colors cursor-pointer"
+              :class="selectedUser.isVerified
+                ? 'border-amber-400/40 text-amber-300 hover:bg-amber-400/20'
+                : 'border-white/10 text-white/70 hover:bg-white/10'"
+            >
+              {{ selectedUser.isVerified ? 'Revoke Gold Tick' : 'Grant Gold Tick' }}
+            </button>
+            <button
+              @click="handleToggleBan(selectedUser)"
+              class="px-3 py-1.5 text-xs rounded-xl border transition-colors cursor-pointer"
+              :class="selectedUser.isBanned
+                ? 'border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
+                : 'border-rose-500/30 text-rose-300 hover:bg-rose-500/20'"
+            >
+              {{ selectedUser.isBanned ? 'Unban Account' : 'Ban Account' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { adminService } from '@/services/adminService'
-import { api } from '@/services/api'
 import { mediaUrl } from '@/utils/media'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
 import {
@@ -568,6 +772,7 @@ import {
   Users,
   BadgeCheck,
   ShieldAlert,
+  ShieldCheck,
   ArrowLeft,
   RefreshCw,
   Zap,
@@ -577,8 +782,7 @@ import {
   Check,
   X,
   Server,
-  LogOut,
-  Smartphone
+  LogOut
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -589,11 +793,11 @@ const activeTab = ref('overview')
 const isLoading = ref(false)
 
 const stats = ref({})
-const waStatus = ref({})
 const userList = ref([])
 const userSearchQuery = ref('')
 const userTierFilter = ref('')
 const userBanFilter = ref('')
+const selectedUser = ref(null)
 
 const verificationList = ref([])
 const verificationFilter = ref('pending')
@@ -609,6 +813,19 @@ const tabs = computed(() => [
   { id: 'verifications', label: 'Photo Verifications', icon: BadgeCheck, badge: pendingVerifications.value.length || null },
   { id: 'reports', label: 'Safety & Reports', icon: ShieldAlert, badge: stats.value.reports?.pending || null }
 ])
+
+const tierPercent = (tierKey) => {
+  const total = stats.value.users?.total || 1
+  const count = stats.value.users?.tiers?.[tierKey] || 0
+  return Math.min(100, Math.round((count / total) * 100)) + '%'
+}
+
+const genderBarHeight = (genderKey) => {
+  const total = stats.value.users?.total || 1
+  const count = stats.value.users?.genders?.[genderKey] || 0
+  const pct = Math.max(12, Math.round((count / total) * 100))
+  return pct + '%'
+}
 
 const formatDate = (d) => {
   if (!d) return '—'
@@ -627,7 +844,7 @@ const fetchUsers = async () => {
   try {
     const params = {
       search: userSearchQuery.value || undefined,
-      isPremium: userTierFilter.value ? (userTierFilter.value !== 'free') : undefined,
+      subscriptionTier: userTierFilter.value || undefined,
       isBanned: userBanFilter.value || undefined
     }
     const res = await adminService.getUsers(params)
@@ -662,23 +879,17 @@ const fetchReports = async () => {
   }
 }
 
-const fetchWhatsAppStatus = async () => {
-  try {
-    const res = await api.get('/auth/whatsapp-status')
-    waStatus.value = res.data || {}
-  } catch (err) {
-    console.error('Failed to load WhatsApp status:', err)
-  }
-}
-
 const refreshCurrentTab = async () => {
   isLoading.value = true
   await fetchDashboardStats()
-  await fetchWhatsAppStatus()
   if (activeTab.value === 'users') await fetchUsers()
   else if (activeTab.value === 'verifications') await fetchVerifications(verificationFilter.value)
   else if (activeTab.value === 'reports') await fetchReports()
   isLoading.value = false
+}
+
+const inspectUser = (user) => {
+  selectedUser.value = user
 }
 
 const handleReviewVerification = async (verificationId, status) => {
@@ -703,16 +914,17 @@ const handleReviewReport = async (reportId, status, action) => {
   }
 }
 
-const handleTogglePremium = async (user) => {
-  const newPremium = !user.isPremium
+const handleUpdateTier = async (user, newTier) => {
   try {
     await adminService.updateUser(user._id, {
-      isPremium: newPremium,
-      subscriptionTier: newPremium ? 'gold' : 'free'
+      subscriptionTier: newTier,
+      isPremium: newTier !== 'free'
     })
-    user.isPremium = newPremium
-    user.subscriptionTier = newPremium ? 'gold' : 'free'
-    success(`Updated ${user.name || 'user'} to ${newPremium ? 'Gold' : 'Free'}`)
+    user.subscriptionTier = newTier
+    user.isPremium = newTier !== 'free'
+    const tierLabels = { free: 'Free', plus: 'Plus', gold: 'Gold', platinum: 'VIP Platinum' }
+    success(`Updated ${user.name || 'user'} tier to ${tierLabels[newTier] || newTier}`)
+    await fetchDashboardStats()
   } catch (err) {
     error('Failed to update tier')
   }
@@ -751,27 +963,13 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
-let waStatusInterval = null
-
 onMounted(async () => {
   isLoading.value = true
   await fetchDashboardStats()
-  await fetchWhatsAppStatus()
   await fetchUsers()
   await fetchVerifications('all')
   await fetchReports()
   isLoading.value = false
-
-  // Poll WhatsApp pairing status if not yet connected
-  waStatusInterval = setInterval(() => {
-    if (activeTab.value === 'overview') {
-      fetchWhatsAppStatus()
-    }
-  }, 6000)
-})
-
-onUnmounted(() => {
-  if (waStatusInterval) clearInterval(waStatusInterval)
 })
 </script>
 

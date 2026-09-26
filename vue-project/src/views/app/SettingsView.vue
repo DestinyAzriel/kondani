@@ -337,9 +337,12 @@
           </div>
         </div>
       </section>
-
-      <p class="text-center text-white/30 text-xs settings-foot">Kondani v1.0 · Made in Malawi 🇲🇼</p>
     </div>
+
+    <!-- Very bottom page footer -->
+    <footer class="mt-16 pt-8 pb-14 text-center border-t border-white/5">
+      <p class="text-white/30 text-xs font-medium tracking-wider">© octotechglobal</p>
+    </footer>
 
     <!-- District Selection Modal -->
     <div v-if="showDistrictModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="showDistrictModal = false">

@@ -3,9 +3,12 @@ const Report = require('../models/Report');
 const Subscription = require('../models/Subscription');
 const Payment = require('../models/Payment');
 const IDVerification = require('../models/IDVerification');
+const Intent = require('../models/Intent');
+const Message = require('../models/Message');
+const Plan = require('../models/Plan');
 
 /**
- * Get dashboard statistics
+ * Get comprehensive dashboard statistics (Tinder/Bumble grade)
  */
 exports.getDashboardStats = async (req, res) => {
     try {
@@ -19,7 +22,36 @@ exports.getDashboardStats = async (req, res) => {
         const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: thisMonth } });
         const activeUsers = await User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
         const premiumUsers = await User.countDocuments({ isPremium: true });
-        const verifiedUsers = await User.countDocuments({ 'verification.id.verified': true });
+        const verifiedUsers = await User.countDocuments({ isVerified: true });
+
+        // Tiers Breakdown (3 Tiers + Free)
+        const plusCount = await User.countDocuments({ subscriptionTier: 'plus' });
+        const goldCount = await User.countDocuments({ subscriptionTier: 'gold' });
+        const platinumCount = await User.countDocuments({ subscriptionTier: 'platinum' });
+        const freeCount = Math.max(0, totalUsers - (plusCount + goldCount + platinumCount));
+
+        // Gender Breakdown
+        const menCount = await User.countDocuments({ gender: { $in: ['Male', 'male', 'Men', 'men'] } });
+        const womenCount = await User.countDocuments({ gender: { $in: ['Female', 'female', 'Women', 'women'] } });
+        const otherGenderCount = Math.max(0, totalUsers - (menCount + womenCount));
+
+        // Top Districts Adoption
+        const topDistrictsAgg = await User.aggregate([
+            { $match: { district: { $exists: true, $ne: '' } } },
+            { $group: { _id: '$district', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 6 }
+        ]);
+        const topDistricts = topDistrictsAgg.map(d => ({ name: d._id, count: d.count }));
+
+        // Engagement Metrics
+        const totalMessages = await Message.countDocuments();
+        const totalPlans = await Plan.countDocuments();
+        const matchAgg = await Intent.aggregate([
+            { $project: { matchCount: { $size: { $ifNull: ['$matches', []] } } } },
+            { $group: { _id: null, total: { $sum: '$matchCount' } } }
+        ]);
+        const totalMatches = Math.floor((matchAgg[0]?.total || 0) / 2);
 
         // Report stats
         const pendingReports = await Report.countDocuments({ status: 'pending' });
@@ -32,6 +64,12 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
 
+        // Recent Payments
+        const recentPayments = await Payment.find({ status: 'completed' })
+            .sort({ createdAt: -1 })
+            .limit(6)
+            .select('referenceId amount currency paymentMethod createdAt metadata');
+
         // ID verification stats
         const pendingVerifications = await IDVerification.countDocuments({ status: 'pending' });
 
@@ -42,7 +80,24 @@ exports.getDashboardStats = async (req, res) => {
                 newThisMonth: newUsersThisMonth,
                 active: activeUsers,
                 premium: premiumUsers,
-                verified: verifiedUsers
+                verified: verifiedUsers,
+                tiers: {
+                    free: freeCount,
+                    plus: plusCount,
+                    gold: goldCount,
+                    platinum: platinumCount
+                },
+                genders: {
+                    men: menCount,
+                    women: womenCount,
+                    other: otherGenderCount
+                },
+                topDistricts
+            },
+            engagement: {
+                totalMatches,
+                totalMessages,
+                totalPlans
             },
             reports: {
                 pending: pendingReports,
@@ -50,7 +105,8 @@ exports.getDashboardStats = async (req, res) => {
             },
             subscriptions: {
                 active: activeSubscriptions,
-                revenue: totalRevenue[0]?.total || 0
+                revenue: totalRevenue[0]?.total || 0,
+                recentPayments
             },
             verifications: {
                 pending: pendingVerifications
@@ -64,21 +120,35 @@ exports.getDashboardStats = async (req, res) => {
 };
 
 /**
- * Get all users with pagination
+ * Get all users with pagination, tier filters and search
  */
 exports.getAllUsers = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search, role, isPremium, isBanned } = req.query;
+        const { page = 1, limit = 50, search, role, isPremium, subscriptionTier, isBanned } = req.query;
 
         const query = {};
         if (search) {
             query.$or = [
                 { name: { $regex: search, $options: 'i' } },
-                { phoneNumber: { $regex: search, $options: 'i' } }
+                { email: { $regex: search, $options: 'i' } },
+                { phoneNumber: { $regex: search, $options: 'i' } },
+                { district: { $regex: search, $options: 'i' } }
             ];
         }
         if (role) query.role = role;
-        if (isPremium !== undefined) query.isPremium = isPremium === 'true';
+        if (subscriptionTier) {
+            if (subscriptionTier === 'free') {
+                query.$or = [
+                    { subscriptionTier: 'free' },
+                    { subscriptionTier: { $exists: false } },
+                    { isPremium: false }
+                ];
+            } else {
+                query.subscriptionTier = subscriptionTier;
+            }
+        } else if (isPremium !== undefined) {
+            query.isPremium = isPremium === 'true';
+        }
         if (isBanned !== undefined) query.isBanned = isBanned === 'true';
 
         const users = await User.find(query)
@@ -106,7 +176,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 /**
- * Update user (ban, make admin, etc.)
+ * Update user (ban, tier change, verify, etc.)
  */
 exports.updateUser = async (req, res) => {
     try {
@@ -122,12 +192,18 @@ exports.updateUser = async (req, res) => {
         if (isBanned !== undefined) user.isBanned = isBanned;
         if (banReason) user.banReason = banReason;
         if (bannedUntil !== undefined) user.bannedUntil = bannedUntil;
+
+        // Support all 3 tiers (Plus, Gold, Platinum) + Free
         if (subscriptionTier !== undefined) {
             user.subscriptionTier = subscriptionTier;
             user.isPremium = subscriptionTier !== 'free';
+            if (subscriptionTier !== 'free' && (!user.premiumUntil || new Date(user.premiumUntil) < new Date())) {
+                user.premiumUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            }
         } else if (isPremium !== undefined) {
             user.isPremium = isPremium;
             if (!isPremium) user.subscriptionTier = 'free';
+            else if (user.subscriptionTier === 'free') user.subscriptionTier = 'gold';
         }
 
         if (req.body.isVerified !== undefined) {
@@ -143,7 +219,6 @@ exports.updateUser = async (req, res) => {
         }
 
         await user.save();
-
         res.json({ message: 'User updated successfully', user });
 
     } catch (error) {
