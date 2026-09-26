@@ -3,18 +3,16 @@
     <!-- Header -->
     <div class="relative z-20 flex items-center justify-between px-4 py-4">
       <button @click="router.back()" class="k-iconbtn"><X :size="20" /></button>
-      <span class="font-semibold text-white">Kondani Premium</span>
-      <div style="width:40px"></div>
-    </div>
-
-    <!-- Active Subscription Banner if already subscribed -->
-    <div v-if="isAlreadyActive" class="relative z-20 mx-4 mb-4 p-4 rounded-2xl bg-amber-500/15 border border-amber-400/40 text-center">
-      <div class="inline-flex items-center gap-2 text-amber-300 font-bold text-sm">
-        <Crown :size="18" /> You have active Kondani {{ activeTierName }}!
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-white">Kondani Premium</span>
+        <span
+          v-if="isAlreadyActive"
+          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30"
+        >
+          <Crown :size="12" /> {{ activeTierName }} Active
+        </span>
       </div>
-      <p class="text-xs text-white/70 mt-1" v-if="authStore.user?.premiumUntil">
-        Valid until {{ new Date(authStore.user.premiumUntil).toLocaleDateString(undefined, { dateStyle: 'long' }) }}
-      </p>
+      <div style="width:40px"></div>
     </div>
 
     <!-- HERO with imagery -->
@@ -22,8 +20,20 @@
       <img :src="heroImg" alt="Kondani Subscriptions" />
       <div class="hero-scrim"></div>
       <div class="hero-content">
-        <span class="eyebrow"><KondaniMark :size="20" /> Kondani Memberships</span>
-        <h1 class="k-serif mt-4 text-white">Stand out. <span style="color:var(--k-gold-l)">Match faster.</span></h1>
+        <!-- Sleek Active VIP Badge inside Hero -->
+        <div
+          v-if="isAlreadyActive"
+          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 border border-amber-400/40 text-amber-300 text-xs font-semibold backdrop-blur-md shadow-lg shadow-amber-500/10 mb-3"
+        >
+          <Crown :size="14" class="text-amber-400" />
+          <span>You currently hold <strong>Kondani {{ activeTierName }}</strong></span>
+          <span v-if="authStore.user?.premiumUntil" class="text-white/60 text-[11px] hidden sm:inline">
+            · Until {{ new Date(authStore.user.premiumUntil).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }}
+          </span>
+        </div>
+
+        <div><span class="eyebrow"><KondaniMark :size="20" /> Kondani Memberships</span></div>
+        <h1 class="k-serif mt-3 text-white">Stand out. <span style="color:var(--k-gold-l)">Match faster.</span></h1>
         <p>Unlock more likes, see who likes you, and get priority visibility — cancel anytime.</p>
       </div>
     </div>
