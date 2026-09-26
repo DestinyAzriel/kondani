@@ -182,7 +182,6 @@ exports.getIntents = async (req, res) => {
             let distanceKm = null;
             if (hasMyLocation && hasLocation) {
                 distanceKm = haversineKm(myLat, myLon, lat, lon);
-                if (distanceKm > maxKm) continue; // outside the user's radius
             }
 
             const candidateTier = getUserTier(user);
