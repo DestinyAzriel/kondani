@@ -1,5 +1,5 @@
 <template>
-  <div class="profile k-page pb-28 relative">
+  <div class="profile k-page pb-16 relative">
     <div class="k-stars"></div>
     <div class="absolute top-[-12%] right-[-8%] w-[45%] h-[38%] rounded-full blur-[130px] pointer-events-none"
          style="background:radial-gradient(circle,rgba(244,183,64,.1),transparent 70%)"></div>
@@ -218,6 +218,31 @@
               <div class="k-serif text-sm">"{{ pr.answer }}"</div>
             </div>
           </div>
+
+          <!-- Relationship Intent (Utilizing space) -->
+          <div class="k-card p-3.5 sm:p-4">
+            <p class="k-label text-xs mb-2">Looking for</p>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gold-400/10 text-gold-300 border border-gold-400/25">
+                <Heart :size="13" class="fill-current text-gold-400" /> Long-term relationship & connection
+              </span>
+            </div>
+          </div>
+
+          <!-- Quick Shortcuts & Actions -->
+          <div class="k-card p-3.5 sm:p-4 space-y-2">
+            <p class="k-label text-xs mb-1.5">Quick Shortcuts</p>
+            <div class="grid grid-cols-2 gap-2">
+              <button @click="router.push('/settings')" class="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/10 border border-white/5 text-xs text-white/80 transition-all text-left cursor-pointer">
+                <Settings :size="15" class="text-gold-400 shrink-0" />
+                <span>Discovery & Settings</span>
+              </button>
+              <button @click="router.push('/safety-center')" class="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/10 border border-white/5 text-xs text-white/80 transition-all text-left cursor-pointer">
+                <ShieldCheck :size="15" class="text-teal-400 shrink-0" />
+                <span>Safety Center</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -231,7 +256,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import PhotoUpload from '@/components/feature/PhotoUpload.vue'
-import { Check, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ChevronRight, ArrowRight, Star, Zap, Flame, LogOut, Image as ImageIcon } from 'lucide-vue-next'
+import { Check, MapPin, Pencil, Plus, X, ShieldCheck, Crown, Settings, ChevronRight, ArrowRight, Star, Zap, Flame, LogOut, Image as ImageIcon, Heart } from 'lucide-vue-next'
 import { mediaUrl } from '@/utils/media'
 
 const router = useRouter()

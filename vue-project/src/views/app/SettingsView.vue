@@ -17,12 +17,12 @@
         <p class="k-label mb-3">Account</p>
         <div class="k-card overflow-hidden">
           <div class="k-row">
-            <div class="k-row-ic"><Smartphone :size="16" /></div>
+            <div class="k-row-ic"><Mail :size="16" /></div>
             <div class="grow">
-              <div class="t">Phone number</div>
+              <div class="t">Email address</div>
               <div class="d">Your login &amp; identity</div>
             </div>
-            <div class="val">{{ maskedPhone }}</div>
+            <div class="val text-right font-mono text-xs text-white/80 max-w-[200px] truncate">{{ authStore.user?.email || '—' }}</div>
           </div>
           <div class="k-row cursor-pointer" @click="router.push('/profile')">
             <div class="k-row-ic"><UserPen :size="16" /></div>
@@ -340,7 +340,7 @@
     </div>
 
     <!-- Very bottom page footer -->
-    <footer class="mt-16 pt-8 pb-14 text-center border-t border-white/5">
+    <footer class="mt-4 pt-4 pb-8 text-center border-t border-white/5">
       <p class="text-white/30 text-xs font-medium tracking-wider">© octotechglobal</p>
     </footer>
 
@@ -379,7 +379,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import {
-  ArrowLeft, Smartphone, UserPen, MapPin, Users, BadgeCheck, Sparkles, MessageCircle,
+  ArrowLeft, Smartphone, Mail, UserPen, MapPin, Users, BadgeCheck, Sparkles, MessageCircle,
   Heart, Star, Eye, CircleDot, CheckCheck, Shield, Crown, LifeBuoy, ScrollText,
   FileText, LogOut, Trash2, ChevronRight, Zap, X
 } from 'lucide-vue-next'

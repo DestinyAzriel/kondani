@@ -19,7 +19,7 @@
     </div>
 
     <!-- ====== MOBILE: Tinder-Grade Architecture (Screenshot 3) ====== -->
-    <div class="block md:hidden pb-28 relative z-10">
+    <div class="block md:hidden pb-16 relative z-10">
       <!-- Profile Strip (Identical to Desktop Screenshot 3) -->
       <div class="sticky top-0 z-20 bg-night-950/95 backdrop-blur-xl border-b border-white/5 px-4 py-3">
         <div class="flex items-center justify-between mb-3 cursor-pointer" @click="router.push('/profile')">
@@ -161,12 +161,17 @@
           </div>
 
           <!-- Empty Messages State (Screenshot 3) -->
-          <div v-else class="py-10 px-6 text-center flex flex-col items-center gap-2.5">
+          <div v-else class="py-6 px-4 text-center flex flex-col items-center gap-2.5 bg-white/[0.015] rounded-2xl border border-white/5 my-1">
             <div class="w-11 h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-              <MessageCircleIcon :size="20" :stroke-width="1.5" class="text-white/30" />
+              <MessageCircleIcon :size="20" :stroke-width="1.5" class="text-white/35" />
             </div>
-            <p class="text-white/60 text-xs font-medium">No messages yet</p>
-            <p class="text-white/35 text-[11px] max-w-[200px]">Click any match above to start chatting.</p>
+            <div>
+              <p class="text-white/80 text-xs font-semibold">No messages yet</p>
+              <p class="text-white/40 text-[11px] max-w-[220px] mx-auto mt-0.5">Click any match above to start chatting or discover new people.</p>
+            </div>
+            <button @click="router.push('/encounters')" class="mt-1 px-3.5 py-1.5 rounded-full bg-gold-400/15 hover:bg-gold-400/25 border border-gold-400/30 text-gold-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+              <Sparkles :size="12" /> Discover Matches
+            </button>
           </div>
         </section>
 
@@ -174,7 +179,7 @@
         <div class="px-4 pt-1">
           <div class="bg-gradient-to-br from-white/[0.06] to-white/[0.02] rounded-xl p-3 text-center border border-gold-400/20 shadow-md">
             <p class="text-[10px] font-bold text-gold-300 uppercase tracking-widest mb-0.5">Kondani Gold</p>
-            <p class="text-[11px] text-white/60 mb-2.5">See who likes you and match faster.</p>
+            <p class="text-[11px] text-white/60 mb-2">See who likes you and match faster.</p>
             <button @click="router.push(likesCount > 0 ? '/likes' : '/premium')" class="w-full py-1.5 bg-gradient-to-r from-gold-500 to-gold-300 text-night-950 rounded-lg text-xs font-bold transition-all hover:opacity-95 shadow-sm cursor-pointer">
               {{ likesCount > 0 ? 'View Likes' : 'Upgrade' }}
             </button>
@@ -197,7 +202,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { intentService } from '@/services/intentService'
 import { socketService } from '@/services/socketService'
-import { Check as CheckIcon, CheckCheck as CheckCheckIcon, BadgeCheck, MessageCircle as MessageCircleIcon, Shield, Search, Heart, PhoneMissed as PhoneMissedIcon, User as UserIcon } from 'lucide-vue-next'
+import { Check as CheckIcon, CheckCheck as CheckCheckIcon, BadgeCheck, MessageCircle as MessageCircleIcon, Shield, Search, Heart, PhoneMissed as PhoneMissedIcon, User as UserIcon, Sparkles } from 'lucide-vue-next'
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import ChatPanel from '@/components/feature/ChatPanel.vue'
 import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.vue'
