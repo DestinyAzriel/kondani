@@ -1,9 +1,12 @@
 <template>
   <div class="sub k-page relative overflow-hidden">
     <!-- Header -->
-    <div class="relative z-20 flex items-center justify-between px-4 py-4">
-      <button @click="router.back()" class="k-iconbtn cursor-pointer"><X :size="20" /></button>
-      <span class="font-semibold text-white text-sm sm:text-base">Kondani Memberships</span>
+    <div class="relative z-20 flex items-center justify-between px-4 py-3.5 sm:px-6">
+      <button @click="router.back()" class="k-iconbtn cursor-pointer" title="Close"><X :size="20" /></button>
+      <div class="flex items-center gap-2">
+        <KondaniMark :size="24" />
+        <span class="font-bold text-white text-base tracking-wide">Kondani Memberships</span>
+      </div>
       <div style="width:40px"></div>
     </div>
 
@@ -12,9 +15,8 @@
       <img :src="heroImg" alt="Kondani Subscriptions" />
       <div class="hero-scrim"></div>
       <div class="hero-content">
-        <span class="eyebrow"><KondaniMark :size="20" /> Kondani Memberships</span>
-        <h1 class="k-serif mt-3 text-white text-3xl sm:text-4xl font-bold">Stand out. <span style="color:var(--k-gold-l)">Match faster.</span></h1>
-        <p class="text-white/80 text-sm max-w-md mx-auto mt-2">Unlock more likes, see who likes you, and get priority visibility — cancel anytime.</p>
+        <h1 class="k-serif text-white">Stand out. <span style="color:var(--k-gold-l)">Match faster.</span></h1>
+        <p>Unlock more likes, see who likes you, and get priority visibility — cancel anytime.</p>
       </div>
     </div>
 
