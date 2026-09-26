@@ -368,23 +368,46 @@ exports.getProfile = async (req, res) => {
     }
 };
 
-// Permanently delete the current user's account + related data
+// Permanently delete the current user's account + related data (GDPR / Malawian DPA compliant)
 exports.deleteAccount = async (req, res) => {
     try {
         const userId = req.user.id;
+        const user = await User.findById(userId);
 
-        // Remove this user from everyone else's likes/passes/matches/dailyPicks
+        if (!user) {
+            return res.json({ success: true });
+        }
+
+        // 1. Delete user photos from Cloudinary permanently
+        if (user.photos && Array.isArray(user.photos) && user.photos.length > 0) {
+            try {
+                if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+                    const cloudinary = require('cloudinary').v2;
+                    for (const photoUrl of user.photos) {
+                        const match = String(photoUrl).match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-zA-Z0-9]+)?$/);
+                        if (match && match[1]) {
+                            await cloudinary.uploader.destroy(match[1]).catch(() => {});
+                        }
+                    }
+                }
+            } catch (cloudErr) {
+                console.warn('Cloudinary photo cleanup error on deleteAccount:', cloudErr.message);
+            }
+        }
+
+        // 2. Remove this user from everyone else's likes/passes/matches/dailyPicks
         await User.updateMany(
             { $or: [{ likes: userId }, { passes: userId }, { matches: userId }, { dailyPicks: userId }] },
             { $pull: { likes: userId, passes: userId, matches: userId, dailyPicks: userId } }
         );
 
-        // Best-effort cleanup of related collections (ignore if a model/field differs)
+        // 3. Best-effort cleanup of related collections
         try { const Message = require('../models/Message'); await Message.deleteMany({ $or: [{ sender: userId }, { recipient: userId }, { from: userId }, { to: userId }] }); } catch (e) {}
         try { const Intent = require('../models/Intent'); await Intent.deleteMany({ user: userId }); } catch (e) {}
+        try { const Plan = require('../models/Plan'); await Plan.deleteMany({ creator: userId }); } catch (e) {}
         try { const IDVerification = require('../models/IDVerification'); await IDVerification.deleteMany({ userId }); } catch (e) {}
         try { const Report = require('../models/Report'); await Report.deleteMany({ $or: [{ reporter: userId }, { reported: userId }] }); } catch (e) {}
-        try { const Block = require('../models/Block'); await Block.deleteMany({ $or: [{ blocker: userId }, { blocked: userId }] }); } catch (e) {}
+        try { const Block = require('../models/Block'); await Block.deleteMany({ $or: [{ blocker: userId }, { blocked: userId }, { blockerId: userId }, { blockedUserId: userId }] }); } catch (e) {}
 
         await User.findByIdAndDelete(userId);
         res.json({ success: true });

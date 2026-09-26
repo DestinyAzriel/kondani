@@ -1,0 +1,23 @@
+User-agent: *
+# Allow search engines to index public landing and legal pages
+Allow: /$
+Allow: /about
+Allow: /privacy
+Allow: /terms
+Allow: /safety
+Allow: /login
+Allow: /register
+
+# Disallow indexing of private app routes, user profiles, matches, and chats
+Disallow: /app/
+Disallow: /encounters/
+Disallow: /chats/
+Disallow: /likes/
+Disallow: /profile/
+Disallow: /settings/
+Disallow: /admin/
+Disallow: /feed/
+Disallow: /daily-picks/
+Disallow: /video-call/
+Disallow: /onboarding/
+Disallow: /api/
