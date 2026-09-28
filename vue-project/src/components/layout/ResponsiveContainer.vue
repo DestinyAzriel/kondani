@@ -28,22 +28,29 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Fill the remaining height of the flex parent (AppLayout) */
 .app-container {
-  min-height: 100vh;
-  background: #0a0e1a;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* critical: lets flex children shrink below content height */
 }
 
 .main-wrapper {
-  min-height: 100vh;
-  width: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-height: 0;
 }
 
 .content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 100%;
-  flex: 1;
+  min-height: 0;
 }
 
 /* Desktop: shift content right by exactly the sidebar width */
@@ -55,13 +62,9 @@ onUnmounted(() => {
     overflow-x: hidden;
   }
 
-  /* Let each view control its own max-width — no global cap here */
   .content-area {
     width: 100%;
     max-width: 100%;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
     box-sizing: border-box;
     overflow-x: hidden;
   }

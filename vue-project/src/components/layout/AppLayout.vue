@@ -86,14 +86,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="app-layout min-h-screen bg-night-950 text-white">
+  <div class="app-layout flex flex-col font-sans bg-night-950 text-white" style="min-height:100dvh">
     <DesktopNav class="hidden md:flex" />
 
-    <ResponsiveContainer>
-      <main class="relative z-10 w-full min-h-screen md:max-w-none transition-all duration-300">
+    <ResponsiveContainer class="flex-1">
+      <main class="relative z-10 w-full flex-1 flex flex-col md:max-w-none transition-all duration-300">
         <router-view v-slot="{ Component, route }">
           <transition :name="route.meta.transition || 'fade'" mode="out-in">
-            <component :is="Component" :key="route.path" />
+            <component :is="Component" :key="route.path" class="flex-1" />
           </transition>
         </router-view>
       </main>

@@ -17,8 +17,14 @@
   --k-line: rgba(255, 255, 255, .08);
 }
 
-/* page surface */
-.k-page { min-height: 100vh; background: var(--k-night); color: var(--k-txt); }
+/* page surface — every view fills full viewport, last element hugs bottom */
+.k-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh; /* dvh = device viewport height, respects mobile browser chrome */
+  background: var(--k-night);
+  color: var(--k-txt);
+}
 
 /* typography */
 .k-serif { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -.01em; }

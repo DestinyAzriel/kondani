@@ -49,12 +49,14 @@
   html {
     font-family: var(--font-body);
     scroll-behavior: smooth;
+    height: 100%;
   }
 
   body {
     @apply bg-deep-950 text-white antialiased selection:bg-emerald-500 selection:text-white;
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
+    height: 100%;
   }
 
   h1,

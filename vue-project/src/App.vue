@@ -3,11 +3,11 @@ import Toast from '@/components/ui/Toast.vue'
 </script>
 
 <template>
-  <div id="app" class="min-h-screen font-sans bg-deep-950">
+  <div id="app" class="flex flex-col font-sans bg-deep-950" style="min-height: 100dvh">
 
     <router-view v-slot="{ Component, route }">
       <transition :name="route.meta.transition || 'page'" mode="out-in">
-        <component :is="Component" :key="route.path" />
+        <component :is="Component" :key="route.path" class="flex-1" />
       </transition>
     </router-view>
     
