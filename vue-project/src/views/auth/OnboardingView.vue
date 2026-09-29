@@ -12,7 +12,8 @@
           <li :class="stepClass(1)"><span class="dot"><Check v-if="step > 1" :size="13" /><span v-else>1</span></span> Your basics</li>
           <li :class="stepClass(2)"><span class="dot"><Check v-if="step > 2" :size="13" /><span v-else>2</span></span> Your photos</li>
           <li :class="stepClass(3)"><span class="dot"><Check v-if="step > 3" :size="13" /><span v-else>3</span></span> Interests &amp; bio</li>
-          <li :class="stepClass(4)"><span class="dot"><span>4</span></span> Your location</li>
+          <li :class="stepClass(4)"><span class="dot"><Check v-if="step > 4" :size="13" /><span v-else>4</span></span> Looking for</li>
+          <li :class="stepClass(5)"><span class="dot"><span>5</span></span> Your location</li>
         </ul>
       </div>
     </aside>
@@ -23,9 +24,9 @@
 
       <header class="ob-head">
         <div class="brand mob-brand cursor-pointer select-none hover:opacity-85 transition-opacity" @click="router.push('/')" title="Kondani Home"><KondaniMark :size="30" /><b>Kondani</b></div>
-        <span class="stepcount">Step {{ step }} of 4</span>
+        <span class="stepcount">Step {{ step }} of 5</span>
       </header>
-      <div class="ob-progress"><div class="bar" :style="{ width: `${(step / 4) * 100}%` }"></div></div>
+      <div class="ob-progress"><div class="bar" :style="{ width: `${(step / 5) * 100}%` }"></div></div>
 
       <div class="ob-body">
         <transition name="fade" mode="out-in">
@@ -105,34 +106,43 @@
               <label class="lbl">Bio</label>
               <textarea v-model="form.bio" rows="3" maxlength="300" class="field resize-none" placeholder="Tell people a bit about you…"></textarea>
             </div>
-            <div>
-              <label class="lbl">Looking for</label>
-              <div class="grid grid-cols-2 gap-2 mt-1.5">
-                <button
-                  v-for="opt in lookingForOptions"
-                  :key="opt.value"
-                  type="button"
-                  @click="form.lookingFor = opt.value"
-                  class="p-2.5 rounded-xl border text-left transition-all flex flex-col gap-0.5 cursor-pointer"
-                  :class="form.lookingFor === opt.value
-                    ? 'bg-gradient-to-br from-gold-500/25 to-gold-400/10 border-gold-400 text-white shadow-sm'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'">
-                  <div class="flex items-center gap-1.5 font-bold text-xs">
-                    <span>{{ opt.emoji }}</span>
-                    <span class="truncate">{{ opt.label }}</span>
-                  </div>
-                  <span class="text-[10px] text-white/40 leading-tight">{{ opt.desc }}</span>
-                </button>
-              </div>
-            </div>
             <div class="flex gap-3">
               <button class="btn-ghost flex-1" @click="step--">Back</button>
               <button class="btn-gold flex-1" :disabled="!isStep3Valid" @click="step++">Continue</button>
             </div>
           </div>
 
-          <!-- Step 4: location -->
+          <!-- Step 4: looking for (Dedicated step like Tinder) -->
           <div v-else-if="step === 4" key="s4" class="space-y-6">
+            <div>
+              <h2 class="serif heading">What are you looking for?</h2>
+              <p class="sub">All good if it changes. There's something for everyone.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                v-for="opt in lookingForOptions"
+                :key="opt.value"
+                type="button"
+                @click="form.lookingFor = opt.value"
+                class="p-4 rounded-2xl border text-left transition-all flex items-center gap-3.5 cursor-pointer"
+                :class="form.lookingFor === opt.value
+                  ? 'bg-gradient-to-r from-gold-500/25 via-gold-500/10 to-transparent border-gold-400 text-white shadow-lg'
+                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'">
+                <span class="text-2xl">{{ opt.emoji }}</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-bold text-sm text-white">{{ opt.label }}</span>
+                  <span class="text-xs text-white/45 leading-tight mt-0.5">{{ opt.desc }}</span>
+                </div>
+              </button>
+            </div>
+            <div class="flex gap-3">
+              <button class="btn-ghost flex-1" @click="step--">Back</button>
+              <button class="btn-gold flex-1" :disabled="!form.lookingFor" @click="step++">Continue</button>
+            </div>
+          </div>
+
+          <!-- Step 5: location -->
+          <div v-else-if="step === 5" key="s5" class="space-y-6">
             <div>
               <h2 class="serif heading">Where are you?</h2>
               <p class="sub">So we can show you people nearby and the distance between you.</p>
