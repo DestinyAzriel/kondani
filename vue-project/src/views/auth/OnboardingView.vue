@@ -105,6 +105,26 @@
               <label class="lbl">Bio</label>
               <textarea v-model="form.bio" rows="3" maxlength="300" class="field resize-none" placeholder="Tell people a bit about you…"></textarea>
             </div>
+            <div>
+              <label class="lbl">Looking for</label>
+              <div class="grid grid-cols-2 gap-2 mt-1.5">
+                <button
+                  v-for="opt in lookingForOptions"
+                  :key="opt.value"
+                  type="button"
+                  @click="form.lookingFor = opt.value"
+                  class="p-2.5 rounded-xl border text-left transition-all flex flex-col gap-0.5 cursor-pointer"
+                  :class="form.lookingFor === opt.value
+                    ? 'bg-gradient-to-br from-gold-500/25 to-gold-400/10 border-gold-400 text-white shadow-sm'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'">
+                  <div class="flex items-center gap-1.5 font-bold text-xs">
+                    <span>{{ opt.emoji }}</span>
+                    <span class="truncate">{{ opt.label }}</span>
+                  </div>
+                  <span class="text-[10px] text-white/40 leading-tight">{{ opt.desc }}</span>
+                </button>
+              </div>
+            </div>
             <div class="flex gap-3">
               <button class="btn-ghost flex-1" @click="step--">Back</button>
               <button class="btn-gold flex-1" :disabled="!isStep3Valid" @click="step++">Continue</button>
@@ -170,13 +190,22 @@ const stepClass = (n) => (step.value === n ? 'on' : (step.value > n ? 'done' : '
 const initialPhotos = (authStore.user?.photos?.filter(Boolean) || []).map(url => ({ file: null, preview: url, url }))
 const form = reactive({
   name: authStore.user?.name || '', dob: '', gender: '', interestedIn: 'Everyone',
-  photos: initialPhotos, interests: [], bio: '',
+  photos: initialPhotos, interests: [], bio: '', lookingFor: '',
   coords: null, district: ''
 })
 
 const availableInterests = [
   'Music','Travel','Cooking','Movies','Dancing','Football','Fashion','Art',
   'Reading','Gaming','Nature','Photography','Food','Technology','Fitness','Church'
+]
+
+const lookingForOptions = [
+  { value: 'Long-term relationship', label: 'Long-term relationship', emoji: '💍', desc: 'Someone to build a future with' },
+  { value: 'Short-term relationship', label: 'Short-term relationship', emoji: '🌹', desc: 'Open to seeing where it goes' },
+  { value: 'Casual dating', label: 'Casual dating', emoji: '🥂', desc: 'Fun dates, no pressure' },
+  { value: 'New friends', label: 'New friends', emoji: '👋', desc: 'Platonic connections' },
+  { value: 'Marriage', label: 'Marriage', emoji: '💒', desc: 'Ready to settle down' },
+  { value: 'Still figuring it out', label: 'Still figuring it out', emoji: '🤷', desc: 'Open to anything' }
 ]
 
 // All 28 Malawi districts with [lon, lat] for distance (incl. Chitipa).
@@ -320,6 +349,7 @@ const finish = async () => {
       gender: form.gender,
       bio: form.bio,
       interests: form.interests,
+      lookingFor: form.lookingFor || null,
       photos: filesToUpload.length > 0 ? filesToUpload : existingUrls,
       photoUrls: existingUrls,
       preferences: { gender: form.interestedIn },

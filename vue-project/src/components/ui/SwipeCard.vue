@@ -83,6 +83,13 @@
             <span>{{ profile.district && profile.distance ? `${profile.district} · ${profile.distance}` : (profile.district || profile.distance) }}</span>
           </div>
 
+          <div v-if="profile.lookingFor" class="mb-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-400/20 backdrop-blur-md text-gold-300 text-[11px] font-semibold border border-gold-400/30 shadow-sm">
+              <span>{{ lookingForEmoji(profile.lookingFor) }}</span>
+              <span>{{ profile.lookingFor }}</span>
+            </span>
+          </div>
+
           <p v-if="profile.bio" class="text-sm text-white/90 drop-shadow-md line-clamp-2 mb-3 leading-relaxed">{{ profile.bio }}</p>
 
           <div v-if="profile.interests && profile.interests.length" class="flex flex-wrap gap-2">
@@ -130,6 +137,16 @@ const currentPhotoIndex = ref(0)
 const showOptions = ref(false)
 
 const handleReportOrBlock = () => emit('swipe', 'left')
+
+const lookingForEmojiMap = {
+  'Long-term relationship': '💍',
+  'Short-term relationship': '🌹',
+  'Casual dating': '🥂',
+  'New friends': '👋',
+  'Marriage': '💒',
+  'Still figuring it out': '🤷'
+}
+const lookingForEmoji = (val) => lookingForEmojiMap[val] || '💍'
 
 const nextPhoto = () => {
   if (props.profile.photos && currentPhotoIndex.value < props.profile.photos.length - 1) currentPhotoIndex.value++

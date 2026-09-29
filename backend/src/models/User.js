@@ -24,6 +24,18 @@ const userSchema = new mongoose.Schema({
     bio: String,
     photos: [String],
     interests: [String],
+    lookingFor: {
+        type: String,
+        enum: [
+            'Long-term relationship',
+            'Short-term relationship',
+            'Casual dating',
+            'New friends',
+            'Marriage',
+            'Still figuring it out'
+        ],
+        default: null
+    },
     district: String, // e.g. 'Lilongwe', 'Chitipa'
     location: {
         type: {

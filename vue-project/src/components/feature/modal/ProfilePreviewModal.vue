@@ -158,13 +158,13 @@
                   </div>
 
                   <!-- Relationship Intent Card -->
-                  <div v-if="user.relationshipIntent || user.intent" class="p-4 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center gap-3.5">
+                  <div v-if="user.lookingFor || user.relationshipIntent || user.intent" class="p-4 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center gap-3.5">
                     <div class="p-2.5 rounded-xl bg-gold-400/10 text-gold-400 border border-gold-400/20 shrink-0">
                       <Sparkles :size="20" />
                     </div>
                     <div>
                       <span class="text-[10px] font-semibold tracking-wider text-white/40 uppercase block">Looking for</span>
-                      <p class="text-sm font-bold text-white">{{ user.relationshipIntent || user.intent }}</p>
+                      <p class="text-sm font-bold text-white">{{ user.lookingFor || user.relationshipIntent || user.intent }}</p>
                     </div>
                   </div>
 

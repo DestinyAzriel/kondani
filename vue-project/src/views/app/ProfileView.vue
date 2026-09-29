@@ -219,12 +219,37 @@
             </div>
           </div>
 
-          <!-- Relationship Intent (Utilizing space) -->
+          <!-- Relationship Intent (Looking for) -->
           <div class="k-card p-3.5 sm:p-4">
-            <p class="k-label text-xs mb-2">Looking for</p>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center justify-between mb-2">
+              <p class="k-label text-xs">Looking for</p>
+              <button v-if="!isEditing" @click="toggleEdit" class="text-[11px] text-gold-400 hover:text-gold-300 font-medium cursor-pointer">Change</button>
+            </div>
+
+            <!-- Edit mode: selectable options -->
+            <div v-if="isEditing" class="grid grid-cols-2 gap-2">
+              <button
+                v-for="opt in lookingForOptions"
+                :key="opt.value"
+                type="button"
+                @click="editForm.lookingFor = opt.value"
+                class="p-2.5 rounded-xl border text-left transition-all flex flex-col gap-0.5 cursor-pointer"
+                :class="editForm.lookingFor === opt.value
+                  ? 'bg-gradient-to-br from-gold-500/25 to-gold-400/10 border-gold-400 text-white shadow-sm'
+                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'">
+                <div class="flex items-center gap-1.5 font-bold text-xs">
+                  <span>{{ opt.emoji }}</span>
+                  <span class="truncate">{{ opt.label }}</span>
+                </div>
+                <span class="text-[10px] text-white/40 leading-tight">{{ opt.desc }}</span>
+              </button>
+            </div>
+
+            <!-- Read mode -->
+            <div v-else class="flex items-center gap-2">
               <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gold-400/10 text-gold-300 border border-gold-400/25">
-                <Heart :size="13" class="fill-current text-gold-400" /> Long-term relationship & connection
+                <span>{{ lookingForEmoji(profile.lookingFor) }}</span>
+                <span>{{ profile.lookingFor || 'Long-term relationship' }}</span>
               </span>
             </div>
           </div>
@@ -304,10 +329,24 @@ const mainPhoto = computed(() => (photoList.value[0] ? mediaSrc(photoList.value[
 const photoCount = computed(() => photoList.value.length)
 const emptySlots = computed(() => Math.max(0, Math.min(6, 6 - photoCount.value)))
 
+const lookingForOptions = [
+  { value: 'Long-term relationship', label: 'Long-term relationship', emoji: '💍', desc: 'Someone to build a future with' },
+  { value: 'Short-term relationship', label: 'Short-term relationship', emoji: '🌹', desc: 'Open to seeing where it goes' },
+  { value: 'Casual dating', label: 'Casual dating', emoji: '🥂', desc: 'Fun dates, no pressure' },
+  { value: 'New friends', label: 'New friends', emoji: '👋', desc: 'Platonic connections' },
+  { value: 'Marriage', label: 'Marriage', emoji: '💒', desc: 'Ready to settle down' },
+  { value: 'Still figuring it out', label: 'Still figuring it out', emoji: '🤷', desc: 'Open to anything' }
+]
+
+const lookingForEmoji = (val) => {
+  const match = lookingForOptions.find(o => o.value === val)
+  return match ? match.emoji : '💍'
+}
+
 const isEditing = ref(false)
 const isSaving = ref(false)
 const newInterest = ref('')
-const editForm = reactive({ bio: '', interests: [], photos: [] })
+const editForm = reactive({ bio: '', interests: [], photos: [], lookingFor: '' })
 
 const isUserVerified = computed(() => {
   return Boolean(profile.value.isVerified && profile.value.verification?.id?.status === 'approved')
@@ -326,6 +365,7 @@ function toggleEdit() {
     editForm.bio = profile.value.bio || ''
     editForm.interests = [...(profile.value.interests || [])]
     editForm.photos = [...(profile.value.photos || [])]
+    editForm.lookingFor = profile.value.lookingFor || 'Long-term relationship'
   }
   isEditing.value = !isEditing.value
 }
@@ -337,7 +377,12 @@ const saveChanges = async () => {
   if (isSaving.value) return
   isSaving.value = true
   try {
-    await saveProfile({ bio: editForm.bio, interests: editForm.interests, photos: editForm.photos })
+    await saveProfile({
+      bio: editForm.bio,
+      interests: editForm.interests,
+      photos: editForm.photos,
+      lookingFor: editForm.lookingFor
+    })
     isEditing.value = false
     success('Profile updated')
   } catch (e) { toastError('Could not save changes') }
