@@ -37,7 +37,7 @@
               <p class="sub">Let's set up your profile.</p>
             </div>
             <div>
-              <label class="lbl">First name</label>
+              <label class="lbl">Name</label>
               <input v-model="form.name" type="text" class="field" placeholder="e.g. Tadala" />
             </div>
             <div>
