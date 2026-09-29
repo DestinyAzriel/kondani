@@ -168,7 +168,7 @@
 
             <div class="flex gap-3">
               <button class="btn-ghost flex-1" @click="step--">Back</button>
-              <button class="btn-gold flex-1" :disabled="loading" @click="finish">
+              <button class="btn-gold flex-1" :disabled="loading || !form.district" @click="finish">
                 <span v-if="loading" class="spinner"></span>{{ loading ? 'Saving…' : 'Finish' }}
               </button>
             </div>
@@ -347,6 +347,11 @@ const calculateAge = (dob) => {
 
 const finish = async () => {
   errorMsg.value = ''
+  locationError.value = ''
+  if (!form.district) {
+    locationError.value = 'Please select your district or use GPS location to finish.'
+    return
+  }
   loading.value = true
   try {
     const rawFiles = form.photos.filter(Boolean).filter(p => p.file).map(p => p.file)

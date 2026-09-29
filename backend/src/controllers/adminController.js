@@ -228,21 +228,58 @@ exports.updateUser = async (req, res) => {
 };
 
 /**
- * Delete user
+ * Delete user permanently (Full GDPR / Malawian DPA Purge)
  */
 exports.deleteUser = async (req, res) => {
     try {
         const { userId } = req.params;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.json({ message: 'User already deleted or not found' });
+        }
+
+        if (user.role === 'admin') {
+            return res.status(403).json({ error: 'Cannot delete an administrator account.' });
+        }
+
+        // 1. Delete user photos from Cloudinary permanently
+        if (user.photos && Array.isArray(user.photos) && user.photos.length > 0) {
+            try {
+                if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+                    const cloudinary = require('cloudinary').v2;
+                    for (const photoUrl of user.photos) {
+                        const match = String(photoUrl).match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-zA-Z0-9]+)?$/);
+                        if (match && match[1]) {
+                            await cloudinary.uploader.destroy(match[1]).catch(() => {});
+                        }
+                    }
+                }
+            } catch (cloudErr) {
+                console.warn('Cloudinary photo cleanup error on admin deleteUser:', cloudErr.message);
+            }
+        }
+
+        // 2. Remove this user from everyone else's likes/passes/matches/dailyPicks
+        await User.updateMany(
+            { $or: [{ likes: userId }, { passes: userId }, { matches: userId }, { dailyPicks: userId }] },
+            { $pull: { likes: userId, passes: userId, matches: userId, dailyPicks: userId } }
+        );
+
+        // 3. Cleanup of related collections
+        try { const Message = require('../models/Message'); await Message.deleteMany({ $or: [{ sender: userId }, { recipient: userId }, { from: userId }, { to: userId }] }); } catch (e) {}
+        try { const Intent = require('../models/Intent'); await Intent.deleteMany({ user: userId }); } catch (e) {}
+        try { const Plan = require('../models/Plan'); await Plan.deleteMany({ creator: userId }); } catch (e) {}
+        try { const IDVerification = require('../models/IDVerification'); await IDVerification.deleteMany({ userId }); } catch (e) {}
+        try { const Report = require('../models/Report'); await Report.deleteMany({ $or: [{ reporter: userId }, { reported: userId }] }); } catch (e) {}
+        try { const Block = require('../models/Block'); await Block.deleteMany({ $or: [{ blocker: userId }, { blocked: userId }, { blockerId: userId }, { blockedUserId: userId }] }); } catch (e) {}
 
         await User.findByIdAndDelete(userId);
-
-        // TODO: Also delete user's intents, messages, reports, etc.
-
-        res.json({ message: 'User deleted successfully' });
+        res.json({ message: 'User permanently deleted' });
 
     } catch (error) {
         console.error('Delete user error:', error);
-        res.status(500).json({ error: 'Failed to delete user' });
+        res.status(500).json({ error: 'Failed to delete user: ' + error.message });
     }
 };
 

@@ -459,6 +459,16 @@
                       >
                         Inspect
                       </button>
+
+                      <!-- Delete User Permanently (Admin Action) -->
+                      <button
+                        v-if="user.role !== 'admin'"
+                        @click="handleDeleteUser(user)"
+                        class="px-2 py-1 text-[11px] rounded-lg border border-rose-500/40 text-rose-300 hover:bg-rose-500/20 transition-colors cursor-pointer flex items-center gap-1"
+                        title="Permanently Delete User"
+                      >
+                        <Trash2 :size="12" /> Delete
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -752,6 +762,13 @@
             >
               {{ selectedUser.isBanned ? 'Unban Account' : 'Ban Account' }}
             </button>
+            <button
+              v-if="selectedUser.role !== 'admin'"
+              @click="handleDeleteUser(selectedUser)"
+              class="px-3 py-1.5 text-xs rounded-xl border border-rose-500/40 text-rose-300 hover:bg-rose-500/20 transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <Trash2 :size="13" /> Delete Permanently
+            </button>
           </div>
         </div>
       </div>
@@ -782,7 +799,8 @@ import {
   Check,
   X,
   Server,
-  LogOut
+  LogOut,
+  Trash2
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -954,6 +972,30 @@ const handleToggleVerify = async (user) => {
     success(`User ${user.name || ''} verification ${newVerified ? 'granted' : 'revoked'}`)
   } catch (err) {
     error('Failed to update verification status')
+  }
+}
+
+const handleDeleteUser = async (user) => {
+  if (user.role === 'admin') {
+    error('Cannot delete an administrator account.')
+    return
+  }
+  const name = user.name || user.email || user.phoneNumber || 'this user'
+  if (!confirm(`Are you sure you want to PERMANENTLY delete "${name}"?\n\nThis will permanently erase their profile, photos, matches, and chats from the database and Cloudinary. This cannot be undone.`)) {
+    return
+  }
+
+  try {
+    await adminService.deleteUser(user._id || user.id)
+    success(`User "${name}" has been permanently deleted.`)
+    if (selectedUser.value && (selectedUser.value._id === user._id || selectedUser.value.id === user.id)) {
+      selectedUser.value = null
+    }
+    await fetchUsers()
+    await fetchDashboardStats()
+  } catch (err) {
+    console.error('Delete user error:', err)
+    error(err.response?.data?.error || err.message || 'Failed to delete user.')
   }
 }
 
