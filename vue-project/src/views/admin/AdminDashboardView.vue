@@ -51,7 +51,7 @@
           v-for="tab in tabs"
           :key="tab.id"
           @click="activeTab = tab.id"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer"
           :class="activeTab === tab.id
             ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30 shadow-sm shadow-amber-400/10'
             : 'text-white/60 hover:text-white hover:bg-white/5 border border-transparent'"
@@ -344,17 +344,21 @@
 
         <!-- Users Table -->
         <div class="rounded-2xl border border-white/10 bg-white/[0.01] overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+          <div class="px-4 py-2 bg-white/[0.02] border-b border-white/5 flex items-center justify-between text-[11px] text-white/40 md:hidden">
+            <span>← Swipe table horizontally →</span>
+            <span class="text-white/60 font-semibold">{{ userList.length }} users</span>
+          </div>
+          <div class="overflow-x-auto scrollbar-thin">
+            <table class="w-full min-w-[800px] text-left text-xs">
               <thead class="bg-white/[0.03] border-b border-white/10 text-white/50 uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th class="px-4 py-3">Member</th>
-                  <th class="px-4 py-3">Email / Phone</th>
-                  <th class="px-4 py-3">District</th>
-                  <th class="px-4 py-3">Tier</th>
-                  <th class="px-4 py-3">Role</th>
-                  <th class="px-4 py-3">Status</th>
-                  <th class="px-4 py-3 text-right">Actions</th>
+                  <th class="px-4 py-3 min-w-[180px]">Member</th>
+                  <th class="px-4 py-3 min-w-[200px]">Email / Phone</th>
+                  <th class="px-4 py-3 min-w-[110px]">District</th>
+                  <th class="px-4 py-3 min-w-[90px]">Tier</th>
+                  <th class="px-4 py-3 min-w-[80px]">Role</th>
+                  <th class="px-4 py-3 min-w-[90px]">Status</th>
+                  <th class="px-4 py-3 min-w-[220px] text-right">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5">
