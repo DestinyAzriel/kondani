@@ -21,9 +21,9 @@
     </div>
 
     <!-- Main -->
-    <div class="relative z-10 w-full max-w-4xl mx-auto px-4 pb-28">
+    <div class="relative z-10 w-full max-w-4xl mx-auto px-4 flex-1 flex flex-col justify-center pb-4">
       <!-- Empty: centered across the whole content area -->
-      <div v-if="!isLoading && profiles.length === 0" class="flex justify-center pt-2">
+      <div v-if="!isLoading && profiles.length === 0" class="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-180px)] py-6">
         <EmptyState
           type="no-cards"
           title="No one new nearby"

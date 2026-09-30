@@ -196,7 +196,7 @@
             <button
               class="k-toggle cursor-pointer"
               :class="prefs.verifiedOnly ? 'on' : ''"
-              @click="prefs.verifiedOnly = !prefs.verifiedOnly"
+              @click="toggleVerifiedOnly"
             >
               <span class="knob"></span>
             </button>
@@ -581,6 +581,22 @@ const toggleVisibility = async () => {
     isVisible.value = prev
     const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Could not update visibility'
     toastError(msg)
+  }
+}
+
+// Toggle Verified Only
+const toggleVerifiedOnly = async () => {
+  prefs.verifiedOnly = !prefs.verifiedOnly
+  try {
+    await authStore.updateUserProfile({
+      preferences: {
+        verifiedOnly: Boolean(prefs.verifiedOnly)
+      }
+    })
+    success(prefs.verifiedOnly ? 'Showing verified profiles only' : 'Showing all profiles')
+  } catch (e) {
+    prefs.verifiedOnly = !prefs.verifiedOnly
+    toastError('Could not update preference')
   }
 }
 

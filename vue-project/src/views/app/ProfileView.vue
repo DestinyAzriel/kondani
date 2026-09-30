@@ -223,34 +223,36 @@
           <div class="k-card p-3.5 sm:p-4">
             <div class="flex items-center justify-between mb-2">
               <p class="k-label text-xs">Looking for</p>
-              <button v-if="!isEditing" @click="toggleEdit" class="text-[11px] text-gold-400 hover:text-gold-300 font-medium cursor-pointer">Change</button>
-            </div>
-
-            <!-- Edit mode: selectable options -->
-            <div v-if="isEditing" class="grid grid-cols-2 gap-2">
-              <button
-                v-for="opt in lookingForOptions"
-                :key="opt.value"
-                type="button"
-                @click="editForm.lookingFor = opt.value"
-                class="p-2.5 rounded-xl border text-left transition-all flex flex-col gap-0.5 cursor-pointer"
-                :class="editForm.lookingFor === opt.value
-                  ? 'bg-gradient-to-br from-gold-500/25 to-gold-400/10 border-gold-400 text-white shadow-sm'
-                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'">
-                <div class="flex items-center gap-1.5 font-bold text-xs">
-                  <span>{{ opt.emoji }}</span>
-                  <span class="truncate">{{ opt.label }}</span>
-                </div>
-                <span class="text-[10px] text-white/40 leading-tight">{{ opt.desc }}</span>
+              <button @click="showLookingForModal = !showLookingForModal" class="text-[11px] text-gold-400 hover:text-gold-300 font-medium cursor-pointer">
+                {{ showLookingForModal ? 'Close' : 'Change' }}
               </button>
             </div>
 
-            <!-- Read mode -->
-            <div v-else class="flex items-center gap-2">
+            <!-- Read mode active pill -->
+            <div class="flex items-center gap-2">
               <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gold-400/10 text-gold-300 border border-gold-400/25">
                 <span>{{ lookingForEmoji(profile.lookingFor) }}</span>
                 <span>{{ profile.lookingFor || 'Long-term relationship' }}</span>
               </span>
+            </div>
+
+            <!-- Instant Selectable Options (Shown on 'Change' or when in Edit mode) -->
+            <div v-if="showLookingForModal || isEditing" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-3 border-t border-white/5 animate-fade-in">
+              <button
+                v-for="opt in lookingForOptions"
+                :key="opt.value"
+                type="button"
+                @click="updateLookingFor(opt.value)"
+                class="p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 cursor-pointer"
+                :class="(profile.lookingFor || 'Long-term relationship') === opt.value
+                  ? 'bg-gradient-to-r from-gold-500/25 via-gold-500/10 to-transparent border-gold-400 text-white shadow-sm'
+                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'">
+                <span class="text-xl">{{ opt.emoji }}</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-bold text-xs text-white">{{ opt.label }}</span>
+                  <span class="text-[10px] text-white/40 leading-tight">{{ opt.desc }}</span>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -368,6 +370,18 @@ function toggleEdit() {
     editForm.lookingFor = profile.value.lookingFor || 'Long-term relationship'
   }
   isEditing.value = !isEditing.value
+}
+
+const showLookingForModal = ref(false)
+const updateLookingFor = async (val) => {
+  editForm.lookingFor = val
+  try {
+    await saveProfile({ lookingFor: val })
+    showLookingForModal.value = false
+    success(`Looking for updated to: ${val}`)
+  } catch (e) {
+    toastError('Could not save selection. Please try again.')
+  }
 }
 const addInterest = () => {
   const v = newInterest.value?.trim()

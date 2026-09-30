@@ -1,45 +1,43 @@
 <template>
   <div class="admin-portal min-h-screen bg-night-950 text-white font-sans antialiased">
     <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-50 bg-night-900/90 backdrop-blur-xl border-b border-white/10 px-6 py-4">
-      <div class="max-w-[1440px] mx-auto flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <KondaniMark :size="34" />
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-lg font-bold tracking-wide text-white">Kondani Admin</h1>
-              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Staff
-              </span>
+    <header class="sticky top-0 z-50 bg-night-900/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-6 py-2.5 sm:py-3.5">
+      <div class="max-w-[1440px] mx-auto flex items-center justify-between gap-2 sm:gap-4">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <KondaniMark :size="28" class="shrink-0" />
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <h1 class="text-sm sm:text-base font-bold tracking-wide text-white whitespace-nowrap">Kondani Admin</h1>
+              <span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">Staff</span>
             </div>
-            <p class="text-xs text-white/50">Platform control, user verification & safety</p>
+            <p class="text-[10px] text-white/50 hidden md:block">Platform control, user verification &amp; safety</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <router-link
             to="/encounters"
-            class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 transition-all"
+            class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 transition-all whitespace-nowrap"
           >
-            <ArrowLeft :size="14" />
-            <span>Open User App</span>
+            <ArrowLeft :size="13" />
+            <span>App</span>
           </router-link>
 
           <button
             @click="refreshCurrentTab"
-            class="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer"
+            class="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer"
             title="Refresh data"
             :disabled="isLoading"
           >
-            <RefreshCw :size="16" :class="{ 'animate-spin': isLoading }" />
+            <RefreshCw :size="14" :class="{ 'animate-spin': isLoading }" />
           </button>
 
           <button
             @click="handleLogout"
-            class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-300 hover:text-rose-200 transition-all cursor-pointer"
+            class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-300 hover:text-rose-200 transition-all cursor-pointer whitespace-nowrap"
             title="Sign out of Admin Portal"
           >
-            <LogOut :size="14" />
+            <LogOut :size="13" />
             <span>Logout</span>
           </button>
         </div>
@@ -47,8 +45,8 @@
     </header>
 
     <!-- Sub Navigation Tabs -->
-    <div class="bg-night-900/40 border-b border-white/5 px-6 py-2.5">
-      <div class="max-w-[1440px] mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none">
+    <div class="bg-night-900/40 border-b border-white/5 px-3 sm:px-6 py-2">
+      <div class="max-w-[1440px] mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -72,7 +70,7 @@
     </div>
 
     <!-- Main Content Body -->
-    <main class="max-w-[1440px] mx-auto px-6 py-6">
+    <main class="max-w-[1440px] mx-auto px-3 sm:px-6 py-4 sm:py-6 overflow-x-hidden">
       <!-- 1. OVERVIEW TAB -->
       <section v-if="activeTab === 'overview'" class="space-y-6">
         <!-- Stats Grid -->

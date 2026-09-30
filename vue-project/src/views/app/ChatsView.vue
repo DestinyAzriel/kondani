@@ -19,7 +19,7 @@
     </div>
 
     <!-- ====== MOBILE: Tinder-Grade Architecture (Screenshot 3) ====== -->
-    <div class="block md:hidden pb-3 relative z-10">
+    <div class="block md:hidden pb-4 relative z-10 flex flex-col min-h-[calc(100dvh-76px)] justify-between">
       <!-- Profile Strip (Identical to Desktop Screenshot 3) -->
       <div class="sticky top-0 z-20 bg-night-950/95 backdrop-blur-xl border-b border-white/5 px-4 py-3">
         <div class="flex items-center justify-between mb-3 cursor-pointer" @click="router.push('/profile')">
@@ -174,16 +174,16 @@
             </button>
           </div>
         </section>
+      </div>
 
-        <!-- Gold Upsell Card (Screenshot 3) -->
-        <div class="px-4 pt-1">
-          <div class="bg-gradient-to-br from-white/[0.06] to-white/[0.02] rounded-xl p-3 text-center border border-gold-400/20 shadow-md">
-            <p class="text-[10px] font-bold text-gold-300 uppercase tracking-widest mb-0.5">Kondani Gold</p>
-            <p class="text-[11px] text-white/60 mb-2">See who likes you and match faster.</p>
-            <button @click="router.push(likesCount > 0 ? '/likes' : '/premium')" class="w-full py-1.5 bg-gradient-to-r from-gold-500 to-gold-300 text-night-950 rounded-lg text-xs font-bold transition-all hover:opacity-95 shadow-sm cursor-pointer">
-              {{ likesCount > 0 ? 'View Likes' : 'Upgrade' }}
-            </button>
-          </div>
+      <!-- Gold Upsell Card anchored naturally near bottom -->
+      <div class="px-4 pt-4 pb-2">
+        <div class="bg-gradient-to-br from-white/[0.06] to-white/[0.02] rounded-xl p-3 text-center border border-gold-400/20 shadow-md">
+          <p class="text-[10px] font-bold text-gold-300 uppercase tracking-widest mb-0.5">Kondani Gold</p>
+          <p class="text-[11px] text-white/60 mb-2">See who likes you and match faster.</p>
+          <button @click="router.push(likesCount > 0 ? '/likes' : '/premium')" class="w-full py-1.5 bg-gradient-to-r from-gold-500 to-gold-300 text-night-950 rounded-lg text-xs font-bold transition-all hover:opacity-95 shadow-sm cursor-pointer">
+            {{ likesCount > 0 ? 'View Likes' : 'Upgrade' }}
+          </button>
         </div>
       </div>
     </div>

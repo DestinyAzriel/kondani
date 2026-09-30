@@ -30,6 +30,7 @@ export function useProfile() {
       // Backend returns user object
       if (res && res.data) {
         authStore.user = res.data
+        try { localStorage.setItem('kondani_user', JSON.stringify(res.data)) } catch (e) {}
       }
       return res.data
     } catch (err) {
@@ -44,7 +45,9 @@ export function useProfile() {
       // If photos or files are present, caller should handle multipart
       const res = await api.put('/auth/profile', profileData)
       if (res && res.data) {
-        authStore.user = { ...authStore.user, ...res.data }
+        const merged = { ...authStore.user, ...res.data }
+        authStore.user = merged
+        try { localStorage.setItem('kondani_user', JSON.stringify(merged)) } catch (e) {}
       }
       return res.data
     } catch (err) {
