@@ -9,22 +9,22 @@
     <!-- Header -->
     <div class="sticky top-0 z-40 bg-night-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-4 relative">
       <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
-        <div>
-          <h1 class="k-title flex items-center gap-2">
+        <div class="min-w-0 flex-1 pr-2">
+          <h1 class="k-title text-xl sm:text-2xl flex items-center gap-2">
             Plans Nearby
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gold-400/10 text-gold-300 border border-gold-400/20">
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gold-400/10 text-gold-300 border border-gold-400/20">
               Live
             </span>
           </h1>
-          <p class="text-white/50 text-xs sm:text-sm mt-0.5">
+          <p class="text-white/50 text-xs sm:text-sm mt-0.5 leading-snug">
             Real dates, spontaneous meetups &amp; activities in Malawi
           </p>
         </div>
 
-        <!-- Desktop Header Post Button (Mobile uses floating button) -->
+        <!-- Single Post Button for both Mobile and Desktop in Header -->
         <button
           @click="openComposer"
-          class="hidden md:flex k-btn k-btn-gold shrink-0 py-2.5 px-4 text-xs sm:text-sm items-center gap-1.5 shadow-lg"
+          class="k-btn k-btn-gold shrink-0 py-2 px-3 sm:px-4 text-xs sm:text-sm flex items-center gap-1.5 shadow-lg whitespace-nowrap cursor-pointer"
         >
           <Plus :size="16" />
           <span>Post a Plan</span>
@@ -99,17 +99,6 @@
         </template>
       </EmptyState>
     </div>
-
-    <!-- Floating Action Button for Mobile -->
-    <button
-      @click="openComposer"
-      class="md:hidden fixed bottom-20 right-4 z-40 p-4 rounded-full font-bold text-night-950 shadow-2xl flex items-center justify-center gap-2 border-2 border-night-950 transition-transform active:scale-95"
-      style="background: linear-gradient(135deg, var(--k-gold, #f4b740), var(--k-gold-l, #fcd34d))"
-      aria-label="Post a plan"
-    >
-      <Plus :size="20" class="stroke-[3]" />
-      <span class="text-xs font-bold pr-1">Post Plan</span>
-    </button>
 
     <!-- Plan Composer Modal -->
     <PlanComposerModal

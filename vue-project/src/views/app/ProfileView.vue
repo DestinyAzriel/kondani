@@ -1,10 +1,10 @@
 <template>
-  <div class="profile k-page pb-16 relative">
+  <div class="profile k-page pb-3 relative">
     <div class="k-stars"></div>
     <div class="absolute top-[-12%] right-[-8%] w-[45%] h-[38%] rounded-full blur-[130px] pointer-events-none"
          style="background:radial-gradient(circle,rgba(244,183,64,.1),transparent 70%)"></div>
 
-    <div class="max-w-4xl mx-auto px-3 sm:px-5 pt-3 pb-12 relative z-10 w-full">
+    <div class="max-w-4xl mx-auto px-3 sm:px-5 pt-3 pb-3 relative z-10 w-full">
       <!-- top bar -->
       <div class="flex items-center justify-between mb-3.5">
         <h1 class="k-title text-2xl">Profile</h1>

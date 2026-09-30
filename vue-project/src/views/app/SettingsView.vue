@@ -1,8 +1,8 @@
 <template>
-  <div class="settings k-page flex flex-col justify-between min-h-screen relative">
+  <div class="settings k-page relative">
     <div class="k-stars"></div>
 
-    <div class="flex-1 w-full">
+    <div class="w-full">
       <!-- Header -->
       <div class="sticky top-0 z-20 bg-night-950/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
@@ -17,13 +17,17 @@
       <section>
         <p class="k-label mb-3">Account</p>
         <div class="k-card overflow-hidden">
-          <div class="k-row">
-            <div class="k-row-ic"><Mail :size="16" /></div>
-            <div class="grow">
-              <div class="t">Email address</div>
-              <div class="d">Your login &amp; identity</div>
+          <div class="k-row flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-4 py-3 sm:py-3.5">
+            <div class="flex items-center gap-3.5 w-full sm:w-auto">
+              <div class="k-row-ic shrink-0"><Mail :size="16" /></div>
+              <div class="grow">
+                <div class="t">Email address</div>
+                <div class="d">Your login &amp; identity</div>
+              </div>
             </div>
-            <div class="val text-right font-mono text-xs text-white/80 max-w-[200px] truncate">{{ authStore.user?.email || '—' }}</div>
+            <div class="font-mono text-xs text-white/80 break-all pl-11 sm:pl-0 sm:text-right select-all">
+              {{ authStore.user?.email || '—' }}
+            </div>
           </div>
           <div class="k-row cursor-pointer" @click="router.push('/profile')">
             <div class="k-row-ic"><UserPen :size="16" /></div>
@@ -50,7 +54,7 @@
               <span class="font-semibold text-gold-300">You're on Free</span>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60 uppercase">Free</span>
             </div>
-            <div class="text-xs text-white/55 mt-0.5 truncate">Plans from MWK 600 — see who likes you, unlimited likes &amp; boosts.</div>
+            <div class="text-xs text-white/55 mt-0.5 leading-normal">Plans from MWK 600 — see who likes you, unlimited likes &amp; boosts.</div>
           </div>
           <button class="k-btn k-btn-gold whitespace-nowrap" style="padding:9px 18px;font-size:13px" @click="router.push('/premium')">
             Upgrade

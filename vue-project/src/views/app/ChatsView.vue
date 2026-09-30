@@ -19,7 +19,7 @@
     </div>
 
     <!-- ====== MOBILE: Tinder-Grade Architecture (Screenshot 3) ====== -->
-    <div class="block md:hidden pb-16 relative z-10">
+    <div class="block md:hidden pb-3 relative z-10">
       <!-- Profile Strip (Identical to Desktop Screenshot 3) -->
       <div class="sticky top-0 z-20 bg-night-950/95 backdrop-blur-xl border-b border-white/5 px-4 py-3">
         <div class="flex items-center justify-between mb-3 cursor-pointer" @click="router.push('/profile')">

@@ -42,11 +42,11 @@
 
         <!-- Category Tag -->
         <span
-          class="text-xs font-semibold px-3 py-1 rounded-full border shrink-0 flex items-center gap-1.5"
+          class="text-xs font-semibold px-2.5 sm:px-3 py-1 rounded-full border shrink-0 flex items-center gap-1.5"
           :class="categoryStyle.badge"
         >
           <span>{{ categoryStyle.emoji }}</span>
-          <span class="hidden xs:inline sm:inline">{{ categoryStyle.label }}</span>
+          <span class="text-[11px] sm:text-xs">{{ categoryStyle.label }}</span>
         </span>
       </div>
 
