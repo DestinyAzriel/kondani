@@ -1,5 +1,5 @@
 <template>
-  <div class="likes-view k-page p-4 relative overflow-hidden pb-28">
+  <div class="likes-view k-page p-4 relative overflow-hidden pb-6">
     <div class="k-stars"></div>
     <div class="fixed inset-0 pointer-events-none">
       <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[45%] rounded-full blur-[100px]" style="background: radial-gradient(circle, rgba(244,183,64,.12), transparent 70%)"></div>

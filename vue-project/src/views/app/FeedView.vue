@@ -1,5 +1,5 @@
 <template>
-  <div class="feed-container k-page relative overflow-hidden pb-32">
+  <div class="feed-container k-page relative overflow-hidden pb-6">
     <!-- Ambient Background Lighting -->
     <div class="fixed inset-0 pointer-events-none">
       <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px]" style="background: radial-gradient(circle, rgba(244,183,64,.13), transparent 70%)"></div>

@@ -136,11 +136,18 @@
           
           <!-- Maximum distance slider -->
           <div style="padding:14px 18px;border-bottom:1px solid var(--k-line)">
-            <div class="flex justify-between mb-3">
+            <div class="flex justify-between mb-2">
               <span class="text-sm font-medium">Maximum distance</span>
-              <span class="text-sm font-semibold text-gold-300">{{ prefs.distance }} km</span>
+              <span class="text-sm font-semibold text-gold-300">
+                {{ prefs.distance >= 500 ? '500+ km (Whole Malawi)' : `${prefs.distance} km` }}
+              </span>
             </div>
-            <input type="range" min="1" max="200" v-model.number="prefs.distance" class="k-range" />
+            <input type="range" min="5" max="500" step="5" v-model.number="prefs.distance" class="k-range" />
+            <div class="flex justify-between text-[10px] text-white/30 mt-1.5">
+              <span>5 km (Local)</span>
+              <span>150 km (City/Region)</span>
+              <span>500 km (Whole Country)</span>
+            </div>
           </div>
 
           <!-- Minimum and Maximum age sliders -->
@@ -341,8 +348,8 @@
     </div>
   </div>
 
-    <!-- Very bottom page footer: pinned cleanly to the very bottom -->
-    <footer class="py-3 text-center border-t border-white/5 pb-20 md:pb-4 w-full">
+    <!-- Very bottom page footer: pinned cleanly to the bottom -->
+    <footer class="py-4 text-center border-t border-white/5 w-full">
       <p class="text-white/30 text-xs font-medium tracking-wider">© octotechglobal</p>
     </footer>
 
