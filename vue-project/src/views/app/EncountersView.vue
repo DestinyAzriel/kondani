@@ -39,7 +39,8 @@
 
         <!-- Card column -->
         <div class="flex flex-col items-center w-full max-w-[440px] mx-auto lg:mx-0">
-          <div class="swipe-column relative w-full h-[64vh] sm:h-[68vh] lg:h-[600px]">
+          <!-- Mobile: near full-screen. Desktop: fixed 620px -->
+          <div class="swipe-column relative w-full h-[calc(100dvh-185px)] sm:h-[72vh] lg:h-[620px] max-h-[680px]">
             <div v-if="isLoading" class="w-full h-full">
               <SkeletonLoader type="swipe-card" />
             </div>
@@ -53,17 +54,18 @@
                 :total="visibleProfiles.length"
                 :ref="el => (cardRefs[index] = el)"
                 @swipe="(dir) => handleSwipe(dir, index)"
+                @open-profile="previewProfile = $event"
               />
             </div>
           </div>
 
-          <!-- Heavy action buttons -->
-          <div v-if="!isLoading && profiles.length > 0" class="k-act mt-7 sm:mt-9">
-            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
-            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
-            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
-            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="25" class="fill-current" /></button>
-            <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
+          <!-- Action buttons: balanced glassmorphic row -->
+          <div v-if="!isLoading && profiles.length > 0" class="k-act mt-5 sm:mt-6">
+            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="17" /></button>
+            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="20" /></button>
+            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="18" class="fill-current" /></button>
+            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="20" class="fill-current" /></button>
+            <button class="b" @click="handleBoost" title="Boost"><Zap :size="17" /></button>
           </div>
 
           <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-4">
@@ -132,6 +134,14 @@
       @close="showFilterModal = false"
       @apply="applyFilters"
     />
+
+    <!-- Profile full-detail sheet (opened via ⓘ button on the swipe card) -->
+    <ProfilePreviewModal
+      v-if="previewProfile"
+      :show="!!previewProfile"
+      :user="previewProfile"
+      @close="previewProfile = null"
+    />
   </div>
 </template>
 
@@ -142,6 +152,7 @@ import SkeletonLoader from '@/components/ui/SkeletonLoader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import MatchCelebration from '@/components/feature/MatchCelebration.vue'
 import FilterModal from '@/components/feature/modal/FilterModal.vue'
+import ProfilePreviewModal from '@/components/feature/modal/ProfilePreviewModal.vue'
 import { SlidersHorizontal, X, Heart, Star, RotateCcw, Zap, MapPin, BadgeCheck } from 'lucide-vue-next'
 import { intentService } from '@/services/intentService'
 import KondaniMark from '@/components/ui/KondaniMark.vue'
@@ -156,6 +167,7 @@ const router = useRouter()
 
 const showMatchCelebration = ref(false)
 const showFilterModal = ref(false)
+const previewProfile = ref(null) // Profile opened from the ⓘ card button
 const currentMatch = ref({})
 const profiles = ref([])
 const isLoading = ref(true)

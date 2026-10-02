@@ -24,25 +24,25 @@
           <span class="text-sm">No photo yet</span>
         </div>
 
-        <!-- Gradient overlay -->
-        <div class="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-b from-transparent to-night-950/95 pointer-events-none"></div>
+        <!-- Gradient overlay: progressive cinematic scrim (dark only at bottom 45%) -->
+        <div class="absolute inset-x-0 bottom-0 h-[48%] bg-gradient-to-t from-black/95 via-black/55 to-transparent pointer-events-none z-10"></div>
 
-        <!-- Photo dots -->
-        <div v-if="profile.photos && profile.photos.length > 1" class="absolute top-2 left-0 right-0 flex justify-center gap-1 z-10 px-2 pointer-events-none">
+        <!-- Photo story bars -->
+        <div v-if="profile.photos && profile.photos.length > 1" class="absolute top-2.5 inset-x-3 flex gap-1 z-30 pointer-events-none">
           <div
             v-for="(photo, index) in profile.photos"
             :key="index"
             class="flex-1 h-1 rounded-full transition-all duration-300"
-            :class="index === currentPhotoIndex ? 'bg-white' : 'bg-white/40'"
+            :class="index === currentPhotoIndex ? 'bg-white shadow-sm' : 'bg-white/35'"
           />
         </div>
 
         <!-- Options -->
         <button
           @click.stop="showOptions = true"
-          class="absolute top-4 right-4 z-40 p-2 bg-black/25 hover:bg-black/45 backdrop-blur-md rounded-full text-white/80 hover:text-white transition-all pointer-events-auto"
+          class="absolute top-4 right-4 z-40 p-2 bg-black/35 hover:bg-black/55 backdrop-blur-md rounded-full text-white/80 hover:text-white transition-all pointer-events-auto"
         >
-          <MoreVerticalIcon size="20" />
+          <MoreVerticalIcon size="18" />
         </button>
 
         <!-- Tap zones -->
@@ -70,19 +70,33 @@
 
         <!-- Info (only rendered on active top card to prevent text overlapping) -->
         <div v-if="index === 0" class="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white z-20 pointer-events-none">
-          <div class="flex items-end gap-2 mb-1.5">
-            <h2 class="text-3xl sm:text-4xl font-bold font-display drop-shadow-md tracking-tight leading-none">{{ profile.name }}</h2>
-            <span v-if="profile.age" class="text-xl sm:text-2xl font-medium drop-shadow-md opacity-90 leading-none">{{ profile.age }}</span>
-            <span v-if="profile.isVerified" class="mb-1 inline-flex items-center gap-1 bg-gradient-to-r from-gold-300 to-gold-500 text-night-950 text-[10px] font-bold px-2 py-0.5 rounded-full shadow" title="Verified">
-              <CheckIcon size="11" class="stroke-[4]" /> Verified
-            </span>
-          </div>
-
-          <div v-if="profile.district || profile.distance" class="flex items-center gap-1.5 text-xs sm:text-sm font-medium drop-shadow-md mb-2 text-white/85">
-            <MapPinIcon size="14" class="text-lagoon-400" />
+          <!-- District & Distance Badge -->
+          <div v-if="profile.district || profile.distance" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[11px] font-semibold text-white/90 mb-2">
+            <MapPinIcon size="11" class="text-lagoon-400 shrink-0" />
             <span>{{ profile.district && profile.distance ? `${profile.district} · ${profile.distance}` : (profile.district || profile.distance) }}</span>
           </div>
 
+          <!-- Name & Age + Verified Badge + Profile Info button -->
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <div class="flex items-baseline gap-2 min-w-0">
+              <h2 class="text-2xl sm:text-3xl font-bold font-display drop-shadow-md tracking-tight leading-none text-white truncate">{{ profile.name }}</h2>
+              <span v-if="profile.age" class="text-xl sm:text-2xl font-semibold drop-shadow-md text-white/90 leading-none">{{ profile.age }}</span>
+              <span v-if="profile.isVerified" class="inline-flex items-center gap-1 bg-gradient-to-r from-gold-300 to-gold-500 text-night-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow" title="Verified Member">
+                <CheckIcon size="10" class="stroke-[4]" />
+              </span>
+            </div>
+
+            <!-- Profile Info Toggle Button -->
+            <button
+              @click.stop="$emit('openProfile', profile)"
+              class="p-2 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md border border-white/20 text-white pointer-events-auto transition-all shadow-md shrink-0 cursor-pointer"
+              title="View full profile"
+            >
+              <InfoIcon :size="15" />
+            </button>
+          </div>
+
+          <!-- Relationship Intent -->
           <div v-if="profile.lookingFor" class="mb-2">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-400/20 backdrop-blur-md text-gold-300 text-[11px] font-semibold border border-gold-400/30 shadow-sm">
               <span>{{ lookingForEmoji(profile.lookingFor) }}</span>
@@ -90,15 +104,17 @@
             </span>
           </div>
 
-          <p v-if="profile.bio" class="text-sm text-white/90 drop-shadow-md line-clamp-2 mb-3 leading-relaxed">{{ profile.bio }}</p>
+          <!-- Bio snippet -->
+          <p v-if="profile.bio" class="text-xs sm:text-sm text-white/85 drop-shadow-md line-clamp-2 leading-relaxed mb-2.5">{{ profile.bio }}</p>
 
-          <div v-if="profile.interests && profile.interests.length" class="flex flex-wrap gap-2">
+          <!-- Interest chips -->
+          <div v-if="profile.interests && profile.interests.length" class="flex flex-wrap gap-1.5 pointer-events-auto">
             <span
               v-for="(interest, idx) in profile.interests.slice(0, 3)"
               :key="idx"
-              class="px-3 py-1 bg-white/10 backdrop-blur-md text-white text-[11px] font-semibold rounded-full border border-white/15"
+              class="px-2.5 py-0.5 bg-black/40 backdrop-blur-md text-white/90 text-[10px] sm:text-[11px] font-medium rounded-full border border-white/10"
             >{{ interest }}</span>
-            <span v-if="profile.interests.length > 3" class="px-3 py-1 bg-white/10 backdrop-blur-md text-white text-[11px] font-semibold rounded-full border border-white/15">
+            <span v-if="profile.interests.length > 3" class="px-2 py-0.5 bg-black/40 backdrop-blur-md text-white/60 text-[10px] font-medium rounded-full border border-white/10">
               +{{ profile.interests.length - 3 }}
             </span>
           </div>
@@ -122,7 +138,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { MapPin as MapPinIcon, Check as CheckIcon, MoreVertical as MoreVerticalIcon, Image as ImageIcon } from 'lucide-vue-next'
+import { MapPin as MapPinIcon, Check as CheckIcon, MoreVertical as MoreVerticalIcon, Image as ImageIcon, Info as InfoIcon } from 'lucide-vue-next'
 import ReportModal from '@/components/feature/modal/ReportModal.vue'
 import { mediaUrl } from '@/utils/media'
 
@@ -131,7 +147,7 @@ const props = defineProps({
   index: { type: Number, default: 0 },
   total: { type: Number, default: 1 }
 })
-const emit = defineEmits(['swipe'])
+const emit = defineEmits(['swipe', 'openProfile'])
 
 const currentPhotoIndex = ref(0)
 const showOptions = ref(false)

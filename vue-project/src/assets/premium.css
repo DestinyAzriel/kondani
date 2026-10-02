@@ -80,74 +80,85 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #14232c;
-  border: 1.5px solid rgba(255,255,255,.18);
-  box-shadow: 0 6px 16px rgba(0,0,0,.5);
+  background: rgba(14, 25, 33, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,.14);
+  box-shadow: 0 8px 20px rgba(0,0,0,.5);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   color: rgba(255,255,255,.8);
 }
-.k-act .b svg { stroke-width: 2.2; transition: transform 0.22s ease, filter 0.22s ease; }
+.k-act .b svg { stroke-width: 2.3; transition: transform 0.22s ease, filter 0.22s ease; }
 
-/* Rewind button glow */
+/* Rewind button (amber) */
+.k-act .b:first-child { color: #f59e0b; border-color: rgba(245, 158, 11, 0.35); }
 .k-act .b:first-child:hover {
-  transform: translateY(-4px) scale(1.12);
-  border-color: rgba(255,255,255,.75);
-  background: #1c3240;
-  color: #fff;
-  box-shadow: 0 0 20px rgba(255,255,255,.35), 0 10px 24px rgba(0,0,0,.6);
+  transform: translateY(-3px) scale(1.1);
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
 }
-.k-act .b:first-child:hover svg { transform: rotate(-25deg) scale(1.08); filter: drop-shadow(0 0 6px rgba(255,255,255,.7)); }
 
-/* Pass button (coral) glow */
-.k-act .b.pass { border-color: rgba(255,122,107,.45); color: var(--k-coral); }
+/* Pass button (coral red) - prominent 52px */
+.k-act .b.pass {
+  width: 52px;
+  height: 52px;
+  border-color: rgba(255,107,107,.45);
+  color: #ff6b6b;
+}
 .k-act .b.pass:hover {
-  transform: translateY(-4px) scale(1.12);
-  border-color: #ff7a6b;
-  background: rgba(255,122,107,.18);
-  color: #ff9183;
-  box-shadow: 0 0 22px rgba(255,122,107,.6), 0 0 40px rgba(255,122,107,.25), 0 10px 24px rgba(0,0,0,.6);
+  transform: translateY(-3px) scale(1.1);
+  border-color: #ff6b6b;
+  background: rgba(255,107,107,.16);
+  color: #ff8787;
+  box-shadow: 0 0 24px rgba(255,107,107,.55);
 }
-.k-act .b.pass:hover svg { transform: scale(1.1); filter: drop-shadow(0 0 6px rgba(255,122,107,.8)); }
 
-/* Superlike button (star / gold-l) glow */
-.k-act .b.sup { border-color: rgba(244,183,64,.45); color: var(--k-gold-l); }
+/* Superlike button (sky blue star) */
+.k-act .b.sup {
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
 .k-act .b.sup:hover {
-  transform: translateY(-4px) scale(1.12);
-  border-color: #f4b740;
-  background: rgba(244,183,64,.18);
-  color: #ffe099;
-  box-shadow: 0 0 24px rgba(244,183,64,.65), 0 0 45px rgba(244,183,64,.28), 0 10px 24px rgba(0,0,0,.6);
+  transform: translateY(-3px) scale(1.1);
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.16);
+  color: #7dd3fc;
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.55);
 }
-.k-act .b.sup:hover svg { transform: scale(1.12) rotate(12deg); filter: drop-shadow(0 0 8px rgba(244,183,64,.85)); }
 
-/* Main Like button (gold gradient) glow */
+/* Like button (emerald heart) - prominent 52px */
 .k-act .b.like {
-  width: 54px;
-  height: 54px;
-  background: linear-gradient(135deg, #f4b740 0%, #ffd98a 100%);
-  color: var(--k-night);
-  border: none;
-  box-shadow: 0 0 16px rgba(244,183,64,.4), 0 8px 22px rgba(0,0,0,.5);
+  width: 52px;
+  height: 52px;
+  border-color: rgba(45, 212, 191, 0.45);
+  color: #2dd4bf;
+  background: rgba(14, 25, 33, 0.88);
 }
 .k-act .b.like:hover {
-  transform: translateY(-5px) scale(1.14);
-  box-shadow: 0 0 28px rgba(244,183,64,.85), 0 0 50px rgba(244,183,64,.4), 0 14px 30px rgba(0,0,0,.6);
+  transform: translateY(-3px) scale(1.1);
+  border-color: #2dd4bf;
+  background: rgba(45, 212, 191, 0.16);
+  color: #5eead4;
+  box-shadow: 0 0 24px rgba(45, 212, 191, 0.6);
 }
-.k-act .b.like:hover svg { transform: scale(1.12); filter: drop-shadow(0 0 6px rgba(244,183,64,.9)); }
 
 /* Boost button (purple / electric) glow */
-.k-act .b:last-child { color: #c084fc; border-color: rgba(192,132,252,.45); }
+.k-act .b:last-child {
+  color: #c084fc;
+  border-color: rgba(192,132,252,.4);
+}
 .k-act .b:last-child:hover {
-  transform: translateY(-4px) scale(1.12);
+  transform: translateY(-3px) scale(1.1);
   border-color: #c084fc;
-  background: rgba(192,132,252,.18);
-  color: #e9d5ff;
-  box-shadow: 0 0 22px rgba(192,132,252,.65), 0 0 40px rgba(192,132,252,.25), 0 10px 24px rgba(0,0,0,.6);
+  background: rgba(192,132,252,.16);
+  color: #d8b4fe;
+  box-shadow: 0 0 22px rgba(192,132,252,.55);
 }
 .k-act .b:last-child:hover svg { transform: scale(1.12); filter: drop-shadow(0 0 6px rgba(192,132,252,.85)); }
 
