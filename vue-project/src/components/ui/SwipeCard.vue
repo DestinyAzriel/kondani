@@ -24,8 +24,8 @@
           <span class="text-sm">No photo yet</span>
         </div>
 
-        <!-- Gradient overlay: progressive cinematic scrim (dark only at bottom 55%) -->
-        <div class="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-10"></div>
+        <!-- Gradient overlay: smooth progressive scrim from transparent to 85% black at the very bottom -->
+        <div class="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black/90 via-black/45 to-transparent pointer-events-none z-10"></div>
 
         <!-- Segmented Photo progress bars at top of photo -->
         <div v-if="profile.photos && profile.photos.length > 1" class="absolute top-2.5 inset-x-2.5 flex gap-1.5 z-30 pointer-events-none">
@@ -40,7 +40,7 @@
         <!-- Options -->
         <button
           @click.stop="showOptions = true"
-          class="absolute top-4 right-4 z-40 p-2 bg-black/35 hover:bg-black/55 backdrop-blur-md rounded-full text-white/80 hover:text-white transition-all pointer-events-auto cursor-pointer"
+          class="absolute top-4 right-4 z-40 p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white/80 hover:text-white transition-all pointer-events-auto cursor-pointer"
         >
           <MoreVerticalIcon size="18" />
         </button>
@@ -68,8 +68,8 @@
           </div>
         </div>
 
-        <!-- Info Overlay (rendered on active top card above action buttons) -->
-        <div v-if="index === 0" class="absolute bottom-20 sm:bottom-22 inset-x-0 px-4 text-white z-20 pointer-events-none">
+        <!-- Info Overlay: Floats directly over the photo right above the action buttons -->
+        <div v-if="index === 0" class="absolute bottom-[78px] inset-x-0 px-4 text-white z-20 pointer-events-none">
           <!-- 1. Small pill for "Nearby" or distance -->
           <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/95 mb-1.5 shadow-sm">
             <span>Nearby</span>
@@ -100,15 +100,10 @@
           </div>
 
           <!-- 3. Line with pin icon and "X km away" -->
-          <div v-if="profile.district || profile.distance" class="flex items-center gap-1.5 text-xs sm:text-sm text-white/85 font-medium drop-shadow mb-1">
+          <div v-if="profile.district || profile.distance" class="flex items-center gap-1.5 text-xs sm:text-sm text-white/85 font-medium drop-shadow mb-0.5">
             <MapPinIcon :size="13" class="text-lagoon-400 shrink-0" />
             <span>{{ profile.district && profile.distance ? `${profile.district} · ${profile.distance}` : (profile.district || profile.distance) }}</span>
           </div>
-
-          <!-- 4. Bio: at most 1 single line -->
-          <p v-if="profile.bio" class="text-xs sm:text-sm text-white/80 drop-shadow truncate leading-relaxed">
-            {{ profile.bio }}
-          </p>
         </div>
       </div>
     </div>

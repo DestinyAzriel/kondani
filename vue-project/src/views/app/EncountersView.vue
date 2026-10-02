@@ -22,7 +22,7 @@
     </div>
 
     <!-- Main Discovery Area -->
-    <div class="relative z-10 w-full max-w-4xl mx-auto px-1 sm:px-4 flex flex-col items-center justify-center pb-2">
+    <div class="relative z-10 w-full max-w-4xl mx-auto px-2 sm:px-4 flex flex-col items-center justify-center">
       <!-- Empty: centered across the whole content area -->
       <div v-if="!isLoading && profiles.length === 0" class="flex flex-col items-center justify-center min-h-[calc(100dvh-180px)] py-6">
         <EmptyState
@@ -38,12 +38,12 @@
 
       <div v-else class="w-full grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-8 lg:items-center justify-center">
 
-        <!-- Card column -->
+        <!-- Card column: Full bleed on mobile, fixed 620px on desktop -->
         <div class="flex flex-col items-center w-full max-w-[440px] mx-auto lg:mx-0">
-          <!-- Card stack: explicit dvh-based height, perspective for stack depth -->
+          <!-- Card stack: full bleed height on mobile, fixed 620px on desktop -->
           <div
             class="swipe-column relative w-full"
-            style="height: calc(100dvh - 188px); min-height: 460px; max-height: 700px;"
+            style="height: calc(100dvh - 126px); min-height: 480px; max-height: 720px;"
           >
             <div v-if="isLoading" class="w-full h-full">
               <SkeletonLoader type="swipe-card" />
@@ -61,15 +61,18 @@
                 @open-profile="previewProfile = $event"
               />
             </div>
-          </div>
 
-          <!-- Action buttons: sit directly below the card -->
-          <div v-if="!isLoading && profiles.length > 0" class="k-act mt-4 sm:mt-5">
-            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
-            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
-            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
-            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="22" class="fill-current" /></button>
-            <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
+            <!-- Action buttons: floating directly over the bottom of the photo -->
+            <div
+              v-if="!isLoading && profiles.length > 0"
+              class="k-act absolute bottom-3.5 inset-x-0 z-30 pointer-events-auto"
+            >
+              <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
+              <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
+              <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
+              <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="22" class="fill-current" /></button>
+              <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
+            </div>
           </div>
 
           <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-3">
