@@ -39,14 +39,17 @@
       <div v-else class="w-full grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-8 lg:items-center justify-center">
 
         <!-- Card column -->
-        <div class="flex flex-col items-center w-full max-w-[440px] mx-auto lg:mx-0 relative">
-          <!-- Explicit viewport height so card NEVER collapses to 0 -->
-          <div class="swipe-column relative w-full h-[calc(100dvh-130px)] min-h-[460px] max-h-[720px] sm:h-[75vh] lg:h-[620px] rounded-2xl overflow-hidden shadow-2xl">
+        <div class="flex flex-col items-center w-full max-w-[440px] mx-auto lg:mx-0">
+          <!-- Card stack: explicit dvh-based height, perspective for stack depth -->
+          <div
+            class="swipe-column relative w-full"
+            style="height: calc(100dvh - 188px); min-height: 460px; max-height: 700px;"
+          >
             <div v-if="isLoading" class="w-full h-full">
               <SkeletonLoader type="swipe-card" />
             </div>
 
-            <div v-else class="w-full h-full relative overflow-visible">
+            <div v-else class="w-full h-full relative">
               <SwipeCard
                 v-for="(profile, index) in visibleProfiles"
                 :key="profile.id"
@@ -58,19 +61,21 @@
                 @open-profile="previewProfile = $event"
               />
             </div>
-
-            <!-- Action buttons: absolutely positioned inside the bottom of the card over the gradient -->
-            <div
-              v-if="!isLoading && profiles.length > 0"
-              class="k-act absolute bottom-3 sm:bottom-4 inset-x-0 z-30 pointer-events-auto"
-            >
-              <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
-              <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
-              <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
-              <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="22" class="fill-current" /></button>
-              <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
-            </div>
           </div>
+
+          <!-- Action buttons: sit directly below the card -->
+          <div v-if="!isLoading && profiles.length > 0" class="k-act mt-4 sm:mt-5">
+            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
+            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
+            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
+            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="22" class="fill-current" /></button>
+            <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
+          </div>
+
+          <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-3">
+            {{ likesLeft === 0 ? 'No more likes today' : `Only ${likesLeft} ${likesLeft === 1 ? 'like' : 'likes'} left today` }} ·
+            <span class="cursor-pointer" style="color:var(--k-gold-l)" @click="router.push('/premium')">Get unlimited</span>
+          </p>
         </div>
 
         <!-- Desktop detail panel -->
