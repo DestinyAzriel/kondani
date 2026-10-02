@@ -1,5 +1,5 @@
 <template>
-  <div class="encounters relative overflow-hidden flex flex-col h-[calc(100dvh-72px)] md:h-auto md:min-h-[100dvh] bg-night-950">
+  <div class="encounters relative overflow-hidden flex flex-col w-full min-h-screen bg-night-950">
     <div class="k-stars"></div>
     <div class="absolute top-[-18%] left-[-15%] w-[55%] h-[50%] rounded-full blur-[130px] pointer-events-none"
          style="background:radial-gradient(circle,rgba(244,183,64,.14),transparent 70%)"></div>
@@ -21,10 +21,10 @@
       </button>
     </div>
 
-    <!-- Main Discovery Area: Full-Bleed on Mobile -->
-    <div class="relative z-10 w-full max-w-4xl mx-auto px-1 sm:px-4 flex-1 min-h-0 flex flex-col justify-center pb-1 sm:pb-3">
+    <!-- Main Discovery Area -->
+    <div class="relative z-10 w-full max-w-4xl mx-auto px-1 sm:px-4 flex flex-col items-center justify-center pb-2">
       <!-- Empty: centered across the whole content area -->
-      <div v-if="!isLoading && profiles.length === 0" class="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-180px)] py-6">
+      <div v-if="!isLoading && profiles.length === 0" class="flex flex-col items-center justify-center min-h-[calc(100dvh-180px)] py-6">
         <EmptyState
           type="no-cards"
           title="No one new nearby"
@@ -36,11 +36,12 @@
         />
       </div>
 
-      <div v-else class="h-full w-full grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-8 lg:items-center justify-center">
+      <div v-else class="w-full grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-8 lg:items-center justify-center">
 
-        <!-- Card column: Full bleed flex-1 on mobile, fixed 620px on desktop -->
-        <div class="flex flex-col items-center w-full h-full max-w-[440px] mx-auto lg:mx-0 relative">
-          <div class="swipe-column relative w-full h-full flex-1 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
+        <!-- Card column -->
+        <div class="flex flex-col items-center w-full max-w-[440px] mx-auto lg:mx-0 relative">
+          <!-- Explicit viewport height so card NEVER collapses to 0 -->
+          <div class="swipe-column relative w-full h-[calc(100dvh-130px)] min-h-[460px] max-h-[720px] sm:h-[75vh] lg:h-[620px] rounded-2xl overflow-hidden shadow-2xl">
             <div v-if="isLoading" class="w-full h-full">
               <SkeletonLoader type="swipe-card" />
             </div>
