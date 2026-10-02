@@ -24,15 +24,15 @@
           <span class="text-sm">No photo yet</span>
         </div>
 
-        <!-- Gradient overlay: progressive cinematic scrim (dark only at bottom 45%) -->
-        <div class="absolute inset-x-0 bottom-0 h-[48%] bg-gradient-to-t from-black/95 via-black/55 to-transparent pointer-events-none z-10"></div>
+        <!-- Gradient overlay: progressive cinematic scrim (dark only at bottom 55%) -->
+        <div class="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-10"></div>
 
-        <!-- Photo story bars -->
-        <div v-if="profile.photos && profile.photos.length > 1" class="absolute top-2.5 inset-x-3 flex gap-1 z-30 pointer-events-none">
+        <!-- Segmented Photo progress bars at top of photo -->
+        <div v-if="profile.photos && profile.photos.length > 1" class="absolute top-2.5 inset-x-2.5 flex gap-1.5 z-30 pointer-events-none">
           <div
             v-for="(photo, index) in profile.photos"
             :key="index"
-            class="flex-1 h-1 rounded-full transition-all duration-300"
+            class="flex-1 h-1 rounded-full transition-all duration-200"
             :class="index === currentPhotoIndex ? 'bg-white shadow-sm' : 'bg-white/35'"
           />
         </div>
@@ -40,15 +40,15 @@
         <!-- Options -->
         <button
           @click.stop="showOptions = true"
-          class="absolute top-4 right-4 z-40 p-2 bg-black/35 hover:bg-black/55 backdrop-blur-md rounded-full text-white/80 hover:text-white transition-all pointer-events-auto"
+          class="absolute top-4 right-4 z-40 p-2 bg-black/35 hover:bg-black/55 backdrop-blur-md rounded-full text-white/80 hover:text-white transition-all pointer-events-auto cursor-pointer"
         >
           <MoreVerticalIcon size="18" />
         </button>
 
-        <!-- Tap zones -->
-        <div v-if="profile.photos && profile.photos.length > 1" class="absolute inset-0 flex z-20">
-          <div class="w-1/3 h-full cursor-pointer" @click.stop="previousPhoto" />
-          <div class="w-2/3 h-full cursor-pointer" @click.stop="nextPhoto" />
+        <!-- Tap zones: 50% left (previous) / 50% right (next) -->
+        <div v-if="profile.photos && profile.photos.length > 1" class="absolute inset-0 flex z-20 pointer-events-none">
+          <div class="w-1/2 h-[75%] pointer-events-auto cursor-pointer" @click.stop="previousPhoto" />
+          <div class="w-1/2 h-[75%] pointer-events-auto cursor-pointer" @click.stop="nextPhoto" />
         </div>
 
         <!-- Swipe indicators -->
@@ -68,56 +68,47 @@
           </div>
         </div>
 
-        <!-- Info (only rendered on active top card to prevent text overlapping) -->
-        <div v-if="index === 0" class="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white z-20 pointer-events-none">
-          <!-- District & Distance Badge -->
-          <div v-if="profile.district || profile.distance" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[11px] font-semibold text-white/90 mb-2">
-            <MapPinIcon size="11" class="text-lagoon-400 shrink-0" />
-            <span>{{ profile.district && profile.distance ? `${profile.district} · ${profile.distance}` : (profile.district || profile.distance) }}</span>
+        <!-- Info Overlay (rendered on active top card above action buttons) -->
+        <div v-if="index === 0" class="absolute bottom-20 sm:bottom-22 inset-x-0 px-4 text-white z-20 pointer-events-none">
+          <!-- 1. Small pill for "Nearby" or distance -->
+          <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/95 mb-1.5 shadow-sm">
+            <span>Nearby</span>
           </div>
 
-          <!-- Name & Age + Verified Badge + Profile Info button -->
-          <div class="flex items-center justify-between gap-2 mb-1.5">
+          <!-- 2. Name & Age (28-32px) + Verified tick + Details up-arrow button -->
+          <div class="flex items-center justify-between gap-2 mb-1">
             <div class="flex items-baseline gap-2 min-w-0">
-              <h2 class="text-2xl sm:text-3xl font-bold font-display drop-shadow-md tracking-tight leading-none text-white truncate">{{ profile.name }}</h2>
-              <span v-if="profile.age" class="text-xl sm:text-2xl font-semibold drop-shadow-md text-white/90 leading-none">{{ profile.age }}</span>
-              <span v-if="profile.isVerified" class="inline-flex items-center gap-1 bg-gradient-to-r from-gold-300 to-gold-500 text-night-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow" title="Verified Member">
-                <CheckIcon size="10" class="stroke-[4]" />
+              <h2 class="text-[28px] sm:text-[32px] font-bold font-display tracking-tight text-white drop-shadow-md truncate leading-tight">
+                {{ profile.name }}
+              </h2>
+              <span v-if="profile.age" class="text-2xl font-bold text-white/90 drop-shadow-md leading-tight">
+                {{ profile.age }}
+              </span>
+              <span v-if="profile.isVerified" class="inline-flex items-center text-amber-400 drop-shadow-md" title="Verified Member">
+                <BadgeCheck :size="22" class="fill-amber-400 text-night-950" />
               </span>
             </div>
 
-            <!-- Profile Info Toggle Button -->
+            <!-- Details button: circular up-arrow on the right of the name row -->
             <button
               @click.stop="$emit('openProfile', profile)"
-              class="p-2 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md border border-white/20 text-white pointer-events-auto transition-all shadow-md shrink-0 cursor-pointer"
+              class="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 active:scale-95 backdrop-blur-md border border-white/25 text-white flex items-center justify-center pointer-events-auto transition-transform cursor-pointer shrink-0 shadow-lg"
               title="View full profile"
             >
-              <InfoIcon :size="15" />
+              <ArrowUp :size="18" stroke-width="2.5" />
             </button>
           </div>
 
-          <!-- Relationship Intent -->
-          <div v-if="profile.lookingFor" class="mb-2">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-400/20 backdrop-blur-md text-gold-300 text-[11px] font-semibold border border-gold-400/30 shadow-sm">
-              <span>{{ lookingForEmoji(profile.lookingFor) }}</span>
-              <span>{{ profile.lookingFor }}</span>
-            </span>
+          <!-- 3. Line with pin icon and "X km away" -->
+          <div v-if="profile.district || profile.distance" class="flex items-center gap-1.5 text-xs sm:text-sm text-white/85 font-medium drop-shadow mb-1">
+            <MapPinIcon :size="13" class="text-lagoon-400 shrink-0" />
+            <span>{{ profile.district && profile.distance ? `${profile.district} · ${profile.distance}` : (profile.district || profile.distance) }}</span>
           </div>
 
-          <!-- Bio snippet -->
-          <p v-if="profile.bio" class="text-xs sm:text-sm text-white/85 drop-shadow-md line-clamp-2 leading-relaxed mb-2.5">{{ profile.bio }}</p>
-
-          <!-- Interest chips -->
-          <div v-if="profile.interests && profile.interests.length" class="flex flex-wrap gap-1.5 pointer-events-auto">
-            <span
-              v-for="(interest, idx) in profile.interests.slice(0, 3)"
-              :key="idx"
-              class="px-2.5 py-0.5 bg-black/40 backdrop-blur-md text-white/90 text-[10px] sm:text-[11px] font-medium rounded-full border border-white/10"
-            >{{ interest }}</span>
-            <span v-if="profile.interests.length > 3" class="px-2 py-0.5 bg-black/40 backdrop-blur-md text-white/60 text-[10px] font-medium rounded-full border border-white/10">
-              +{{ profile.interests.length - 3 }}
-            </span>
-          </div>
+          <!-- 4. Bio: at most 1 single line -->
+          <p v-if="profile.bio" class="text-xs sm:text-sm text-white/80 drop-shadow truncate leading-relaxed">
+            {{ profile.bio }}
+          </p>
         </div>
       </div>
     </div>
@@ -138,7 +129,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { MapPin as MapPinIcon, Check as CheckIcon, MoreVertical as MoreVerticalIcon, Image as ImageIcon, Info as InfoIcon } from 'lucide-vue-next'
+import { ArrowUp, BadgeCheck, MapPin as MapPinIcon, MoreVertical as MoreVerticalIcon, Image as ImageIcon } from 'lucide-vue-next'
 import ReportModal from '@/components/feature/modal/ReportModal.vue'
 import { mediaUrl } from '@/utils/media'
 

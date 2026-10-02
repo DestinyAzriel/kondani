@@ -1,27 +1,28 @@
 <template>
-  <div class="encounters k-page relative overflow-hidden">
+  <div class="encounters relative overflow-hidden flex flex-col h-[calc(100dvh-72px)] md:h-auto md:min-h-[100dvh] bg-night-950">
     <div class="k-stars"></div>
     <div class="absolute top-[-18%] left-[-15%] w-[55%] h-[50%] rounded-full blur-[130px] pointer-events-none"
          style="background:radial-gradient(circle,rgba(244,183,64,.14),transparent 70%)"></div>
     <div class="absolute bottom-[-18%] right-[-15%] w-[55%] h-[50%] rounded-full blur-[130px] pointer-events-none"
          style="background:radial-gradient(circle,rgba(45,212,191,.10),transparent 70%)"></div>
 
-    <!-- Header -->
-    <div class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-4 max-w-4xl mx-auto w-full">
-      <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity select-none group" @click="loadProfiles" title="Refresh Discover">
-        <KondaniMark :size="32" class="transition-transform group-hover:scale-105" />
-        <h1 class="k-serif text-2xl group-hover:text-gold-300 transition-colors">Kondani</h1>
+    <!-- Slim Top Header -->
+    <div class="relative z-10 flex items-center justify-between px-3 sm:px-6 h-12 shrink-0 max-w-4xl mx-auto w-full">
+      <div class="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity select-none group" @click="loadProfiles" title="Refresh Discover">
+        <KondaniMark :size="26" class="transition-transform group-hover:scale-105" />
+        <h1 class="k-serif text-xl group-hover:text-gold-300 transition-colors">Kondani</h1>
       </div>
-      <button @click="showFilterModal = true" class="k-iconbtn relative" title="Filters">
-        <SlidersHorizontal :size="19" />
+      <button @click="showFilterModal = true" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all relative cursor-pointer" title="Filters">
+        <SlidersHorizontal :size="16" />
         <span v-if="activeFilterCount > 0"
-              class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 text-[11px] font-bold rounded-full flex items-center justify-center"
-              style="background:var(--k-gold);color:var(--k-night)">{{ activeFilterCount }}</span>
+              class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center bg-amber-400 text-night-950">
+          {{ activeFilterCount }}
+        </span>
       </button>
     </div>
 
-    <!-- Main -->
-    <div class="relative z-10 w-full max-w-4xl mx-auto px-4 flex-1 flex flex-col justify-center pb-4">
+    <!-- Main Discovery Area: Full-Bleed on Mobile -->
+    <div class="relative z-10 w-full max-w-4xl mx-auto px-1 sm:px-4 flex-1 min-h-0 flex flex-col justify-center pb-1 sm:pb-3">
       <!-- Empty: centered across the whole content area -->
       <div v-if="!isLoading && profiles.length === 0" class="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-180px)] py-6">
         <EmptyState
@@ -35,12 +36,11 @@
         />
       </div>
 
-      <div v-else class="grid lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] gap-10 lg:items-center justify-center">
+      <div v-else class="h-full w-full grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-8 lg:items-center justify-center">
 
-        <!-- Card column -->
-        <div class="flex flex-col items-center w-full max-w-[440px] mx-auto lg:mx-0">
-          <!-- Mobile: near full-screen. Desktop: fixed 620px -->
-          <div class="swipe-column relative w-full h-[calc(100dvh-185px)] sm:h-[72vh] lg:h-[620px] max-h-[680px]">
+        <!-- Card column: Full bleed flex-1 on mobile, fixed 620px on desktop -->
+        <div class="flex flex-col items-center w-full h-full max-w-[440px] mx-auto lg:mx-0 relative">
+          <div class="swipe-column relative w-full h-full flex-1 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
             <div v-if="isLoading" class="w-full h-full">
               <SkeletonLoader type="swipe-card" />
             </div>
@@ -57,21 +57,19 @@
                 @open-profile="previewProfile = $event"
               />
             </div>
-          </div>
 
-          <!-- Action buttons: balanced glassmorphic row -->
-          <div v-if="!isLoading && profiles.length > 0" class="k-act mt-5 sm:mt-6">
-            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="17" /></button>
-            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="20" /></button>
-            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="18" class="fill-current" /></button>
-            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="20" class="fill-current" /></button>
-            <button class="b" @click="handleBoost" title="Boost"><Zap :size="17" /></button>
+            <!-- Action buttons: absolutely positioned inside the bottom of the card over the gradient -->
+            <div
+              v-if="!isLoading && profiles.length > 0"
+              class="k-act absolute bottom-3 sm:bottom-4 inset-x-0 z-30 pointer-events-auto"
+            >
+              <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
+              <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
+              <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
+              <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="22" class="fill-current" /></button>
+              <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
+            </div>
           </div>
-
-          <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-4">
-            {{ likesLeft === 0 ? 'No more likes today' : `Only ${likesLeft} ${likesLeft === 1 ? 'like' : 'likes'} left today` }} ·
-            <span class="cursor-pointer" style="color:var(--k-gold-l)" @click="router.push('/premium')">Get unlimited</span>
-          </p>
         </div>
 
         <!-- Desktop detail panel -->
