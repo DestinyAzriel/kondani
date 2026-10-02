@@ -120,6 +120,147 @@ exports.getDashboardStats = async (req, res) => {
 };
 
 /**
+ * Comprehensive Revenue Analytics & Investor-Grade Financial Ledger
+ */
+exports.getRevenueAnalytics = async (req, res) => {
+    try {
+        const now = new Date();
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+        // 1. Total Gross Revenue (Completed)
+        const totalGrossAgg = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+        ]);
+        const totalRevenue = totalGrossAgg[0]?.total || 0;
+        const completedCount = totalGrossAgg[0]?.count || 0;
+
+        // 2. Month-to-Date (MTD)
+        const mtdAgg = await Payment.aggregate([
+            { $match: { status: 'completed', createdAt: { $gte: thisMonthStart } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const mtdRevenue = mtdAgg[0]?.total || 0;
+
+        // 3. Last Month Revenue (for MoM growth calculation)
+        const lastMonthAgg = await Payment.aggregate([
+            { $match: { status: 'completed', createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const lastMonthRevenue = lastMonthAgg[0]?.total || 0;
+        const momGrowthPercent = lastMonthRevenue > 0
+            ? (((mtdRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(1)
+            : (mtdRevenue > 0 ? '+100%' : '0%');
+
+        // 4. Unique Paying Customers
+        const payingUsersAgg = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: '$userId' } },
+            { $count: 'count' }
+        ]);
+        const payingCustomersCount = payingUsersAgg[0]?.count || 0;
+
+        // 5. Total Users & Conversion Rate
+        const totalUsers = await User.countDocuments();
+        const conversionRate = totalUsers > 0
+            ? ((payingCustomersCount / totalUsers) * 100).toFixed(2)
+            : '0.00';
+
+        // 6. ARPU (Average Revenue Per User) and ARPPU (Per Paying User)
+        const arpu = totalUsers > 0 ? Math.round(totalRevenue / totalUsers) : 0;
+        const arppu = payingCustomersCount > 0 ? Math.round(totalRevenue / payingCustomersCount) : 0;
+
+        // 7. Plan / Tier Distribution
+        const tierDistAgg = await User.aggregate([
+            { $group: { _id: '$subscriptionTier', count: { $sum: 1 } } }
+        ]);
+        const tierBreakdown = {
+            free: 0,
+            plus: 0,
+            gold: 0,
+            platinum: 0
+        };
+        tierDistAgg.forEach(t => {
+            if (t._id && tierBreakdown[t._id] !== undefined) {
+                tierBreakdown[t._id] = t.count;
+            } else if (!t._id) {
+                tierBreakdown.free += t.count;
+            }
+        });
+
+        // 8. Payment Method Breakdown (Airtel Money, Mpamba, Card, PayChangu)
+        const methodAgg = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: '$paymentMethod', total: { $sum: '$amount' }, count: { $sum: 1 } } }
+        ]);
+
+        // 9. Monthly Trend for charts (Last 12 months)
+        const monthlyTrendAgg = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+                    revenue: { $sum: '$amount' },
+                    transactions: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } },
+            { $limit: 12 }
+        ]);
+
+        // 10. Full Transaction Ledger (with Populated User Details)
+        const transactions = await Payment.find()
+            .populate('userId', 'name email phoneNumber district subscriptionTier')
+            .sort({ createdAt: -1 })
+            .limit(200)
+            .lean();
+
+        const formattedLedger = transactions.map(t => {
+            const u = t.userId || {};
+            return {
+                id: t._id,
+                reference: t.referenceId || t.transactionId || '—',
+                transactionId: t.transactionId || '—',
+                date: t.createdAt,
+                amount: t.amount,
+                currency: t.currency || 'MWK',
+                status: t.status,
+                paymentMethod: t.paymentMethod || 'Mobile Money',
+                customerName: u.name || 'Unnamed',
+                customerEmail: u.email || '—',
+                customerPhone: u.phoneNumber || t.phoneNumber || '—',
+                district: u.district || '—',
+                tier: u.subscriptionTier || 'Plus / Gold'
+            };
+        });
+
+        res.json({
+            summary: {
+                totalGrossRevenue: totalRevenue,
+                mtdRevenue,
+                lastMonthRevenue,
+                momGrowthPercent,
+                completedCount,
+                payingCustomersCount,
+                totalUsers,
+                conversionRate: `${conversionRate}%`,
+                arpu,
+                arppu,
+                tierBreakdown,
+                methodBreakdown: methodAgg,
+                monthlyTrend: monthlyTrendAgg
+            },
+            transactions: formattedLedger
+        });
+    } catch (error) {
+        console.error('Revenue analytics error:', error);
+        res.status(500).json({ error: 'Failed to retrieve revenue analytics' });
+    }
+};
+
+/**
  * Get all users with pagination, tier filters and search
  */
 exports.getAllUsers = async (req, res) => {

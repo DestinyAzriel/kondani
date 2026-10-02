@@ -302,7 +302,287 @@
         </div>
       </section>
 
-      <!-- 2. USER MANAGEMENT TAB -->
+      <!-- 2. FINANCIALS & EXCEL LEDGER TAB -->
+      <section v-else-if="activeTab === 'financials'" class="space-y-6">
+        <!-- Investor Executive Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-white/[0.02] to-transparent border border-amber-400/20 shadow-xl">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="p-2 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                <TrendingUp :size="20" />
+              </span>
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-white">Investor Financials &amp; Revenue Ledger</h2>
+                <p class="text-xs text-white/50">Real-time GMV, unit economics &amp; one-click Excel export for investor meetings</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              @click="exportToExcel"
+              class="flex-1 sm:flex-none k-btn k-btn-gold py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer"
+            >
+              <FileSpreadsheet :size="16" />
+              <span>Export to Excel (.csv)</span>
+              <Download :size="14" />
+            </button>
+            <button
+              @click="fetchFinancials"
+              class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer"
+              title="Refresh financial data"
+            >
+              <RefreshCw :size="16" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 5 Key Investor Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+          <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+            <div class="flex items-center justify-between text-white/50 text-[11px] mb-1.5">
+              <span>Gross Revenue (GMV)</span>
+              <Coins :size="15" class="text-emerald-400" />
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-emerald-400">
+              MWK {{ (financialData.summary?.totalGrossRevenue || 0).toLocaleString() }}
+            </div>
+            <div class="text-[10px] text-white/40 mt-1">PayChangu total</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+            <div class="flex items-center justify-between text-white/50 text-[11px] mb-1.5">
+              <span>Month-to-Date (MTD)</span>
+              <Coins :size="15" class="text-amber-400" />
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-white">
+              MWK {{ (financialData.summary?.mtdRevenue || 0).toLocaleString() }}
+            </div>
+            <div class="text-[10px] text-emerald-400 mt-1">
+              MoM: {{ financialData.summary?.momGrowthPercent || '0%' }}
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+            <div class="flex items-center justify-between text-white/50 text-[11px] mb-1.5">
+              <span>Paying Customers</span>
+              <Crown :size="15" class="text-gold-300" />
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-white">
+              {{ financialData.summary?.payingCustomersCount || 0 }}
+            </div>
+            <div class="text-[10px] text-white/40 mt-1">Paid subscribers</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+            <div class="flex items-center justify-between text-white/50 text-[11px] mb-1.5">
+              <span>Conversion Rate</span>
+              <TrendingUp :size="15" class="text-cyan-400" />
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-cyan-300">
+              {{ financialData.summary?.conversionRate || '0.00%' }}
+            </div>
+            <div class="text-[10px] text-white/40 mt-1">Free-to-Paid ratio</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 col-span-2 sm:col-span-1">
+            <div class="flex items-center justify-between text-white/50 text-[11px] mb-1.5">
+              <span>ARPU (Avg Rev / User)</span>
+              <Zap :size="15" class="text-purple-400" />
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-purple-300">
+              MWK {{ (financialData.summary?.arpu || 0).toLocaleString() }}
+            </div>
+            <div class="text-[10px] text-white/40 mt-1">ARPPU: MWK {{ (financialData.summary?.arppu || 0).toLocaleString() }}</div>
+          </div>
+        </div>
+
+        <!-- Tier & Channel Breakdown Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Tier Breakdown -->
+          <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10">
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center justify-between">
+              <span>Revenue by Subscription Tier</span>
+              <Crown :size="14" class="text-amber-400" />
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-white/80">Kondani Free</span>
+                  <span class="font-semibold text-white/50">{{ financialData.summary?.tierBreakdown?.free || 0 }} users</span>
+                </div>
+                <div class="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div class="h-full bg-white/20 rounded-full" :style="{ width: tierPercent('free') }"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-cyan-300 font-semibold">Kondani Plus (MWK 600/wk)</span>
+                  <span class="font-semibold text-cyan-300">{{ financialData.summary?.tierBreakdown?.plus || 0 }} subs</span>
+                </div>
+                <div class="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div class="h-full bg-cyan-400 rounded-full" :style="{ width: tierPercent('plus') }"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-amber-300 font-semibold">Kondani Gold (MWK 2,500/mo)</span>
+                  <span class="font-semibold text-amber-300">{{ financialData.summary?.tierBreakdown?.gold || 0 }} subs</span>
+                </div>
+                <div class="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div class="h-full bg-amber-400 rounded-full" :style="{ width: tierPercent('gold') }"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-purple-300 font-semibold">VIP Platinum (MWK 5,000/mo)</span>
+                  <span class="font-semibold text-purple-300">{{ financialData.summary?.tierBreakdown?.platinum || 0 }} subs</span>
+                </div>
+                <div class="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div class="h-full bg-purple-400 rounded-full" :style="{ width: tierPercent('platinum') }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Channels -->
+          <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+            <div>
+              <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center justify-between">
+                <span>Payment Gateways &amp; Channels</span>
+                <CreditCard :size="14" class="text-emerald-400" />
+              </h3>
+              <div class="space-y-3">
+                <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-300 flex items-center justify-center font-black text-xs">AM</div>
+                    <div>
+                      <div class="text-xs font-bold text-white">Airtel Money (Malawi)</div>
+                      <div class="text-[10px] text-white/40">Processed via PayChangu Mobile</div>
+                    </div>
+                  </div>
+                  <span class="text-xs font-bold text-white">Active</span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-black text-xs">TM</div>
+                    <div>
+                      <div class="text-xs font-bold text-white">TNM Mpamba (Malawi)</div>
+                      <div class="text-[10px] text-white/40">Processed via PayChangu Mobile</div>
+                    </div>
+                  </div>
+                  <span class="text-xs font-bold text-white">Active</span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center font-black text-xs">CC</div>
+                    <div>
+                      <div class="text-xs font-bold text-white">Visa / Mastercard &amp; International</div>
+                      <div class="text-[10px] text-white/40">Processed via PayChangu Gateway</div>
+                    </div>
+                  </div>
+                  <span class="text-xs font-bold text-white">Active</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial Ledger & Transaction Table -->
+        <div class="space-y-3">
+          <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white/[0.02] p-4 rounded-2xl border border-white/10">
+            <div class="relative w-full sm:w-80">
+              <Search :size="16" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+              <input
+                v-model="financialSearch"
+                type="text"
+                placeholder="Search transactions by name, email, ref..."
+                class="w-full bg-night-900/80 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-white/40 outline-none focus:border-amber-400/50"
+              />
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+              <select
+                v-model="financialStatusFilter"
+                class="bg-night-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 outline-none"
+              >
+                <option value="">All Statuses</option>
+                <option value="completed">Completed Only</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+
+              <button
+                @click="exportToExcel"
+                class="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+              >
+                <FileSpreadsheet :size="14" /> Download .csv
+              </button>
+            </div>
+          </div>
+
+          <!-- Transaction Table (Clean, Scrollable) -->
+          <div class="rounded-2xl border border-white/10 bg-white/[0.01] overflow-hidden">
+            <div class="px-4 py-2 bg-white/[0.02] border-b border-white/5 flex items-center justify-between text-[11px] text-white/40 md:hidden">
+              <span>← Swipe ledger horizontally →</span>
+              <span class="text-white/60 font-semibold">{{ filteredTransactions.length }} records</span>
+            </div>
+            <div class="overflow-x-auto scrollbar-thin">
+              <table class="w-full min-w-[850px] text-left text-xs">
+                <thead class="bg-white/[0.03] border-b border-white/10 text-white/50 uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th class="px-4 py-3 min-w-[140px]">Date &amp; Time</th>
+                    <th class="px-4 py-3 min-w-[180px]">Customer</th>
+                    <th class="px-4 py-3 min-w-[150px]">Reference</th>
+                    <th class="px-4 py-3 min-w-[120px]">Plan / Tier</th>
+                    <th class="px-4 py-3 min-w-[110px]">Amount</th>
+                    <th class="px-4 py-3 min-w-[120px]">Channel</th>
+                    <th class="px-4 py-3 min-w-[90px] text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  <tr v-if="filteredTransactions.length === 0">
+                    <td colspan="7" class="py-12 text-center text-white/40">
+                      No payment records found. As members subscribe to Plus, Gold, or VIP, transactions appear live here.
+                    </td>
+                  </tr>
+                  <tr v-for="t in filteredTransactions" :key="t.id" class="hover:bg-white/[0.02] transition-colors">
+                    <td class="px-4 py-3 text-white/50 whitespace-nowrap">{{ formatDate(t.date) }}</td>
+                    <td class="px-4 py-3">
+                      <div class="font-bold text-white">{{ t.customerName }}</div>
+                      <div class="text-[11px] text-white/40 font-mono">{{ t.customerEmail || t.customerPhone }}</div>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-[11px] text-white/60">{{ t.reference }}</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        {{ t.tier }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 font-bold text-emerald-400">
+                      MWK {{ Number(t.amount || 0).toLocaleString() }}
+                    </td>
+                    <td class="px-4 py-3 text-white/70">{{ t.paymentMethod }}</td>
+                    <td class="px-4 py-3 text-right">
+                      <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                        :class="t.status === 'completed'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : (t.status === 'pending' ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30')"
+                      >
+                        {{ t.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. USER MANAGEMENT TAB -->
       <section v-else-if="activeTab === 'users'" class="space-y-4">
         <!-- Search & Filter Bar -->
         <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white/[0.02] p-4 rounded-2xl border border-white/10">
@@ -802,7 +1082,12 @@ import {
   X,
   Server,
   LogOut,
-  Trash2
+  Trash2,
+  FileSpreadsheet,
+  Download,
+  TrendingUp,
+  CreditCard,
+  Calendar
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -823,12 +1108,123 @@ const verificationList = ref([])
 const verificationFilter = ref('pending')
 const reportList = ref([])
 
+// Financial State & Analytics for Investors
+const financialData = ref({ summary: {}, transactions: [] })
+const financialSearch = ref('')
+const financialStatusFilter = ref('')
+
+const fetchFinancials = async () => {
+  try {
+    const res = await adminService.getRevenueAnalytics()
+    if (res) financialData.value = res
+  } catch (err) {
+    console.error('Failed to load revenue analytics:', err)
+  }
+}
+
+const filteredTransactions = computed(() => {
+  let list = financialData.value.transactions || []
+  if (financialStatusFilter.value) {
+    list = list.filter(t => t.status === financialStatusFilter.value)
+  }
+  if (financialSearch.value.trim()) {
+    const q = financialSearch.value.toLowerCase().trim()
+    list = list.filter(t =>
+      (t.customerName || '').toLowerCase().includes(q) ||
+      (t.customerEmail || '').toLowerCase().includes(q) ||
+      (t.customerPhone || '').toLowerCase().includes(q) ||
+      (t.reference || '').toLowerCase().includes(q) ||
+      (t.tier || '').toLowerCase().includes(q)
+    )
+  }
+  return list
+})
+
+const exportToExcel = () => {
+  const transactions = financialData.value.transactions || []
+  const summary = financialData.value.summary || {}
+  const now = new Date()
+  const dateStr = now.toISOString().slice(0, 10)
+
+  const headers = [
+    'Transaction Reference',
+    'Date & Time',
+    'Customer Name',
+    'Email Address',
+    'Phone Number',
+    'District',
+    'Subscription Tier',
+    'Amount (MWK)',
+    'Payment Method',
+    'Payment Gateway',
+    'Status'
+  ]
+
+  const rows = transactions.map(t => [
+    `"${t.reference || t.transactionId || '—'}"`,
+    `"${new Date(t.date).toLocaleString()}"`,
+    `"${(t.customerName || 'Unnamed').replace(/"/g, '""')}"`,
+    `"${t.customerEmail || '—'}"`,
+    `"${t.customerPhone || '—'}"`,
+    `"${t.district || '—'}"`,
+    `"${t.tier || 'Plus / Gold'}"`,
+    t.amount || 0,
+    `"${t.paymentMethod || 'Mobile Money'}"`,
+    '"PayChangu"',
+    `"${t.status || 'completed'}"`
+  ])
+
+  const summaryBlock = [
+    ['KONDANI DATING APP - FINANCIAL REVENUE & TRANSACTION LEDGER'],
+    [`Generated Date: ${now.toLocaleString()}`],
+    [`Gross Merchandise Value (GMV): MWK ${(summary.totalGrossRevenue || 0).toLocaleString()}`],
+    [`Month-to-Date (MTD) Revenue: MWK ${(summary.mtdRevenue || 0).toLocaleString()}`],
+    [`Total Paying Customers: ${summary.payingCustomersCount || 0}`],
+    [`Total Registered Members: ${summary.totalUsers || 0}`],
+    [`Free-to-Paid Conversion Rate: ${summary.conversionRate || '0.00%'}`],
+    [`Average Revenue Per User (ARPU): MWK ${(summary.arpu || 0).toLocaleString()}`],
+    [''],
+    headers
+  ]
+
+  const csvContent = summaryBlock.map(r => r.join(',')).join('\n') + '\n' + rows.map(r => r.join(',')).join('\n')
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `kondani_investor_financial_ledger_${dateStr}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+
+  success('Financial spreadsheet exported successfully! Ready for investors.')
+}
+
+const refreshCurrentTab = async () => {
+  isLoading.value = true
+  try {
+    if (activeTab.value === 'overview') await fetchDashboardStats()
+    else if (activeTab.value === 'financials') await fetchFinancials()
+    else if (activeTab.value === 'users') await fetchUsers()
+    else if (activeTab.value === 'verifications') await fetchVerifications(verificationFilter.value)
+    else if (activeTab.value === 'reports') await fetchReports()
+    success('Dashboard refreshed')
+  } catch (e) {
+    console.error('Refresh error:', e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const pendingVerifications = computed(() =>
   verificationList.value.filter(v => v.status === 'pending')
 )
 
 const tabs = computed(() => [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'financials', label: 'Financials & Excel', icon: TrendingUp },
   { id: 'users', label: 'User Directory', icon: Users, badge: stats.value.users?.total },
   { id: 'verifications', label: 'Photo Verifications', icon: BadgeCheck, badge: pendingVerifications.value.length || null },
   { id: 'reports', label: 'Safety & Reports', icon: ShieldAlert, badge: stats.value.reports?.pending || null }
@@ -897,15 +1293,6 @@ const fetchReports = async () => {
   } catch (err) {
     console.error('Failed to load reports:', err)
   }
-}
-
-const refreshCurrentTab = async () => {
-  isLoading.value = true
-  await fetchDashboardStats()
-  if (activeTab.value === 'users') await fetchUsers()
-  else if (activeTab.value === 'verifications') await fetchVerifications(verificationFilter.value)
-  else if (activeTab.value === 'reports') await fetchReports()
-  isLoading.value = false
 }
 
 const inspectUser = (user) => {
@@ -1010,6 +1397,7 @@ const handleLogout = async () => {
 onMounted(async () => {
   isLoading.value = true
   await fetchDashboardStats()
+  await fetchFinancials()
   await fetchUsers()
   await fetchVerifications('all')
   await fetchReports()

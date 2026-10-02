@@ -18,100 +18,7 @@ async function getApprovedVerifiedSet(userIds) {
 /**
  * Fallback seed plans for launch in Malawi
  */
-const SEED_PLANS = [
-    {
-        activity: 'Coffee and catch up at Mamma Mia',
-        category: 'coffee',
-        description: 'Looking to grab a latte and have great conversation this afternoon.',
-        location: 'City Centre, Lilongwe',
-        when: 'Today at 4:30 PM',
-        mockName: 'Chifundo',
-        mockAge: 24,
-        mockGender: 'Female',
-        mockPhoto: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&auto=format&fit=crop&q=80',
-        isVerified: false
-    },
-    {
-        activity: 'Hiking up Mulanje Mountain trails',
-        category: 'outdoors',
-        description: 'Planning a hike along the scenic paths this weekend. Anyone passionate about the outdoors?',
-        location: 'Mulanje / Blantyre',
-        when: 'This Saturday 8:00 AM',
-        mockName: 'Thoko',
-        mockAge: 27,
-        mockGender: 'Female',
-        mockPhoto: 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=400&auto=format&fit=crop&q=80',
-        isVerified: false
-    },
-    {
-        activity: 'Afrobeats & cocktails at Club 101',
-        category: 'music',
-        description: 'Live DJ set, good vibes and drinks. Let\'s dance and enjoy Friday night!',
-        location: 'Zomba Centre',
-        when: 'This Friday ~ 8 PM',
-        mockName: 'Yamikani',
-        mockAge: 23,
-        mockGender: 'Female',
-        mockPhoto: 'https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=400&auto=format&fit=crop&q=80',
-        isVerified: false
-    },
-    {
-        activity: 'Sunday lunch & lake breeze in Salima',
-        category: 'food',
-        description: 'Chambo fish and sunset chill by Lake Malawi. Who is up for a short road trip?',
-        location: 'Senga Bay, Salima',
-        when: 'Sunday afternoon',
-        mockName: 'Tadala',
-        mockAge: 25,
-        mockGender: 'Female',
-        mockPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-        isVerified: false
-    },
-    {
-        activity: 'Evening drinks & jazz at Woodlands',
-        category: 'drinks',
-        description: 'Relaxed atmosphere, good wine, and acoustic jazz music.',
-        location: 'Woodlands, Lilongwe',
-        when: 'Tomorrow evening',
-        mockName: 'Kondwani',
-        mockAge: 28,
-        mockGender: 'Male',
-        mockPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-        isVerified: false
-    }
-];
 
-// Seed starter plans if none exist
-async function ensureSeedPlans(currentUserId) {
-    try {
-        const count = await Plan.countDocuments({ isActive: true, expiresAt: { $gt: new Date() } });
-        if (count >= 3) return;
-
-        const otherUsers = await User.find({ _id: { $ne: currentUserId }, isBanned: { $ne: true } }).limit(5);
-
-        for (let i = 0; i < SEED_PLANS.length; i++) {
-            const seed = SEED_PLANS[i];
-            const assignedUser = otherUsers[i % otherUsers.length];
-
-            if (assignedUser) {
-                const existing = await Plan.findOne({ user: assignedUser._id, activity: seed.activity });
-                if (!existing) {
-                    await Plan.create({
-                        user: assignedUser._id,
-                        activity: seed.activity,
-                        category: seed.category,
-                        description: seed.description,
-                        location: seed.location,
-                        when: seed.when,
-                        expiresAt: new Date(Date.now() + 4 * 24 * 3600 * 1000)
-                    });
-                }
-            }
-        }
-    } catch (err) {
-        console.warn('Seed plans notice:', err.message);
-    }
-}
 
 /**
  * GET /api/plans
@@ -126,8 +33,6 @@ exports.getPlans = async (req, res) => {
         if (!currentUser) {
             return res.status(404).json({ error: 'User not found' });
         }
-
-        await ensureSeedPlans(currentUserId);
 
         const query = {
             isActive: true,

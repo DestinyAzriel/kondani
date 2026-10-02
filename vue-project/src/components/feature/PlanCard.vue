@@ -15,11 +15,19 @@
         <div class="flex items-center gap-3 min-w-0">
           <div class="relative shrink-0">
             <img
+              v-if="hasPhoto"
               :src="authorPhoto"
               :alt="plan.author?.name"
               class="w-12 h-12 rounded-full object-cover border-2"
               :class="categoryStyle.avatarBorder"
             />
+            <div
+              v-else
+              class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm bg-gradient-to-br from-night-800 to-night-900 text-gold-300 border-2"
+              :class="categoryStyle.avatarBorder"
+            >
+              {{ authorInitials }}
+            </div>
             <span
               v-if="plan.author?.isVerified"
               class="absolute -bottom-1 -right-1 bg-gradient-to-r from-gold-400 to-gold-500 text-night-950 rounded-full p-0.5 border border-night-950 shadow"
@@ -178,9 +186,16 @@ defineEmits(['join', 'delete', 'openChat', 'openChatWithApplicant', 'upgrade'])
 
 const mediaSrc = (u) => mediaUrl(u)
 
+const hasPhoto = computed(() => Boolean(props.plan.author?.photo))
 const authorPhoto = computed(() => {
   if (props.plan.author?.photo) return mediaUrl(props.plan.author.photo)
-  return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
+  return ''
+})
+const authorInitials = computed(() => {
+  const name = props.plan.author?.name || 'Kondani'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
 })
 
 const CATEGORY_STYLES = {
