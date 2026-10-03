@@ -54,13 +54,14 @@
                   <span>Online now</span>
                 </div>
 
-                <!-- Mobile Close Button (Top right over photo) -->
+                <!-- Mobile Collapse/Close Button (Top right over photo) -->
                 <button
                   @click="close"
-                  class="sm:hidden absolute top-6 right-4 z-30 p-2.5 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white hover:bg-black/70 active:scale-95 transition-all"
-                  title="Close"
+                  class="sm:hidden absolute top-6 right-4 z-30 p-2.5 rounded-full bg-black/55 backdrop-blur-md border border-white/20 text-white hover:bg-black/75 active:scale-95 transition-all cursor-pointer shadow-lg"
+                  :title="mode === 'encounters' ? 'Collapse profile' : 'Close'"
                 >
-                  <X :size="18" />
+                  <ArrowDown v-if="mode === 'encounters'" :size="18" stroke-width="2.5" />
+                  <X v-else :size="18" />
                 </button>
 
                 <!-- Navigation Arrows on Desktop & Tap zones on Mobile -->
@@ -100,7 +101,7 @@
                   {{ activePhotoIndex + 1 }} / {{ allPhotos.length }}
                 </div>
 
-                <!-- Bottom Photo Overlay on Mobile only (Tinder-style: Name, Age, Bio) -->
+                <!-- Bottom Photo Overlay on Mobile only (Name, Age, Location) -->
                 <div class="sm:hidden absolute bottom-3 inset-x-4 z-20 pointer-events-none">
                   <div class="flex items-center gap-2">
                     <h2 class="text-2xl font-bold font-display text-white drop-shadow-md">
@@ -108,10 +109,6 @@
                     </h2>
                     <BadgeCheck v-if="user.isVerified" :size="22" class="text-gold-400 drop-shadow" />
                   </div>
-
-                  <p v-if="user.bio" class="text-white/95 text-sm mt-1 drop-shadow leading-snug line-clamp-3 font-normal">
-                    {{ user.bio }}
-                  </p>
 
                   <p v-if="userLocation" class="flex items-center gap-1.5 text-white/85 text-xs mt-1.5 drop-shadow">
                     <MapPin :size="13" class="text-lagoon-400 shrink-0" />
@@ -223,14 +220,38 @@
                 </div>
 
                 <!-- Bottom Action Bar (Fixed, never cut off) -->
-                <div class="p-4 sm:px-7 sm:py-4 bg-[#0a151d] border-t border-white/8 shrink-0 flex items-center gap-3">
-                  <button
-                    @click="close"
-                    class="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-400 text-night-950 font-bold text-sm shadow-lg shadow-gold-500/20 hover:brightness-105 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle :size="18" />
-                    <span>Continue Chatting</span>
-                  </button>
+                <div class="p-3.5 sm:px-7 sm:py-4 bg-[#0a151d] border-t border-white/8 shrink-0 flex items-center gap-3">
+                  <!-- Mode: Encounters (Pass / Like decision) -->
+                  <template v-if="mode === 'encounters'">
+                    <button
+                      @click="handleAction('pass')"
+                      class="flex-1 py-3 px-4 rounded-2xl bg-white/[0.05] hover:bg-[#ff6b6b]/15 text-[#ff7a6b] border border-[#ff6b6b]/35 font-bold text-sm hover:border-[#ff6b6b] active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                      title="Pass"
+                    >
+                      <X :size="19" stroke-width="2.5" />
+                      <span>Pass</span>
+                    </button>
+
+                    <button
+                      @click="handleAction('like')"
+                      class="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-400 text-night-950 font-bold text-sm shadow-lg shadow-gold-500/20 hover:brightness-105 active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                      title="Like"
+                    >
+                      <Heart :size="19" class="fill-current" />
+                      <span>Like</span>
+                    </button>
+                  </template>
+
+                  <!-- Mode: Chat (Continue Chatting) -->
+                  <template v-else>
+                    <button
+                      @click="close"
+                      class="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-400 text-night-950 font-bold text-sm shadow-lg shadow-gold-500/20 hover:brightness-105 active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <MessageCircle :size="18" />
+                      <span>Continue Chatting</span>
+                    </button>
+                  </template>
                 </div>
 
               </div>
@@ -262,16 +283,25 @@ import {
   User as UserIcon,
   ChevronLeft,
   ChevronRight,
-  MessageCircle
+  MessageCircle,
+  Heart,
+  ArrowDown
 } from 'lucide-vue-next'
 import { mediaUrl } from '@/utils/media'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  user: { type: Object, default: () => ({}) }
+  user: { type: Object, default: () => ({}) },
+  mode: { type: String, default: 'chat' } // 'encounters' | 'chat'
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'like', 'pass'])
+
+const handleAction = (action) => {
+  if (action === 'pass') emit('pass')
+  else if (action === 'like') emit('like')
+  emit('close')
+}
 
 const activePhotoIndex = ref(0)
 const mediaSrc = (u) => mediaUrl(u)

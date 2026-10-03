@@ -140,12 +140,15 @@
       @apply="applyFilters"
     />
 
-    <!-- Profile full-detail sheet (opened via ⓘ button on the swipe card) -->
+    <!-- Profile full-detail sheet (opened via ↑ button on the swipe card) -->
     <ProfilePreviewModal
       v-if="previewProfile"
       :show="!!previewProfile"
       :user="previewProfile"
+      mode="encounters"
       @close="previewProfile = null"
+      @pass="handlePreviewSwipe('left')"
+      @like="handlePreviewSwipe('right')"
     />
   </div>
 </template>
@@ -172,7 +175,18 @@ const router = useRouter()
 
 const showMatchCelebration = ref(false)
 const showFilterModal = ref(false)
-const previewProfile = ref(null) // Profile opened from the ⓘ card button
+const previewProfile = ref(null) // Profile opened from the ↑ card button
+
+const handlePreviewSwipe = (dir) => {
+  const p = previewProfile.value
+  previewProfile.value = null
+  if (p) {
+    const idx = profiles.value.findIndex(item => (item.id || item._id) === (p.id || p._id))
+    if (idx !== -1) {
+      handleSwipe(dir, idx)
+    }
+  }
+}
 const currentMatch = ref({})
 const profiles = ref([])
 const isLoading = ref(true)
