@@ -45,11 +45,11 @@
             class="swipe-column relative w-full block"
             style="height: calc(100dvh - 128px); min-height: 480px; max-height: 720px;"
           >
-            <div v-if="isLoading" class="w-full h-full">
-              <SkeletonLoader type="swipe-card" />
-            </div>
+            <!-- Loading skeleton fills the explicit-height column -->
+            <SkeletonLoader v-if="isLoading" type="swipe-card" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;" />
 
-            <div v-else class="w-full h-full relative">
+            <!-- SwipeCards go directly here — swipe-column has explicit height, SwipeCards are absolute inside it -->
+            <template v-else>
               <SwipeCard
                 v-for="(profile, index) in visibleProfiles"
                 :key="profile.id"
@@ -60,7 +60,7 @@
                 @swipe="(dir) => handleSwipe(dir, index)"
                 @open-profile="previewProfile = $event"
               />
-            </div>
+            </template>
 
             <!-- Action buttons: position absolute; left: 0; right: 0; bottom: 16px -->
             <div

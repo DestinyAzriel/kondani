@@ -1,7 +1,19 @@
 <template>
   <div
-    style="position: absolute; inset: 0; width: 100%; height: 100%;"
-    :style="[{ position: 'absolute', inset: 0, width: '100%', height: '100%' }, cardStyle]"
+    :style="{
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      width: '100%',
+      height: '100%',
+      userSelect: 'none',
+      touchAction: 'none',
+      zIndex: cardStyle.zIndex,
+      transform: cardStyle.transform,
+      transition: cardStyle.transition
+    }"
     @mousedown="startDrag"
     @touchstart.passive="startDrag"
     @mousemove="onDrag"
@@ -10,7 +22,7 @@
     @touchend="endDrag"
     @mouseleave="endDrag"
   >
-    <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl bg-night-900 border border-white/10">
+    <div style="position: relative; width: 100%; height: 100%; border-radius: 16px; overflow: hidden; background: #0c1b26;">
       <!-- Photo Layer: position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -->
       <img
         v-if="profile.photos && profile.photos.length"
