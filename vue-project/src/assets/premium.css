@@ -75,11 +75,14 @@
 .k-ver { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--k-gold-l); background: rgba(244,183,64,.14); border: 1px solid rgba(244,183,64,.3); padding: 3px 9px; border-radius: 7px; }
 
 /* heavy swipe action buttons - dynamic, glowing, sleek */
-.k-act { display: flex; justify-content: center; align-items: center; gap: 14px; }
+.k-act { display: flex; justify-content: center; align-items: center; gap: 12px; width: 100%; pointer-events: auto; }
 .k-act .b {
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
   background: rgba(14, 25, 33, 0.88);
   backdrop-filter: blur(12px);
   border: 1.5px solid rgba(255,255,255,.14);
@@ -104,10 +107,10 @@
   box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
 }
 
-/* Pass button (coral red) - prominent 52px */
+/* Pass button (coral red) - prominent 54px */
 .k-act .b.pass {
-  width: 52px;
-  height: 52px;
+  width: 54px !important;
+  height: 54px !important;
   border-color: rgba(255,107,107,.45);
   color: #ff6b6b;
 }
@@ -132,10 +135,10 @@
   box-shadow: 0 0 22px rgba(56, 189, 248, 0.55);
 }
 
-/* Like button (emerald heart) - prominent 52px */
+/* Like button (emerald heart) - prominent 54px */
 .k-act .b.like {
-  width: 52px;
-  height: 52px;
+  width: 54px !important;
+  height: 54px !important;
   border-color: rgba(45, 212, 191, 0.45);
   color: #2dd4bf;
   background: rgba(14, 25, 33, 0.88);
