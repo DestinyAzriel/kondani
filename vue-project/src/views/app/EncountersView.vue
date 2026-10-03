@@ -21,9 +21,10 @@
       </button>
     </div>
 
-    <!-- Main Discovery Area: Normal block container with full width -->
-    <div class="relative z-10 w-full max-w-4xl mx-auto px-2 sm:px-4 block">
-      <!-- Empty: centered across the whole content area -->
+    <!-- Main Discovery Area -->
+    <div class="relative z-10 w-full max-w-4xl mx-auto px-3 sm:px-6">
+
+      <!-- Empty state -->
       <div v-if="!isLoading && profiles.length === 0" class="flex flex-col items-center justify-center min-h-[calc(100dvh-180px)] py-6">
         <EmptyState
           type="no-cards"
@@ -36,19 +37,19 @@
         />
       </div>
 
-      <div v-else class="w-full grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-8 lg:items-center justify-center">
+      <!-- Card + side panel: flex-col on mobile, 2-col grid on desktop -->
+      <div v-else class="flex flex-col lg:grid lg:grid-cols-[minmax(0,440px)_1fr] lg:gap-10 lg:items-start">
 
-        <!-- Card column: plain block with full width, no flex shrinking -->
-        <div class="block w-full max-w-[440px] mx-auto">
-          <!-- Card parent: position: relative; width: 100%; exact height between header and nav -->
+        <!-- Card column: always full width on mobile -->
+        <div class="w-full">
+
+          <!-- Card stack: explicit height, position relative so SwipeCards (absolute) fill it -->
           <div
-            class="swipe-column relative w-full block"
-            style="height: calc(100dvh - 128px); min-height: 480px; max-height: 720px;"
+            class="swipe-column"
+            style="position: relative; width: 100%; border-radius: 20px; overflow: hidden; height: calc(100dvh - 212px); min-height: 400px; max-height: 680px;"
           >
-            <!-- Loading skeleton fills the explicit-height column -->
-            <SkeletonLoader v-if="isLoading" type="swipe-card" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;" />
+            <SkeletonLoader v-if="isLoading" type="swipe-card" style="position: absolute; top:0; left:0; right:0; bottom:0;" />
 
-            <!-- SwipeCards go directly here — swipe-column has explicit height, SwipeCards are absolute inside it -->
             <template v-else>
               <SwipeCard
                 v-for="(profile, index) in visibleProfiles"
@@ -61,18 +62,15 @@
                 @open-profile="previewProfile = $event"
               />
             </template>
+          </div>
 
-            <!-- Action buttons: position absolute; left: 0; right: 0; bottom: 16px -->
-            <div
-              v-if="!isLoading && profiles.length > 0"
-              style="position: absolute; left: 0; right: 0; bottom: 16px; z-index: 30; display: flex; justify-content: center; align-items: center; gap: 12px; pointer-events: auto;"
-            >
-              <button class="b" @click="handleRewind" title="Undo" style="flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><RotateCcw :size="18" /></button>
-              <button class="b pass" @click="triggerSwipe('left')" title="Pass" style="flex: 0 0 auto; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><X :size="24" /></button>
-              <button class="b sup" @click="triggerSwipe('up')" title="Super Like" style="flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><Star :size="19" class="fill-current" /></button>
-              <button class="b like" @click="triggerSwipe('right')" title="Like" style="flex: 0 0 auto; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><Heart :size="24" class="fill-current" /></button>
-              <button class="b" @click="handleBoost" title="Boost" style="flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><Zap :size="18" /></button>
-            </div>
+          <!-- Action buttons: normal-flow row BELOW the card -->
+          <div v-if="!isLoading && profiles.length > 0" class="k-act mt-4">
+            <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
+            <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
+            <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
+            <button class="b like" @click="triggerSwipe('right')" title="Like"><Heart :size="22" class="fill-current" /></button>
+            <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
           </div>
 
           <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-3">
