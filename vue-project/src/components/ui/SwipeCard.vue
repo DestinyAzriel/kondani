@@ -82,8 +82,8 @@
         </div>
       </div>
 
-      <!-- Info text container: absolute left: 16px; right: 16px; bottom: 84px; (above the buttons) -->
-      <div v-if="index === 0" class="absolute left-4 right-4 bottom-[84px] z-20 pointer-events-none text-white">
+      <!-- Info text container: positioned at bottom of the card, above the bottom border -->
+      <div v-if="index === 0" class="absolute left-4 right-4 bottom-4 sm:bottom-5 z-20 pointer-events-none text-white">
         <!-- 1. Small pill for "Nearby" or distance -->
         <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/95 mb-1.5 shadow-sm">
           <span>Nearby</span>
@@ -114,10 +114,15 @@
         </div>
 
         <!-- 3. Line with pin icon and "X km away" -->
-        <div v-if="profile.district || profile.distance" class="flex items-center gap-1.5 text-xs sm:text-sm text-white/85 font-medium drop-shadow">
+        <div v-if="profile.district || profile.distance" class="flex items-center gap-1.5 text-xs sm:text-sm text-white/85 font-medium drop-shadow mb-0.5">
           <MapPinIcon :size="13" class="text-lagoon-400 shrink-0" />
           <span>{{ profile.district && profile.distance ? `${profile.district} · ${profile.distance}` : (profile.district || profile.distance) }}</span>
         </div>
+
+        <!-- 4. Bio snippet (matches status quo in Image 3) -->
+        <p v-if="profile.bio" class="text-xs sm:text-sm text-white/80 drop-shadow truncate mt-0.5">
+          {{ profile.bio }}
+        </p>
       </div>
     </div>
 
