@@ -250,7 +250,18 @@
                 class="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5"
               >
                 <div class="flex items-center gap-3">
-                  <img :src="mediaUrl(v.userId?.photos?.[0])" class="w-10 h-10 rounded-full object-cover border border-white/10" alt="" />
+                  <div class="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10 bg-night-800 flex items-center justify-center">
+                    <img
+                      v-if="v.userId?.photos && v.userId.photos.length && v.userId.photos[0]"
+                      :src="mediaUrl(v.userId.photos[0])"
+                      class="w-full h-full object-cover"
+                      alt=""
+                      @error="$event.target.style.display='none'"
+                    />
+                    <span v-else class="text-xs font-bold text-amber-300">
+                      {{ getInitials(v.userId?.name) }}
+                    </span>
+                  </div>
                   <div>
                     <div class="text-xs font-bold text-white">{{ v.userId?.name || 'Member' }}</div>
                     <div class="text-[11px] text-white/40">{{ v.userId?.district || 'Nearby' }} · Score: {{ v.faceMatchScore || 0 }}%</div>
@@ -645,11 +656,18 @@
                 <tr v-for="user in userList" :key="user._id" class="hover:bg-white/[0.02] transition-colors">
                   <td class="px-4 py-3.5">
                     <div class="flex items-center gap-3">
-                      <img
-                        :src="mediaUrl(user.photos?.[0])"
-                        class="w-9 h-9 rounded-full object-cover border border-white/10"
-                        alt=""
-                      />
+                      <div class="relative w-9 h-9 rounded-full overflow-hidden shrink-0 border border-white/10 bg-night-800 flex items-center justify-center">
+                        <img
+                          v-if="user.photos && user.photos.length && user.photos[0]"
+                          :src="mediaUrl(user.photos[0])"
+                          class="w-full h-full object-cover"
+                          alt=""
+                          @error="$event.target.style.display='none'"
+                        />
+                        <span v-else class="text-xs font-bold text-amber-300">
+                          {{ getInitials(user.name) }}
+                        </span>
+                      </div>
                       <div>
                         <div class="font-bold text-white flex items-center gap-1">
                           <span>{{ user.name || 'Unnamed' }}</span>
@@ -817,8 +835,18 @@
               <div class="grid grid-cols-2 gap-3 mt-4">
                 <div class="space-y-1">
                   <div class="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Main Profile Photo</div>
-                  <div class="h-56 rounded-xl overflow-hidden border border-white/10 bg-black/40">
-                    <img :src="mediaUrl(item.userId?.photos?.[0])" class="w-full h-full object-cover" alt="Profile" />
+                  <div class="h-56 rounded-xl overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center">
+                    <img
+                      v-if="item.userId?.photos && item.userId.photos.length && item.userId.photos[0]"
+                      :src="mediaUrl(item.userId.photos[0])"
+                      class="w-full h-full object-cover"
+                      alt="Profile"
+                      @error="$event.target.style.display='none'"
+                    />
+                    <div v-else class="text-center p-4 text-white/40">
+                      <div class="text-2xl font-bold text-amber-300/70 mb-1">{{ getInitials(item.userId?.name) }}</div>
+                      <span class="text-xs">No profile photo</span>
+                    </div>
                   </div>
                 </div>
 
@@ -1093,6 +1121,13 @@ import {
 const router = useRouter()
 const authStore = useAuthStore()
 const { success, error } = useToast()
+
+const getInitials = (name) => {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+}
 
 const activeTab = ref('overview')
 const isLoading = ref(false)

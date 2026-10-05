@@ -11,7 +11,11 @@ const ORIGIN =
 
 export const MEDIA_ORIGIN = ORIGIN
 
-export function mediaUrl(path, fallback = '') {
+// Clean dark-theme silhouette avatar fallback
+export const DEFAULT_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230b1720'/%3E%3Ccircle cx='50' cy='38' r='20' fill='%23243b53'/%3E%3Cpath d='M20 85 C20 62, 35 58, 50 58 C65 58, 80 62, 80 85 Z' fill='%23243b53'/%3E%3C/svg%3E"
+
+export function mediaUrl(path, fallback = DEFAULT_AVATAR) {
   if (!path) return fallback
   if (/^(https?:|blob:|data:)/i.test(path)) return path
   return ORIGIN + (path.startsWith('/') ? path : '/' + path)
