@@ -10,6 +10,7 @@
       height: '100%',
       userSelect: 'none',
       touchAction: 'none',
+      pointerEvents: index === 0 ? 'auto' : 'none',
       zIndex: cardStyle.zIndex,
       transform: cardStyle.transform,
       transition: cardStyle.transition
@@ -31,11 +32,24 @@
         draggable="false"
         alt="Profile photo"
       />
-      <div v-else class="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 text-white/30" style="background:linear-gradient(160deg,#0e1f29,#081016)">
-        <div class="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl bg-gradient-to-br from-night-800 to-night-900 text-gold-300 border-2 border-gold-400/30 shadow-lg">
-          {{ userInitials }}
+      <div
+        v-else
+        class="absolute inset-0 w-full h-full flex items-center justify-center select-none overflow-hidden"
+        style="background: radial-gradient(circle at 50% 40%, rgba(244, 183, 64, 0.22), transparent 60%), radial-gradient(circle at 85% 85%, rgba(45, 212, 191, 0.15), transparent 55%), linear-gradient(160deg, #102432 0%, #08121a 55%, #050b10 100%);"
+      >
+        <!-- Subtle decorative backdrop aura rings -->
+        <div class="absolute w-[300px] h-[300px] rounded-full border border-gold-400/10 pointer-events-none"></div>
+        <div class="absolute w-[440px] h-[440px] rounded-full border border-white/5 pointer-events-none"></div>
+
+        <!-- Hero Initials filling the photo space boldly like a picture (guaranteed zero overflow) -->
+        <div class="relative flex items-center justify-center pb-20 sm:pb-24 pointer-events-none w-full px-6">
+          <span
+            class="font-display font-black leading-none select-none drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] truncate text-center max-w-full"
+            style="font-size: clamp(76px, 22vw, 128px); background: linear-gradient(135deg, #fef3c7 0%, #f4b740 45%, #b45309 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"
+          >
+            {{ userInitials }}
+          </span>
         </div>
-        <span class="text-xs text-white/40">No photo uploaded</span>
       </div>
 
       <!-- Gradient layer: position: absolute; inset: 0; linear-gradient to top -->
@@ -215,38 +229,47 @@ const nopeOpacity = computed(() => Math.min(Math.max(-dragX.value / 100, 0), 1))
 const superOpacity = computed(() => Math.min(Math.max(-dragY.value / 100, 0), 1))
 
 const startDrag = (e) => {
-  if (showOptions.value) return
+  if (props.index !== 0 || showOptions.value) return
   isDragging.value = true
   const touch = e.touches ? e.touches[0] : e
   dragStartX.value = touch.clientX - dragX.value
   dragStartY.value = touch.clientY - dragY.value
 }
 const onDrag = (e) => {
-  if (!isDragging.value) return
+  if (!isDragging.value || props.index !== 0) return
   const touch = e.touches ? e.touches[0] : e
   dragX.value = touch.clientX - dragStartX.value
   dragY.value = touch.clientY - dragStartY.value
 }
 const endDrag = () => {
-  if (!isDragging.value) return
+  if (!isDragging.value || props.index !== 0) return
   isDragging.value = false
   const threshold = 100
   const upThreshold = 150
-  if (dragX.value > threshold) { emit('swipe', 'right'); resetCard() }
-  else if (dragX.value < -threshold) { emit('swipe', 'left'); resetCard() }
-  else if (dragY.value < -upThreshold) { emit('swipe', 'up'); resetCard() }
-  else { dragX.value = 0; dragY.value = 0 }
+  if (dragX.value > threshold) {
+    dragX.value = 600
+    setTimeout(() => { emit('swipe', 'right'); resetCard() }, 220)
+  } else if (dragX.value < -threshold) {
+    dragX.value = -600
+    setTimeout(() => { emit('swipe', 'left'); resetCard() }, 220)
+  } else if (dragY.value < -upThreshold) {
+    dragY.value = -600
+    setTimeout(() => { emit('swipe', 'up'); resetCard() }, 220)
+  } else {
+    dragX.value = 0
+    dragY.value = 0
+  }
 }
 const resetCard = () => {
-  setTimeout(() => { dragX.value = 0; dragY.value = 0; currentPhotoIndex.value = 0 }, 300)
+  setTimeout(() => { dragX.value = 0; dragY.value = 0; currentPhotoIndex.value = 0 }, 250)
 }
 
 defineExpose({
   triggerSwipe: (direction) => {
-    if (direction === 'right') dragX.value = 300
-    else if (direction === 'left') dragX.value = -300
-    else if (direction === 'up') dragY.value = -300
-    setTimeout(() => { emit('swipe', direction); resetCard() }, 300)
+    if (direction === 'right') dragX.value = 600
+    else if (direction === 'left') dragX.value = -600
+    else if (direction === 'up') dragY.value = -600
+    setTimeout(() => { emit('swipe', direction); resetCard() }, 250)
   }
 })
 </script>

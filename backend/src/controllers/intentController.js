@@ -126,12 +126,19 @@ exports.getIntents = async (req, res) => {
             String(b.blockerId) === String(currentUserId) ? b.blockedUserId : b.blockerId
         );
 
-        const excludedIds = [
-            currentUserId,
-            ...userIntent.likes,
-            ...userIntent.passes,
-            ...blockedIds
-        ];
+        const intentPasses = (userIntent.passes || []).map(id => String(id));
+        const intentLikes = (userIntent.likes || []).map(id => String(id));
+        const userPasses = (currentUser.passes || []).map(id => String(id));
+        const userLikes = (currentUser.likes || []).map(id => String(id));
+
+        const excludedIds = Array.from(new Set([
+            String(currentUserId),
+            ...intentLikes,
+            ...intentPasses,
+            ...userLikes,
+            ...userPasses,
+            ...blockedIds.map(id => String(id))
+        ]));
 
         // Apply the user's preferences (age, gender, verified-only)
         const prefs = currentUser.preferences || {};
@@ -152,7 +159,8 @@ exports.getIntents = async (req, res) => {
                 query.gender = prefs.gender;
             }
         }
-        if (prefs.verifiedOnly) {
+        // Only allow verified-only filtering if currentUser is verified themselves
+        if (prefs.verifiedOnly && currentUser.isVerified) {
             query.isVerified = true;
         }
         if (prefs.ageMin || prefs.ageMax) {
@@ -289,6 +297,9 @@ exports.likeIntent = async (req, res) => {
             userIntent.likes.push(targetUserId);
             await userIntent.save();
         }
+        await User.findByIdAndUpdate(currentUserId, {
+            $addToSet: { likes: targetUserId }
+        });
 
         // Check for match
         let targetIntent = await Intent.findOne({ user: targetUserId });
@@ -488,18 +499,30 @@ exports.passIntent = async (req, res) => {
         const currentUserId = req.user.id;
         const targetUserId = req.params.id;
 
+        if (!targetUserId) {
+            return res.status(400).json({ error: 'Target user ID is required' });
+        }
+
         let userIntent = await Intent.findOne({ user: currentUserId });
         if (!userIntent) {
             userIntent = await Intent.create({ user: currentUserId });
         }
 
-        if (!userIntent.passes.includes(targetUserId)) {
+        const targetIdStr = String(targetUserId);
+        const alreadyPassed = (userIntent.passes || []).some(id => String(id) === targetIdStr);
+        if (!alreadyPassed) {
             userIntent.passes.push(targetUserId);
             await userIntent.save();
         }
 
+        // Also sync to User document passes array
+        await User.findByIdAndUpdate(currentUserId, {
+            $addToSet: { passes: targetUserId }
+        });
+
         res.json({ success: true });
     } catch (err) {
+        console.error('passIntent error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 };

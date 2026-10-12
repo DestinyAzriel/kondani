@@ -114,14 +114,19 @@
 
         <!-- Verified Only -->
         <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-          <div>
-            <p class="text-white font-medium">Verified Profiles Only</p>
-            <p class="text-xs text-white/40 mt-1">Show only users with verified photos</p>
+          <div class="pr-3">
+            <div class="flex items-center gap-2">
+              <p class="text-white font-medium">Verified Profiles Only</p>
+              <span v-if="!isUserVerified" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-semibold border border-amber-400/25">
+                Requires Verification
+              </span>
+            </div>
+            <p class="text-xs text-white/40 mt-1">Show only users with badge-verified photos</p>
           </div>
           <button
-            @click="filters.verifiedOnly = !filters.verifiedOnly"
+            @click="handleToggleVerifiedOnly"
             :class="[
-              'relative w-12 h-6 rounded-full transition-colors',
+              'relative w-12 h-6 rounded-full transition-colors shrink-0',
               filters.verifiedOnly ? 'bg-gradient-to-r from-gold-500 to-gold-300' : 'bg-white/20'
             ]"
           >
@@ -166,10 +171,14 @@ const props = defineProps({
   initialFilters: {
     type: Object,
     default: () => ({})
+  },
+  isUserVerified: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['close', 'apply'])
+const emit = defineEmits(['close', 'apply', 'unverifiedAttempt'])
 
 const availableInterests = [
   'Music', 'Travel', 'Cooking', 'Art', 'Sports', 'Reading',
@@ -193,6 +202,14 @@ watch(() => props.initialFilters, (newFilters) => {
   }
 }, { immediate: true })
 
+const handleToggleVerifiedOnly = () => {
+  if (!props.isUserVerified && !filters.value.verifiedOnly) {
+    emit('unverifiedAttempt')
+    return
+  }
+  filters.value.verifiedOnly = !filters.value.verifiedOnly
+}
+
 const toggleInterest = (interest) => {
   const index = filters.value.interests.indexOf(interest)
   if (index > -1) {
@@ -215,6 +232,9 @@ const resetFilters = () => {
 }
 
 const applyFilters = () => {
+  if (!props.isUserVerified) {
+    filters.value.verifiedOnly = false
+  }
   emit('apply', { ...filters.value })
   emit('close')
 }

@@ -29,10 +29,25 @@
               <!-- LEFT COLUMN: Photo Carousel -->
               <div class="relative w-full sm:w-[46%] h-[50vh] sm:h-full bg-night-900 shrink-0 overflow-hidden group">
                 <img
+                  v-if="hasPhotos"
                   :src="currentPhoto"
                   :alt="user.name"
                   class="w-full h-full object-cover transition-all duration-300"
                 />
+                <div
+                  v-else
+                  class="w-full h-full flex items-center justify-center select-none overflow-hidden relative"
+                  style="background: radial-gradient(circle at 50% 40%, rgba(244, 183, 64, 0.22), transparent 60%), radial-gradient(circle at 85% 85%, rgba(45, 212, 191, 0.15), transparent 55%), linear-gradient(160deg, #102432 0%, #08121a 55%, #050b10 100%);"
+                >
+                  <div class="absolute w-[280px] h-[280px] rounded-full border border-gold-400/10 pointer-events-none"></div>
+                  <div class="absolute w-[400px] h-[400px] rounded-full border border-white/5 pointer-events-none"></div>
+                  <span
+                    class="font-display font-black leading-none select-none drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] pb-6 truncate text-center max-w-full px-6"
+                    style="font-size: clamp(76px, 20vw, 128px); background: linear-gradient(135deg, #fef3c7 0%, #f4b740 45%, #b45309 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"
+                  >
+                    {{ userInitials }}
+                  </span>
+                </div>
 
                 <!-- Vignette Gradients -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 pointer-events-none"></div>
@@ -310,17 +325,31 @@ watch(() => props.show, (val) => {
   if (val) activePhotoIndex.value = 0
 })
 
+const userInitials = computed(() => {
+  const name = props.user?.name || 'Kondani'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+})
+
+const hasPhotos = computed(() => {
+  if (props.user.photos && Array.isArray(props.user.photos) && props.user.photos.filter(Boolean).length > 0) return true
+  if (props.user.photo && !props.user.photo.includes('placeholder')) return true
+  return false
+})
+
 const allPhotos = computed(() => {
   if (props.user.photos && Array.isArray(props.user.photos) && props.user.photos.length > 0) {
     const list = props.user.photos.filter(Boolean)
     if (list.length > 0) return list
   }
-  if (props.user.photo) return [props.user.photo]
-  return ['https://via.placeholder.com/400x500']
+  if (props.user.photo && !props.user.photo.includes('placeholder')) return [props.user.photo]
+  return []
 })
 
 const currentPhoto = computed(() => {
   const list = allPhotos.value
+  if (!list.length) return ''
   const photo = list[activePhotoIndex.value] || list[0]
   return mediaSrc(photo)
 })

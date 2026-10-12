@@ -53,7 +53,7 @@
             <template v-else>
               <SwipeCard
                 v-for="(profile, index) in visibleProfiles"
-                :key="profile.id"
+                :key="String(profile.id || profile._id)"
                 :profile="profile"
                 :index="index"
                 :total="visibleProfiles.length"
@@ -136,8 +136,10 @@
     <FilterModal
       :show="showFilterModal"
       :initialFilters="activeFilters"
+      :isUserVerified="Boolean(authStore.user?.isVerified)"
       @close="showFilterModal = false"
       @apply="applyFilters"
+      @unverified-attempt="info('You must verify your profile first to filter for verified members only.')"
     />
 
     <!-- Profile full-detail sheet (opened via ↑ button on the swipe card) -->
@@ -219,6 +221,9 @@ const activeFilterCount = computed(() => {
   return count
 })
 
+const sessionPassedIds = ref(new Set())
+const isSwiping = ref(false)
+
 const loadProfiles = async () => {
   isLoading.value = true
   try {
@@ -229,6 +234,9 @@ const loadProfiles = async () => {
       interests: p.interests || [],
       isVerified: p.isVerified || false
     }))
+    // Exclude users already passed during this session so refresh never brings them back
+    list = list.filter(p => !sessionPassedIds.value.has(String(p.id || p._id)))
+
     if (activeFilters.value.interests.length > 0) {
       list = list.filter(p => activeFilters.value.interests.some(i => p.interests.includes(i)))
     }
@@ -247,10 +255,20 @@ onMounted(loadProfiles)
 const handleSwipe = async (direction, index) => {
   const profile = profiles.value[index]
   if (!profile) return
+  isSwiping.value = true
+
+  const profileId = String(profile.id || profile._id)
+  if (direction === 'left') {
+    sessionPassedIds.value.add(profileId)
+  }
+
   analyticsService.trackSwipe?.(direction, profile.id, profile.name)
   lastSwiped.value = { profile }
 
-  setTimeout(() => { profiles.value.splice(index, 1) }, 200)
+  setTimeout(() => {
+    profiles.value.splice(index, 1)
+    isSwiping.value = false
+  }, 200)
 
   const celebrate = (result) => {
     if (result?.isMatch) {
@@ -262,15 +280,15 @@ const handleSwipe = async (direction, index) => {
 
   try {
     if (direction === 'up') {
-      const result = await intentService.superLikeIntent(profile.id)
+      const result = await intentService.superLikeIntent(profileId)
       if (result?.superLikesRemaining != null) superLikesLeft.value = result.superLikesRemaining
       celebrate(result)
     } else if (direction === 'right') {
-      const result = await intentService.likeIntent(profile.id)
+      const result = await intentService.likeIntent(profileId)
       if (result?.likesRemaining != null) likesLeft.value = result.likesRemaining
       celebrate(result)
     } else {
-      await intentService.passIntent(profile.id)
+      await intentService.passIntent(profileId)
     }
   } catch (err) {
     const data = err.response?.data
@@ -285,11 +303,11 @@ const handleSwipe = async (direction, index) => {
 }
 
 const triggerSwipe = (direction) => {
-  if (profiles.value.length === 0) return
+  if (profiles.value.length === 0 || isSwiping.value) return
   const top = cardRefs.value[0]
   if (top && typeof top.triggerSwipe === 'function') {
+    // SwipeCard.triggerSwipe animates and emits 'swipe', which cleanly calls handleSwipe
     top.triggerSwipe(direction)
-    setTimeout(() => handleSwipe(direction, 0), 350)
     return
   }
   handleSwipe(direction, 0)
@@ -335,6 +353,9 @@ const cardStyle = (index) => {
 }
 
 const applyFilters = async (filters) => {
+  if (!authStore.user?.isVerified) {
+    filters.verifiedOnly = false
+  }
   activeFilters.value = { ...filters }
   analyticsService.trackFilterApplied?.(filters)
   try {
@@ -344,7 +365,7 @@ const applyFilters = async (filters) => {
         ageMax: filters.ageMax,
         distance: filters.distance,
         gender: filters.gender,
-        verifiedOnly: filters.verifiedOnly
+        verifiedOnly: Boolean(filters.verifiedOnly && authStore.user?.isVerified)
       }
     })
   } catch (err) {

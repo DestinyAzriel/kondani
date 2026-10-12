@@ -586,6 +586,10 @@ const toggleVisibility = async () => {
 
 // Toggle Verified Only
 const toggleVerifiedOnly = async () => {
+  if (!user.value?.isVerified && !prefs.verifiedOnly) {
+    info('You must verify your profile first to filter for verified profiles only.')
+    return
+  }
   prefs.verifiedOnly = !prefs.verifiedOnly
   try {
     await authStore.updateUserProfile({

@@ -510,6 +510,10 @@ exports.updateProfile = async (req, res) => {
                 ...(existingUser.preferences ? (existingUser.preferences.toObject ? existingUser.preferences.toObject() : existingUser.preferences) : {}),
                 ...updateData.preferences
             };
+            // Strictly guard verifiedOnly: only verified users can enable this preference
+            if (updateData.preferences.verifiedOnly && !existingUser.isVerified) {
+                updateData.preferences.verifiedOnly = false;
+            }
         }
         if (updateData.notifications) {
             updateData.notifications = {
