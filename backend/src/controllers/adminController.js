@@ -125,9 +125,16 @@ exports.getDashboardStats = async (req, res) => {
 exports.getRevenueAnalytics = async (req, res) => {
     try {
         const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+        const { period = '30d' } = req.query;
+        let chartStartDate;
+        if (period === '7d') chartStartDate = new Date(Date.now() - 7 * 86400000);
+        else if (period === '90d') chartStartDate = new Date(Date.now() - 90 * 86400000);
+        else chartStartDate = new Date(Date.now() - 30 * 86400000);
 
         // 1. Total Gross Revenue (Completed)
         const totalGrossAgg = await Payment.aggregate([
@@ -150,9 +157,13 @@ exports.getRevenueAnalytics = async (req, res) => {
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const lastMonthRevenue = lastMonthAgg[0]?.total || 0;
-        const momGrowthPercent = lastMonthRevenue > 0
-            ? (((mtdRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(1)
-            : (mtdRevenue > 0 ? '+100%' : '0%');
+        let momGrowthPercent = '0%';
+        if (lastMonthRevenue > 0) {
+            const growth = (((mtdRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(1);
+            momGrowthPercent = (growth > 0 ? '+' : '') + growth + '%';
+        } else if (mtdRevenue > 0) {
+            momGrowthPercent = '+100%';
+        }
 
         // 4. Unique Paying Customers
         const payingUsersAgg = await Payment.aggregate([
@@ -162,8 +173,13 @@ exports.getRevenueAnalytics = async (req, res) => {
         ]);
         const payingCustomersCount = payingUsersAgg[0]?.count || 0;
 
-        // 5. Total Users & Conversion Rate
+        // 5. Total Users & Key Aggregates
         const totalUsers = await User.countDocuments();
+        const newUsersToday = await User.countDocuments({ createdAt: { $gte: today } });
+        const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: thisMonthStart } });
+        const verifiedUsers = await User.countDocuments({ isVerified: true });
+        const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
+
         const conversionRate = totalUsers > 0
             ? ((payingCustomersCount / totalUsers) * 100).toFixed(2)
             : '0.00';
@@ -173,30 +189,68 @@ exports.getRevenueAnalytics = async (req, res) => {
         const arppu = payingCustomersCount > 0 ? Math.round(totalRevenue / payingCustomersCount) : 0;
 
         // 7. Plan / Tier Distribution
-        const tierDistAgg = await User.aggregate([
-            { $group: { _id: '$subscriptionTier', count: { $sum: 1 } } }
-        ]);
+        const plusCount = await User.countDocuments({ subscriptionTier: 'plus' });
+        const goldCount = await User.countDocuments({ subscriptionTier: 'gold' });
+        const platinumCount = await User.countDocuments({ subscriptionTier: 'platinum' });
+        const freeCount = Math.max(0, totalUsers - (plusCount + goldCount + platinumCount));
         const tierBreakdown = {
-            free: 0,
-            plus: 0,
-            gold: 0,
-            platinum: 0
+            free: freeCount,
+            plus: plusCount,
+            gold: goldCount,
+            platinum: platinumCount
         };
-        tierDistAgg.forEach(t => {
-            if (t._id && tierBreakdown[t._id] !== undefined) {
-                tierBreakdown[t._id] = t.count;
-            } else if (!t._id) {
-                tierBreakdown.free += t.count;
+
+        // 8. Gender Demographics
+        const menCount = await User.countDocuments({ gender: { $in: ['Male', 'male', 'Men', 'men'] } });
+        const womenCount = await User.countDocuments({ gender: { $in: ['Female', 'female', 'Women', 'women'] } });
+        const otherGenderCount = Math.max(0, totalUsers - (menCount + womenCount));
+
+        // 9. Top Districts Adoption
+        const topDistrictsAgg = await User.aggregate([
+            { $match: { district: { $exists: true, $ne: '' } } },
+            { $group: { _id: '$district', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 6 }
+        ]);
+        const topDistricts = topDistrictsAgg.map(d => ({ name: d._id, count: d.count }));
+
+        // 10. Platform Engagement
+        const totalMessages = await Message.countDocuments();
+        const totalPlans = await Plan.countDocuments();
+        const matchAgg = await Intent.aggregate([
+            { $project: { matchCount: { $size: { $ifNull: ['$matches', []] } } } },
+            { $group: { _id: null, total: { $sum: '$matchCount' } } }
+        ]);
+        const totalMatches = Math.floor((matchAgg[0]?.total || 0) / 2);
+
+        // 11. Payment Channels & Gateway Stats
+        const completedPayments = await Payment.find({ status: 'completed' }).lean();
+        const channelStats = {
+            airtel: { name: 'Airtel Money', volume: 0, count: 0 },
+            tnm: { name: 'TNM Mpamba', volume: 0, count: 0 },
+            card: { name: 'Card / Visa', volume: 0, count: 0 },
+            other: { name: 'Mobile Money / Other', volume: 0, count: 0 }
+        };
+
+        completedPayments.forEach(p => {
+            const prov = (p.gatewayResponse?.data?.authorization?.provider || p.paymentMethod || '').toLowerCase();
+            const ch = (p.gatewayResponse?.data?.authorization?.channel || '').toLowerCase();
+            if (prov.includes('airtel') || ch.includes('airtel')) {
+                channelStats.airtel.volume += (p.amount || 0);
+                channelStats.airtel.count += 1;
+            } else if (prov.includes('tnm') || prov.includes('mpamba') || ch.includes('tnm') || ch.includes('mpamba')) {
+                channelStats.tnm.volume += (p.amount || 0);
+                channelStats.tnm.count += 1;
+            } else if (prov.includes('card') || prov.includes('visa') || ch.includes('card')) {
+                channelStats.card.volume += (p.amount || 0);
+                channelStats.card.count += 1;
+            } else {
+                channelStats.airtel.volume += (p.amount || 0);
+                channelStats.airtel.count += 1;
             }
         });
 
-        // 8. Payment Method Breakdown (Airtel Money, Mpamba, Card, PayChangu)
-        const methodAgg = await Payment.aggregate([
-            { $match: { status: 'completed' } },
-            { $group: { _id: '$paymentMethod', total: { $sum: '$amount' }, count: { $sum: 1 } } }
-        ]);
-
-        // 9. Monthly Trend for charts (Last 12 months)
+        // 12. Monthly Trend (Last 12 months)
         const monthlyTrendAgg = await Payment.aggregate([
             { $match: { status: 'completed' } },
             {
@@ -210,29 +264,99 @@ exports.getRevenueAnalytics = async (req, res) => {
             { $limit: 12 }
         ]);
 
-        // 10. Full Transaction Ledger (with Populated User Details)
+        // 13. Daily Revenue (for period charts)
+        const revenueByDay = await Payment.aggregate([
+            { $match: { status: 'completed', createdAt: { $gte: chartStartDate } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    revenue: { $sum: '$amount' },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // 14. Revenue By Plan
+        const revenueByPlan = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            {
+                $lookup: {
+                    from: 'subscriptions',
+                    localField: 'subscriptionId',
+                    foreignField: '_id',
+                    as: 'subscription'
+                }
+            },
+            { $unwind: { path: '$subscription', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: { $ifNull: ['$subscription.tier', 'gold'] },
+                    revenue: { $sum: '$amount' },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // 15. Itemized Transaction Ledger (with Populated User Details & Fallbacks)
         const transactions = await Payment.find()
-            .populate('userId', 'name email phoneNumber district subscriptionTier')
+            .populate('userId', 'name email phoneNumber district gender subscriptionTier isVerified')
+            .populate('subscriptionId', 'plan tier status startDate endDate')
             .sort({ createdAt: -1 })
-            .limit(200)
+            .limit(500)
             .lean();
 
         const formattedLedger = transactions.map(t => {
             const u = t.userId || {};
+            const sub = t.subscriptionId || {};
+            const gwData = t.gatewayResponse?.data || {};
+            const gwAuth = gwData.authorization || {};
+            const gwCust = gwData.customer || {};
+
+            let tierCode = u.subscriptionTier || sub.tier;
+            if (!tierCode) {
+                if (t.amount === 600) tierCode = 'plus';
+                else if (t.amount === 6000) tierCode = 'platinum';
+                else tierCode = 'gold';
+            }
+            const tierNames = {
+                free: 'Kondani Free',
+                plus: 'Kondani Plus',
+                gold: 'Kondani Gold',
+                platinum: 'VIP Platinum'
+            };
+            const tierLabel = tierNames[tierCode] || 'Kondani Gold';
+
+            let channel = gwAuth.provider || gwAuth.channel || t.paymentMethod || 'Mobile Money';
+            if (channel === 'paychangu') channel = 'Mobile Money (PayChangu)';
+
+            let name = u.name;
+            if (!name && gwCust.first_name) {
+                name = `${gwCust.first_name} ${gwCust.last_name || ''}`.trim();
+            }
+            if (!name) name = 'Kondani Member';
+
+            const phone = u.phoneNumber || t.phoneNumber || gwAuth.mobile_number || '—';
+            const email = u.email || gwCust.email || '—';
+            const planTitle = gwData.customization?.title || (sub.plan ? sub.plan.replace('_', ' ') : tierLabel);
+
             return {
                 id: t._id,
                 reference: t.referenceId || t.transactionId || '—',
-                transactionId: t.transactionId || '—',
+                transactionId: t.transactionId || gwData.reference || '—',
                 date: t.createdAt,
-                amount: t.amount,
+                amount: t.amount || 0,
                 currency: t.currency || 'MWK',
-                status: t.status,
-                paymentMethod: t.paymentMethod || 'Mobile Money',
-                customerName: u.name || 'Unnamed',
-                customerEmail: u.email || '—',
-                customerPhone: u.phoneNumber || t.phoneNumber || '—',
-                district: u.district || '—',
-                tier: u.subscriptionTier || 'Plus / Gold'
+                status: t.status || 'completed',
+                paymentMethod: channel,
+                customerName: name,
+                customerEmail: email,
+                customerPhone: phone,
+                district: u.district || 'Unspecified',
+                gender: u.gender || '—',
+                isVerified: !!u.isVerified,
+                tier: tierLabel,
+                planTitle
             };
         });
 
@@ -245,14 +369,36 @@ exports.getRevenueAnalytics = async (req, res) => {
                 completedCount,
                 payingCustomersCount,
                 totalUsers,
+                newUsersToday,
+                newUsersThisMonth,
+                activeSubscriptions,
+                verifiedUsers,
                 conversionRate: `${conversionRate}%`,
                 arpu,
                 arppu,
                 tierBreakdown,
-                methodBreakdown: methodAgg,
+                genderStats: {
+                    men: menCount,
+                    women: womenCount,
+                    other: otherGenderCount
+                },
+                topDistricts,
+                engagement: {
+                    totalMatches,
+                    totalMessages,
+                    totalPlans
+                },
+                channelStats,
+                methodBreakdown: Object.values(channelStats).map(c => ({
+                    _id: c.name,
+                    total: c.volume,
+                    count: c.count
+                })),
                 monthlyTrend: monthlyTrendAgg
             },
-            transactions: formattedLedger
+            transactions: formattedLedger,
+            revenueByDay,
+            revenueByPlan
         });
     } catch (error) {
         console.error('Revenue analytics error:', error);
@@ -421,65 +567,6 @@ exports.deleteUser = async (req, res) => {
     } catch (error) {
         console.error('Delete user error:', error);
         res.status(500).json({ error: 'Failed to delete user: ' + error.message });
-    }
-};
-
-/**
- * Get revenue analytics
- */
-exports.getRevenueAnalytics = async (req, res) => {
-    try {
-        const { period = '30d' } = req.query;
-
-        let startDate;
-        if (period === '7d') {
-            startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        } else if (period === '30d') {
-            startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        } else {
-            startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-        }
-
-        const revenueByDay = await Payment.aggregate([
-            { $match: { status: 'completed', createdAt: { $gte: startDate } } },
-            {
-                $group: {
-                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-                    revenue: { $sum: '$amount' },
-                    count: { $sum: 1 }
-                }
-            },
-            { $sort: { _id: 1 } }
-        ]);
-
-        const revenueByPlan = await Payment.aggregate([
-            { $match: { status: 'completed' } },
-            {
-                $lookup: {
-                    from: 'subscriptions',
-                    localField: 'subscriptionId',
-                    foreignField: '_id',
-                    as: 'subscription'
-                }
-            },
-            { $unwind: '$subscription' },
-            {
-                $group: {
-                    _id: '$subscription.plan',
-                    revenue: { $sum: '$amount' },
-                    count: { $sum: 1 }
-                }
-            }
-        ]);
-
-        res.json({
-            revenueByDay,
-            revenueByPlan
-        });
-
-    } catch (error) {
-        console.error('Get revenue analytics error:', error);
-        res.status(500).json({ error: 'Failed to get revenue analytics' });
     }
 };
 

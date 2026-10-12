@@ -472,7 +472,14 @@
                       <div class="text-[10px] text-white/40">Processed via PayChangu Mobile</div>
                     </div>
                   </div>
-                  <span class="text-xs font-bold text-white">Active</span>
+                  <div class="text-right">
+                    <span v-if="financialData.summary?.channelStats?.airtel?.volume" class="text-xs font-bold text-emerald-400 block">
+                      MWK {{ financialData.summary.channelStats.airtel.volume.toLocaleString() }}
+                    </span>
+                    <span class="text-[10px] text-white/50">
+                      {{ financialData.summary?.channelStats?.airtel?.count ? `${financialData.summary.channelStats.airtel.count} txns` : 'Active' }}
+                    </span>
+                  </div>
                 </div>
 
                 <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
@@ -483,7 +490,14 @@
                       <div class="text-[10px] text-white/40">Processed via PayChangu Mobile</div>
                     </div>
                   </div>
-                  <span class="text-xs font-bold text-white">Active</span>
+                  <div class="text-right">
+                    <span v-if="financialData.summary?.channelStats?.tnm?.volume" class="text-xs font-bold text-emerald-400 block">
+                      MWK {{ financialData.summary.channelStats.tnm.volume.toLocaleString() }}
+                    </span>
+                    <span class="text-[10px] text-white/50">
+                      {{ financialData.summary?.channelStats?.tnm?.count ? `${financialData.summary.channelStats.tnm.count} txns` : 'Active' }}
+                    </span>
+                  </div>
                 </div>
 
                 <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
@@ -494,7 +508,14 @@
                       <div class="text-[10px] text-white/40">Processed via PayChangu Gateway</div>
                     </div>
                   </div>
-                  <span class="text-xs font-bold text-white">Active</span>
+                  <div class="text-right">
+                    <span v-if="financialData.summary?.channelStats?.card?.volume" class="text-xs font-bold text-emerald-400 block">
+                      MWK {{ financialData.summary.channelStats.card.volume.toLocaleString() }}
+                    </span>
+                    <span class="text-[10px] text-white/50">
+                      {{ financialData.summary?.channelStats?.card?.count ? `${financialData.summary.channelStats.card.count} txns` : 'Active' }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1181,48 +1202,137 @@ const exportToExcel = () => {
   const now = new Date()
   const dateStr = now.toISOString().slice(0, 10)
 
-  const headers = [
+  const escapeCsv = (val) => {
+    if (val === null || val === undefined) return '""'
+    const str = String(val).replace(/"/g, '""')
+    return `"${str}"`
+  }
+
+  const lines = []
+
+  // 1. BRAND & REPORT HEADER
+  lines.push(['KONDANI ENTERPRISES - INVESTOR FINANCIAL & OPERATIONAL AUDIT REPORT'])
+  lines.push(['Platform:', 'Kondani Dating & Social Discovery Platform (Malawi)'])
+  lines.push(['Generated On:', now.toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'medium' })])
+  lines.push(['Currency:', 'Malawian Kwacha (MWK)'])
+  lines.push(['Payment Infrastructure:', 'PayChangu Mobile Money & Card Gateway (Airtel Money & TNM Mpamba)'])
+  lines.push(['Report Type:', 'Executive Investor Due Diligence, Unit Economics & Audit Ledger'])
+  lines.push([''])
+
+  // 2. EXECUTIVE SCORECARD & UNIT ECONOMICS
+  lines.push(['--- 1. EXECUTIVE KPI SCORECARD & UNIT ECONOMICS ---'])
+  lines.push(['Metric', 'Value', 'Unit / Benchmark', 'Category'])
+  lines.push(['Gross Merchandise Value (GMV - All-time)', summary.totalGrossRevenue || 0, 'MWK', 'Revenue'])
+  lines.push(['Month-to-Date (MTD) Revenue', summary.mtdRevenue || 0, 'MWK', 'Revenue'])
+  lines.push(['Month-over-Month (MoM) Growth', summary.momGrowthPercent || '0%', 'Growth Rate', 'Growth'])
+  lines.push(['Total Registered Members', summary.totalUsers || 0, 'Users', 'Traction'])
+  lines.push(['New Members This Month', summary.newUsersThisMonth || 0, 'Users', 'Growth'])
+  lines.push(['New Members Today', summary.newUsersToday || 0, 'Users', 'Growth'])
+  lines.push(['Total Paying Customers', summary.payingCustomersCount || 0, 'Customers', 'Monetization'])
+  lines.push(['Active Paid Subscriptions', summary.activeSubscriptions || 0, 'Subscriptions', 'Monetization'])
+  lines.push(['Free-to-Paid Conversion Rate', summary.conversionRate || '0.00%', 'Ratio', 'Unit Economics'])
+  lines.push(['Average Revenue Per User (ARPU)', summary.arpu || 0, 'MWK / Total User', 'Unit Economics'])
+  lines.push(['Average Revenue Per Paying User (ARPPU)', summary.arppu || 0, 'MWK / Paying User', 'Unit Economics'])
+  lines.push(['Completed Payment Transactions', summary.completedCount || 0, 'Transactions', 'Volume'])
+  lines.push([''])
+
+  // 3. SUBSCRIPTION TIER BREAKDOWN
+  const totalU = summary.totalUsers || 1
+  const freeCount = summary.tierBreakdown?.free || 0
+  const plusCount = summary.tierBreakdown?.plus || 0
+  const goldCount = summary.tierBreakdown?.gold || 0
+  const platinumCount = summary.tierBreakdown?.platinum || 0
+
+  lines.push(['--- 2. SUBSCRIPTION TIERS & PRICING BREAKDOWN ---'])
+  lines.push(['Tier Name', 'Price Model', 'Members / Subscribers', '% of User Base', 'Estimated Run-Rate (MWK)'])
+  lines.push(['Kondani Free', 'MWK 0 (Freemium)', freeCount, `${((freeCount / totalU) * 100).toFixed(1)}%`, 0])
+  lines.push(['Kondani Plus', 'MWK 600 / week', plusCount, `${((plusCount / totalU) * 100).toFixed(1)}%`, plusCount * 600])
+  lines.push(['Kondani Gold', 'MWK 2,400 / month', goldCount, `${((goldCount / totalU) * 100).toFixed(1)}%`, goldCount * 2400])
+  lines.push(['VIP Platinum', 'MWK 6,000 / year', platinumCount, `${((platinumCount / totalU) * 100).toFixed(1)}%`, platinumCount * 6000])
+  lines.push([''])
+
+  // 4. PAYMENT GATEWAY & OPERATOR CHANNELS
+  lines.push(['--- 3. PAYMENT CHANNELS & SETTLEMENT BREAKDOWN ---'])
+  lines.push(['Channel / Operator', 'Gateway', 'Total Volume (MWK)', 'Completed Transactions', 'Status'])
+  const ch = summary.channelStats || {}
+  lines.push(['Airtel Money (Malawi)', 'PayChangu Mobile API', ch.airtel?.volume || 0, ch.airtel?.count || 0, 'Active & Operational'])
+  lines.push(['TNM Mpamba (Malawi)', 'PayChangu Mobile API', ch.tnm?.volume || 0, ch.tnm?.count || 0, 'Active & Operational'])
+  lines.push(['Card / International (Visa/Mastercard)', 'PayChangu Gateway', ch.card?.volume || 0, ch.card?.count || 0, 'Active & Operational'])
+  lines.push([''])
+
+  // 5. NETWORK EFFECTS & ENGAGEMENT HEALTH
+  lines.push(['--- 4. PLATFORM ENGAGEMENT & TRUST METRICS ---'])
+  lines.push(['Metric', 'Count', 'Unit', 'Strategic Value'])
+  lines.push(['Total Mutual Matches Formed', summary.engagement?.totalMatches || 0, 'Matches', 'Network Effect Density'])
+  lines.push(['Direct Messages Exchanged', summary.engagement?.totalMessages || 0, 'Messages', 'Core User Retention'])
+  lines.push(['Date Plans Initiated', summary.engagement?.totalPlans || 0, 'Plans', 'Real-world Dating Intent'])
+  lines.push(['Gold-Tick Verified Profiles', summary.verifiedUsers || 0, 'Profiles', 'Trust & Anti-Catfish Safety'])
+  lines.push(['Male Members', summary.genderStats?.men || 0, 'Users', 'Demographics'])
+  lines.push(['Female Members', summary.genderStats?.women || 0, 'Users', 'Demographics'])
+  lines.push([''])
+
+  // 6. GEOGRAPHIC MARKET PENETRATION
+  lines.push(['--- 5. GEOGRAPHIC FOOTPRINT (TOP DISTRICTS) ---'])
+  lines.push(['District / Location', 'Registered Members', '% Share of User Base'])
+  if (summary.topDistricts && summary.topDistricts.length > 0) {
+    summary.topDistricts.forEach(d => {
+      lines.push([d.name || 'Unspecified', d.count || 0, `${(((d.count || 0) / totalU) * 100).toFixed(1)}%`])
+    })
+  } else {
+    lines.push(['National (Malawi)', totalU, '100%'])
+  }
+  lines.push([''])
+
+  // 7. ITEMIZED TRANSACTION REVENUE LEDGER
+  lines.push(['--- 6. ITEMIZED AUDIT TRANSACTION LEDGER ---'])
+  const ledgerHeaders = [
     'Transaction Reference',
-    'Date & Time',
-    'Customer Name',
-    'Email Address',
+    'Gateway Reference',
+    'Date & Time (UTC/Local)',
+    'Customer Full Name',
     'Phone Number',
-    'District',
+    'Email Address',
+    'District / City',
+    'Gender',
+    'Verified Status',
     'Subscription Tier',
-    'Amount (MWK)',
-    'Payment Method',
+    'Package / Plan',
+    'Gross Amount (MWK)',
+    'Currency',
+    'Payment Channel',
     'Payment Gateway',
     'Status'
   ]
+  lines.push(ledgerHeaders)
 
-  const rows = transactions.map(t => [
-    `"${t.reference || t.transactionId || '—'}"`,
-    `"${new Date(t.date).toLocaleString()}"`,
-    `"${(t.customerName || 'Unnamed').replace(/"/g, '""')}"`,
-    `"${t.customerEmail || '—'}"`,
-    `"${t.customerPhone || '—'}"`,
-    `"${t.district || '—'}"`,
-    `"${t.tier || 'Plus / Gold'}"`,
-    t.amount || 0,
-    `"${t.paymentMethod || 'Mobile Money'}"`,
-    '"PayChangu"',
-    `"${t.status || 'completed'}"`
-  ])
+  transactions.forEach(t => {
+    lines.push([
+      t.reference || '—',
+      t.transactionId || '—',
+      t.date ? new Date(t.date).toLocaleString('en-US') : '—',
+      t.customerName || 'Kondani Member',
+      t.customerPhone || '—',
+      t.customerEmail || '—',
+      t.district || 'Unspecified',
+      t.gender || '—',
+      t.isVerified ? 'Gold Tick Verified' : 'Standard',
+      t.tier || 'Kondani Gold',
+      t.planTitle || 'Premium Subscription',
+      t.amount || 0,
+      t.currency || 'MWK',
+      t.paymentMethod || 'Mobile Money',
+      'PayChangu',
+      t.status || 'completed'
+    ])
+  })
 
-  const summaryBlock = [
-    ['KONDANI DATING APP - FINANCIAL REVENUE & TRANSACTION LEDGER'],
-    [`Generated Date: ${now.toLocaleString()}`],
-    [`Gross Merchandise Value (GMV): MWK ${(summary.totalGrossRevenue || 0).toLocaleString()}`],
-    [`Month-to-Date (MTD) Revenue: MWK ${(summary.mtdRevenue || 0).toLocaleString()}`],
-    [`Total Paying Customers: ${summary.payingCustomersCount || 0}`],
-    [`Total Registered Members: ${summary.totalUsers || 0}`],
-    [`Free-to-Paid Conversion Rate: ${summary.conversionRate || '0.00%'}`],
-    [`Average Revenue Per User (ARPU): MWK ${(summary.arpu || 0).toLocaleString()}`],
-    [''],
-    headers
-  ]
-
-  const csvContent = summaryBlock.map(r => r.join(',')).join('\n') + '\n' + rows.map(r => r.join(',')).join('\n')
+  // Format CSV with proper quoting and escaping
+  const csvContent = lines.map(row =>
+    row.map(cell => {
+      if (typeof cell === 'number') return cell
+      return escapeCsv(cell)
+    }).join(',')
+  ).join('\r\n')
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -1234,7 +1344,7 @@ const exportToExcel = () => {
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 
-  success('Financial spreadsheet exported successfully! Ready for investors.')
+  success('Investor-grade financial ledger exported successfully!')
 }
 
 const refreshCurrentTab = async () => {
@@ -1266,8 +1376,8 @@ const tabs = computed(() => [
 ])
 
 const tierPercent = (tierKey) => {
-  const total = stats.value.users?.total || 1
-  const count = stats.value.users?.tiers?.[tierKey] || 0
+  const total = financialData.value.summary?.totalUsers || stats.value.users?.total || 1
+  const count = financialData.value.summary?.tierBreakdown?.[tierKey] ?? stats.value.users?.tiers?.[tierKey] ?? 0
   return Math.min(100, Math.round((count / total) * 100)) + '%'
 }
 
