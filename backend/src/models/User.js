@@ -167,6 +167,32 @@ const userSchema = new mongoose.Schema({
     boostMonth: { type: String, default: '' } // YYYY-MM
 }, { timestamps: true });
 
+// Geo index (required for $near queries)
 userSchema.index({ location: '2dsphere' });
+
+// ── Hot-path discovery indexes ─────────────────────────────────────────────
+// The getIntents query filters: isBanned, isVisible, isProfileComplete, role
+// This compound index lets Mongo skip banned/hidden/incomplete users instantly.
+userSchema.index({ isBanned: 1, isVisible: 1, isProfileComplete: 1, role: 1 });
+
+// Gender preference filter (very common in discovery)
+userSchema.index({ gender: 1, isBanned: 1, isVisible: 1 });
+
+// Age range filter
+userSchema.index({ age: 1, isBanned: 1, isVisible: 1 });
+
+// Verified-only filter
+userSchema.index({ isVerified: 1, isBanned: 1, isVisible: 1 });
+
+// Boost discovery (boosted users appear first)
+userSchema.index({ boostUntil: 1 });
+
+// Online presence (chat list ordering)
+userSchema.index({ isOnline: 1, lastSeen: -1 });
+
+// Admin / subscription queries
+userSchema.index({ isPremium: 1, premiumUntil: 1 });
+userSchema.index({ subscriptionTier: 1 });
+userSchema.index({ createdAt: -1 }); // admin dashboard: newest users first
 
 module.exports = mongoose.model('User', userSchema);

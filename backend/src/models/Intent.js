@@ -25,4 +25,9 @@ const intentSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
+// Each user has exactly one Intent document — enforce uniqueness & fast lookup
+intentSchema.index({ user: 1 }, { unique: true });
+// Speed up mutual-like check: Intent.find({ user: { $in:[...] }, likes: currentUserId })
+intentSchema.index({ likes: 1 });
+
 module.exports = mongoose.model('Intent', intentSchema);
