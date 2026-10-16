@@ -112,6 +112,9 @@
             <span v-if="profile.age" class="text-2xl font-bold text-white/90 drop-shadow-md leading-tight">
               {{ profile.age }}
             </span>
+            <span v-if="profile.gender" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-md text-white/90 border border-white/20 capitalize self-center">
+              {{ profile.gender }}
+            </span>
             <span v-if="profile.isVerified" class="inline-flex items-center text-amber-400 drop-shadow-md" title="Verified Member">
               <BadgeCheck :size="22" class="fill-amber-400 text-night-950" />
             </span>

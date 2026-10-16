@@ -435,8 +435,46 @@ exports.cancelSubscription = async (req, res) => {
 /**
  * Handle GET redirect if PayChangu redirects the browser to /api/subscription/webhook
  */
-exports.handleWebhookRedirect = (req, res) => {
+exports.handleWebhookRedirect = async (req, res) => {
     const txRef = req.query.tx_ref || req.query.ref || '';
-    const origin = process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',')[0].trim() : 'http://localhost:5173';
+    if (txRef) {
+        try {
+            const payment = await Payment.findOne({ referenceId: txRef });
+            if (payment && payment.status !== 'completed') {
+                const statusResult = await paymentService.verifyPayment(txRef);
+                if (statusResult.status === 'completed') {
+                    payment.status = 'completed';
+                    payment.gatewayResponse = statusResult.rawResponse;
+                    if (statusResult.reference) payment.transactionId = statusResult.reference;
+                    if (!payment.metadata) payment.metadata = {};
+                    payment.metadata.completedAt = new Date();
+                    await payment.save();
+
+                    const subscription = await Subscription.findById(payment.subscriptionId);
+                    const planConfig = PLANS[payment.plan || subscription?.plan] || PLANS['1_month'];
+                    if (subscription) {
+                        subscription.status = 'active';
+                        subscription.tier = planConfig.tier;
+                        subscription.startDate = new Date();
+                        subscription.endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
+                        if (statusResult.reference) subscription.transactionId = statusResult.reference;
+                        await subscription.save();
+                    }
+
+                    const user = await User.findById(payment.userId);
+                    if (user) {
+                        user.isPremium = true;
+                        user.subscriptionTier = planConfig.tier;
+                        user.premiumUntil = subscription ? subscription.endDate : new Date(Date.now() + planConfig.duration * 86400000);
+                        await user.save();
+                    }
+                    console.log(`[PayChangu Redirect] Payment and subscription activated for txRef: ${txRef}`);
+                }
+            }
+        } catch (err) {
+            console.error('[PayChangu Redirect Error]:', err);
+        }
+    }
+    const origin = process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',')[0].trim() : 'https://kondani.com';
     return res.redirect(`${origin}/premium?status=success&tx_ref=${encodeURIComponent(txRef)}`);
 };

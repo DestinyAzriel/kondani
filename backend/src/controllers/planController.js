@@ -380,11 +380,11 @@ exports.joinPlan = async (req, res) => {
         let hostIntent = await Intent.findOne({ user: hostId });
         if (!hostIntent) hostIntent = await Intent.create({ user: hostId });
 
-        if (!myIntent.matches.includes(hostId)) {
+        if (!myIntent.matches.some(id => String(id) === String(hostId))) {
             myIntent.matches.push(hostId);
             await myIntent.save();
         }
-        if (!hostIntent.matches.includes(currentUserId)) {
+        if (!hostIntent.matches.some(id => String(id) === String(currentUserId))) {
             hostIntent.matches.push(currentUserId);
             await hostIntent.save();
         }

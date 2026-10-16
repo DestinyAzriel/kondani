@@ -437,7 +437,7 @@
               </div>
               <div>
                 <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-amber-300 font-semibold">Kondani Gold (MWK 2,500/mo)</span>
+                  <span class="text-amber-300 font-semibold">Kondani Gold (MWK 2,400/mo)</span>
                   <span class="font-semibold text-amber-300">{{ financialData.summary?.tierBreakdown?.gold || 0 }} subs</span>
                 </div>
                 <div class="h-2 rounded-full bg-white/5 overflow-hidden">
@@ -446,7 +446,7 @@
               </div>
               <div>
                 <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-purple-300 font-semibold">VIP Platinum (MWK 5,000/mo)</span>
+                  <span class="text-purple-300 font-semibold">VIP Platinum (MWK 6,000/yr)</span>
                   <span class="font-semibold text-purple-300">{{ financialData.summary?.tierBreakdown?.platinum || 0 }} subs</span>
                 </div>
                 <div class="h-2 rounded-full bg-white/5 overflow-hidden">

@@ -24,10 +24,10 @@ exports.getDashboardStats = async (req, res) => {
         const premiumUsers = await User.countDocuments({ isPremium: true });
         const verifiedUsers = await User.countDocuments({ isVerified: true });
 
-        // Tiers Breakdown (3 Tiers + Free)
-        const plusCount = await User.countDocuments({ subscriptionTier: 'plus' });
-        const goldCount = await User.countDocuments({ subscriptionTier: 'gold' });
-        const platinumCount = await User.countDocuments({ subscriptionTier: 'platinum' });
+        // Tiers Breakdown (3 Tiers + Free based on active subscriptions)
+        const plusCount = await Subscription.countDocuments({ status: 'active', tier: 'plus' });
+        const goldCount = await Subscription.countDocuments({ status: 'active', tier: 'gold' });
+        const platinumCount = await Subscription.countDocuments({ status: 'active', tier: 'platinum' });
         const freeCount = Math.max(0, totalUsers - (plusCount + goldCount + platinumCount));
 
         // Gender Breakdown
@@ -188,10 +188,10 @@ exports.getRevenueAnalytics = async (req, res) => {
         const arpu = totalUsers > 0 ? Math.round(totalRevenue / totalUsers) : 0;
         const arppu = payingCustomersCount > 0 ? Math.round(totalRevenue / payingCustomersCount) : 0;
 
-        // 7. Plan / Tier Distribution
-        const plusCount = await User.countDocuments({ subscriptionTier: 'plus' });
-        const goldCount = await User.countDocuments({ subscriptionTier: 'gold' });
-        const platinumCount = await User.countDocuments({ subscriptionTier: 'platinum' });
+        // 7. Plan / Tier Distribution (from active subscriptions)
+        const plusCount = await Subscription.countDocuments({ status: 'active', tier: 'plus' });
+        const goldCount = await Subscription.countDocuments({ status: 'active', tier: 'gold' });
+        const platinumCount = await Subscription.countDocuments({ status: 'active', tier: 'platinum' });
         const freeCount = Math.max(0, totalUsers - (plusCount + goldCount + platinumCount));
         const tierBreakdown = {
             free: freeCount,

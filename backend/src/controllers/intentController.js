@@ -231,6 +231,7 @@ exports.getIntents = async (req, res) => {
             id: user._id,
             name: user.name || 'New User',
             age: user.age || null,
+            gender: user.gender || '',
             district: user.district || '',
             distance: formatDistance(distanceKm),
             distanceKm: distanceKm == null ? null : Math.round(distanceKm),
@@ -306,18 +307,21 @@ exports.likeIntent = async (req, res) => {
         let isMatch = false;
         let matchData = null;
 
-        if (targetIntent && targetIntent.likes.includes(currentUserId)) {
+        if (targetIntent && targetIntent.likes.some(id => String(id) === String(currentUserId))) {
             isMatch = true;
 
             // Add to matches for both
-            if (!userIntent.matches.includes(targetUserId)) {
+            if (!userIntent.matches.some(id => String(id) === String(targetUserId))) {
                 userIntent.matches.push(targetUserId);
                 await userIntent.save();
             }
-            if (!targetIntent.matches.includes(currentUserId)) {
+            if (!targetIntent.matches.some(id => String(id) === String(currentUserId))) {
                 targetIntent.matches.push(currentUserId);
                 await targetIntent.save();
             }
+
+            await User.findByIdAndUpdate(currentUserId, { $addToSet: { matches: targetUserId } });
+            await User.findByIdAndUpdate(targetUserId, { $addToSet: { matches: currentUserId } });
 
             const targetUser = await User.findById(targetUserId);
             matchData = {

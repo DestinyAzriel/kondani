@@ -118,10 +118,13 @@
 
                 <!-- Bottom Photo Overlay on Mobile only (Name, Age, Location) -->
                 <div class="sm:hidden absolute bottom-3 inset-x-4 z-20 pointer-events-none">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <h2 class="text-2xl font-bold font-display text-white drop-shadow-md">
                       {{ user.name || 'Member' }}<span v-if="userAge">, {{ userAge }}</span>
                     </h2>
+                    <span v-if="user.gender" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-white/95 border border-white/20 capitalize">
+                      {{ user.gender }}
+                    </span>
                     <BadgeCheck v-if="user.isVerified" :size="22" class="text-gold-400 drop-shadow" />
                   </div>
 
@@ -138,10 +141,13 @@
                 <!-- Desktop Header with Name, Age, and Close button -->
                 <div class="hidden sm:flex items-center justify-between px-7 py-5 border-b border-white/8 shrink-0 bg-[#0c1822]/80 backdrop-blur-md">
                   <div class="min-w-0">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                       <h2 class="text-2xl font-bold font-display text-white truncate">
                         {{ user.name || 'Member' }}<span v-if="userAge">, {{ userAge }}</span>
                       </h2>
+                      <span v-if="user.gender" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 capitalize">
+                        {{ user.gender }}
+                      </span>
                       <BadgeCheck v-if="user.isVerified" :size="22" class="text-gold-400 shrink-0" />
                     </div>
                     <p v-if="userLocation" class="flex items-center gap-1.5 text-white/60 text-xs mt-0.5">
@@ -198,6 +204,10 @@
                   <div v-if="hasLifestyleDetails" class="space-y-2.5">
                     <h3 class="text-[11px] font-semibold uppercase tracking-wider text-white/40 mb-1">Details</h3>
                     <div class="grid grid-cols-2 gap-2.5">
+                      <div v-if="user.gender" class="p-3 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2.5 capitalize">
+                        <UserIcon :size="15" class="text-white/50 shrink-0" />
+                        <span class="text-xs text-white/80">{{ user.gender }}</span>
+                      </div>
                       <div v-if="user.occupation || user.job" class="p-3 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2.5">
                         <Briefcase :size="15" class="text-lagoon-400 shrink-0" />
                         <span class="text-xs text-white/80 truncate">{{ user.occupation || user.job }}</span>
@@ -205,14 +215,6 @@
                       <div v-if="user.education" class="p-3 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2.5">
                         <GraduationCap :size="15" class="text-gold-400 shrink-0" />
                         <span class="text-xs text-white/80 truncate">{{ user.education }}</span>
-                      </div>
-                      <div v-if="user.height" class="p-3 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2.5">
-                        <Ruler :size="15" class="text-white/50 shrink-0" />
-                        <span class="text-xs text-white/80">{{ user.height }} cm</span>
-                      </div>
-                      <div v-if="user.gender" class="p-3 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2.5 capitalize">
-                        <UserIcon :size="15" class="text-white/50 shrink-0" />
-                        <span class="text-xs text-white/80">{{ user.gender }}</span>
                       </div>
                     </div>
                   </div>
@@ -412,7 +414,7 @@ const userInterests = computed(() => {
 
 const hasLifestyleDetails = computed(() => {
   const u = props.user
-  return !!(u.occupation || u.job || u.education || u.height || u.gender)
+  return !!(u.occupation || u.job || u.education || u.gender)
 })
 
 const close = () => {
