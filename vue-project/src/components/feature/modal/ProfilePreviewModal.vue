@@ -126,6 +126,22 @@
                       {{ user.gender }}
                     </span>
                     <BadgeCheck v-if="user.isVerified" :size="22" class="text-gold-400 drop-shadow" />
+                    <!-- Tier badge -->
+                    <span
+                      v-if="user.isPremium && user.subscriptionTier === 'platinum'"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                      style="background: linear-gradient(135deg,#7c3aed,#a855f7); color:#fff;"
+                    >👑 VIP</span>
+                    <span
+                      v-else-if="user.isPremium && user.subscriptionTier === 'gold'"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                      style="background: linear-gradient(135deg,#b45309,#f4b740); color:#0a0a0a;"
+                    >⭐ Gold</span>
+                    <span
+                      v-else-if="user.isPremium && user.subscriptionTier === 'plus'"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                      style="background: linear-gradient(135deg,#0ea5e9,#38bdf8); color:#0a0a0a;"
+                    >✦ Plus</span>
                   </div>
 
                   <p v-if="userLocation" class="flex items-center gap-1.5 text-white/85 text-xs mt-1.5 drop-shadow">
@@ -149,6 +165,22 @@
                         {{ user.gender }}
                       </span>
                       <BadgeCheck v-if="user.isVerified" :size="22" class="text-gold-400 shrink-0" />
+                      <!-- Tier badge -->
+                      <span
+                        v-if="user.isPremium && user.subscriptionTier === 'platinum'"
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                        style="background: linear-gradient(135deg,#7c3aed,#a855f7); color:#fff;"
+                      >👑 VIP</span>
+                      <span
+                        v-else-if="user.isPremium && user.subscriptionTier === 'gold'"
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                        style="background: linear-gradient(135deg,#b45309,#f4b740); color:#0a0a0a;"
+                      >⭐ Gold</span>
+                      <span
+                        v-else-if="user.isPremium && user.subscriptionTier === 'plus'"
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                        style="background: linear-gradient(135deg,#0ea5e9,#38bdf8); color:#0a0a0a;"
+                      >✦ Plus</span>
                     </div>
                     <p v-if="userLocation" class="flex items-center gap-1.5 text-white/60 text-xs mt-0.5">
                       <MapPin :size="13" class="text-lagoon-400 shrink-0" />

@@ -193,7 +193,8 @@ exports.getIntents = async (req, res) => {
             }
 
             const candidateTier = getUserTier(user);
-            const isPriorityLike = likerSet.has(String(user._id)) && candidateTier === 'platinum';
+            // Priority Likes: paid members (Plus, Gold, VIP) whose profiles get shown first when they liked you
+            const isPriorityLike = likerSet.has(String(user._id)) && candidateTier !== 'free';
 
             scored.push({
                 user,
@@ -239,6 +240,8 @@ exports.getIntents = async (req, res) => {
             photos: (user.photos && user.photos.length) ? user.photos : [],
             interests: user.interests || [],
             isVerified: approvedVerifSet.has(user._id.toString()),
+            isPremium: Boolean(user.isPremium && (!user.premiumUntil || new Date(user.premiumUntil) > new Date())),
+            subscriptionTier: user.subscriptionTier || 'free',
             matchScore
         }));
 

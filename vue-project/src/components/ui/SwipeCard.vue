@@ -118,6 +118,22 @@
             <span v-if="profile.isVerified" class="inline-flex items-center text-amber-400 drop-shadow-md" title="Verified Member">
               <BadgeCheck :size="22" class="fill-amber-400 text-night-950" />
             </span>
+            <!-- Tier badge -->
+            <span
+              v-if="profile.isPremium && profile.subscriptionTier === 'platinum'"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm self-center"
+              style="background: linear-gradient(135deg,#7c3aed,#a855f7); color:#fff;"
+            >👑 VIP</span>
+            <span
+              v-else-if="profile.isPremium && profile.subscriptionTier === 'gold'"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm self-center"
+              style="background: linear-gradient(135deg,#b45309,#f4b740); color:#0a0a0a;"
+            >⭐ Gold</span>
+            <span
+              v-else-if="profile.isPremium && profile.subscriptionTier === 'plus'"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm self-center"
+              style="background: linear-gradient(135deg,#0ea5e9,#38bdf8); color:#0a0a0a;"
+            >✦ Plus</span>
           </div>
 
           <!-- Details button: circular up-arrow on the right of the name row -->
