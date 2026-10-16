@@ -232,14 +232,10 @@
                     </div>
                   </div>
 
-                  <!-- Details Grid -->
+                  <!-- Details Grid (Occupation, Education) -->
                   <div v-if="hasLifestyleDetails" class="space-y-2.5">
                     <h3 class="text-[11px] font-semibold uppercase tracking-wider text-white/40 mb-1">Details</h3>
                     <div class="grid grid-cols-2 gap-2.5">
-                      <div v-if="user.gender" class="p-3 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2.5 capitalize">
-                        <UserIcon :size="15" class="text-white/50 shrink-0" />
-                        <span class="text-xs text-white/80">{{ user.gender }}</span>
-                      </div>
                       <div v-if="user.occupation || user.job" class="p-3 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2.5">
                         <Briefcase :size="15" class="text-lagoon-400 shrink-0" />
                         <span class="text-xs text-white/80 truncate">{{ user.occupation || user.job }}</span>
@@ -446,7 +442,7 @@ const userInterests = computed(() => {
 
 const hasLifestyleDetails = computed(() => {
   const u = props.user
-  return !!(u.occupation || u.job || u.education || u.gender)
+  return !!(u.occupation || u.job || u.education)
 })
 
 const close = () => {
