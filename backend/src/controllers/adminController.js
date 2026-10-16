@@ -16,28 +16,30 @@ exports.getDashboardStats = async (req, res) => {
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        // User stats
-        const totalUsers = await User.countDocuments();
-        const newUsersToday = await User.countDocuments({ createdAt: { $gte: today } });
-        const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: thisMonth } });
-        const activeUsers = await User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
-        const premiumUsers = await User.countDocuments({ isPremium: true });
-        const verifiedUsers = await User.countDocuments({ isVerified: true });
+        const nonAdminFilter = { role: { $nin: ['admin', 'moderator'] } };
 
-        // Tiers Breakdown (3 Tiers + Free based on active subscriptions)
-        const plusCount = await Subscription.countDocuments({ status: 'active', tier: 'plus' });
-        const goldCount = await Subscription.countDocuments({ status: 'active', tier: 'gold' });
-        const platinumCount = await Subscription.countDocuments({ status: 'active', tier: 'platinum' });
+        // User stats (excluding admin/staff accounts)
+        const totalUsers = await User.countDocuments(nonAdminFilter);
+        const newUsersToday = await User.countDocuments({ ...nonAdminFilter, createdAt: { $gte: today } });
+        const newUsersThisMonth = await User.countDocuments({ ...nonAdminFilter, createdAt: { $gte: thisMonth } });
+        const activeUsers = await User.countDocuments({ ...nonAdminFilter, lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
+        const premiumUsers = await User.countDocuments({ ...nonAdminFilter, isPremium: true });
+        const verifiedUsers = await User.countDocuments({ ...nonAdminFilter, isVerified: true });
+
+        // Tiers Breakdown (Real users by current tier, excluding admin)
+        const plusCount = await User.countDocuments({ ...nonAdminFilter, isPremium: true, subscriptionTier: 'plus' });
+        const goldCount = await User.countDocuments({ ...nonAdminFilter, isPremium: true, subscriptionTier: 'gold' });
+        const platinumCount = await User.countDocuments({ ...nonAdminFilter, isPremium: true, subscriptionTier: 'platinum' });
         const freeCount = Math.max(0, totalUsers - (plusCount + goldCount + platinumCount));
 
-        // Gender Breakdown
-        const menCount = await User.countDocuments({ gender: { $in: ['Male', 'male', 'Men', 'men'] } });
-        const womenCount = await User.countDocuments({ gender: { $in: ['Female', 'female', 'Women', 'women'] } });
+        // Gender Breakdown (Real users)
+        const menCount = await User.countDocuments({ ...nonAdminFilter, gender: { $in: ['Male', 'male', 'Men', 'men'] } });
+        const womenCount = await User.countDocuments({ ...nonAdminFilter, gender: { $in: ['Female', 'female', 'Women', 'women'] } });
         const otherGenderCount = Math.max(0, totalUsers - (menCount + womenCount));
 
-        // Top Districts Adoption
+        // Top Districts Adoption (Real users)
         const topDistrictsAgg = await User.aggregate([
-            { $match: { district: { $exists: true, $ne: '' } } },
+            { $match: { ...nonAdminFilter, district: { $exists: true, $ne: '' } } },
             { $group: { _id: '$district', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 6 }
@@ -165,20 +167,17 @@ exports.getRevenueAnalytics = async (req, res) => {
             momGrowthPercent = '+100%';
         }
 
-        // 4. Unique Paying Customers
-        const payingUsersAgg = await Payment.aggregate([
-            { $match: { status: 'completed' } },
-            { $group: { _id: '$userId' } },
-            { $count: 'count' }
-        ]);
-        const payingCustomersCount = payingUsersAgg[0]?.count || 0;
+        const nonAdminFilter = { role: { $nin: ['admin', 'moderator'] } };
 
-        // 5. Total Users & Key Aggregates
-        const totalUsers = await User.countDocuments();
-        const newUsersToday = await User.countDocuments({ createdAt: { $gte: today } });
-        const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: thisMonthStart } });
-        const verifiedUsers = await User.countDocuments({ isVerified: true });
-        const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
+        // 4. Unique Paying Customers (Actual active subscribers, excluding admin)
+        const activeSubscriptions = await User.countDocuments({ ...nonAdminFilter, isPremium: true });
+        const payingCustomersCount = activeSubscriptions;
+
+        // 5. Total Users & Key Aggregates (excluding admin)
+        const totalUsers = await User.countDocuments(nonAdminFilter);
+        const newUsersToday = await User.countDocuments({ ...nonAdminFilter, createdAt: { $gte: today } });
+        const newUsersThisMonth = await User.countDocuments({ ...nonAdminFilter, createdAt: { $gte: thisMonthStart } });
+        const verifiedUsers = await User.countDocuments({ ...nonAdminFilter, isVerified: true });
 
         const conversionRate = totalUsers > 0
             ? ((payingCustomersCount / totalUsers) * 100).toFixed(2)
@@ -188,10 +187,10 @@ exports.getRevenueAnalytics = async (req, res) => {
         const arpu = totalUsers > 0 ? Math.round(totalRevenue / totalUsers) : 0;
         const arppu = payingCustomersCount > 0 ? Math.round(totalRevenue / payingCustomersCount) : 0;
 
-        // 7. Plan / Tier Distribution (from active subscriptions)
-        const plusCount = await Subscription.countDocuments({ status: 'active', tier: 'plus' });
-        const goldCount = await Subscription.countDocuments({ status: 'active', tier: 'gold' });
-        const platinumCount = await Subscription.countDocuments({ status: 'active', tier: 'platinum' });
+        // 7. Plan / Tier Distribution (Real users by current tier, excluding admin)
+        const plusCount = await User.countDocuments({ ...nonAdminFilter, isPremium: true, subscriptionTier: 'plus' });
+        const goldCount = await User.countDocuments({ ...nonAdminFilter, isPremium: true, subscriptionTier: 'gold' });
+        const platinumCount = await User.countDocuments({ ...nonAdminFilter, isPremium: true, subscriptionTier: 'platinum' });
         const freeCount = Math.max(0, totalUsers - (plusCount + goldCount + platinumCount));
         const tierBreakdown = {
             free: freeCount,
@@ -200,14 +199,14 @@ exports.getRevenueAnalytics = async (req, res) => {
             platinum: platinumCount
         };
 
-        // 8. Gender Demographics
-        const menCount = await User.countDocuments({ gender: { $in: ['Male', 'male', 'Men', 'men'] } });
-        const womenCount = await User.countDocuments({ gender: { $in: ['Female', 'female', 'Women', 'women'] } });
+        // 8. Gender Demographics (excluding admin)
+        const menCount = await User.countDocuments({ ...nonAdminFilter, gender: { $in: ['Male', 'male', 'Men', 'men'] } });
+        const womenCount = await User.countDocuments({ ...nonAdminFilter, gender: { $in: ['Female', 'female', 'Women', 'women'] } });
         const otherGenderCount = Math.max(0, totalUsers - (menCount + womenCount));
 
-        // 9. Top Districts Adoption
+        // 9. Top Districts Adoption (excluding admin)
         const topDistrictsAgg = await User.aggregate([
-            { $match: { district: { $exists: true, $ne: '' } } },
+            { $match: { ...nonAdminFilter, district: { $exists: true, $ne: '' } } },
             { $group: { _id: '$district', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 6 }
@@ -422,7 +421,12 @@ exports.getAllUsers = async (req, res) => {
                 { district: { $regex: search, $options: 'i' } }
             ];
         }
-        if (role) query.role = role;
+        if (role) {
+            query.role = role;
+        } else {
+            // Default: exclude admins and moderators so User Directory displays real members
+            query.role = { $nin: ['admin', 'moderator'] };
+        }
         if (subscriptionTier) {
             if (subscriptionTier === 'free') {
                 query.$or = [
