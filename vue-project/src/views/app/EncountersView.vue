@@ -1,5 +1,5 @@
 <template>
-  <div class="encounters relative overflow-hidden flex flex-col w-full h-[calc(100dvh-72px)] md:h-auto md:min-h-screen bg-night-950">
+  <div class="encounters relative overflow-hidden flex flex-col w-full min-h-screen bg-night-950">
     <div class="k-stars"></div>
     <div class="absolute top-[-18%] left-[-15%] w-[55%] h-[50%] rounded-full blur-[130px] pointer-events-none"
          style="background:radial-gradient(circle,rgba(244,183,64,.14),transparent 70%)"></div>
@@ -21,11 +21,11 @@
       </button>
     </div>
 
-    <!-- Main Discovery Area: flex-1 to fill available vertical space cleanly -->
-    <div class="relative z-10 w-full max-w-4xl mx-auto px-3 sm:px-6 flex-1 min-h-0 flex flex-col">
+    <!-- Main Discovery Area -->
+    <div class="relative z-10 w-full max-w-4xl mx-auto px-3 sm:px-6">
 
       <!-- Empty state -->
-      <div v-if="!isLoading && profiles.length === 0" class="flex flex-col items-center justify-center flex-1 py-6">
+      <div v-if="!isLoading && profiles.length === 0" class="flex flex-col items-center justify-center min-h-[calc(100dvh-180px)] py-6">
         <EmptyState
           type="no-cards"
           title="No one new nearby"
@@ -38,14 +38,15 @@
       </div>
 
       <!-- Card + side panel: flex-col on mobile, 2-col grid on desktop -->
-      <div v-else class="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[minmax(0,440px)_1fr] lg:gap-10 lg:items-start">
+      <div v-else class="flex flex-col lg:grid lg:grid-cols-[minmax(0,440px)_1fr] lg:gap-10 lg:items-start">
 
-        <!-- Card column: flex-1 on mobile so card + buttons fill height without dead space -->
-        <div class="w-full h-full flex flex-col justify-between min-h-0">
+        <!-- Card column: always full width on mobile -->
+        <div class="w-full">
 
-          <!-- Card stack: dynamically fills vertical space on mobile, fixed height on desktop -->
+          <!-- Card stack: explicit height, position relative so SwipeCards (absolute) fill it -->
           <div
-            class="swipe-column relative w-full rounded-[20px] overflow-hidden flex-1 min-h-0 lg:flex-none lg:h-[640px] lg:max-h-[680px]"
+            class="swipe-column"
+            style="position: relative; width: 100%; border-radius: 20px; overflow: hidden; height: calc(100dvh - 212px); min-height: 400px; max-height: 680px;"
           >
             <SkeletonLoader v-if="isLoading" type="swipe-card" style="position: absolute; top:0; left:0; right:0; bottom:0;" />
 
@@ -63,8 +64,8 @@
             </template>
           </div>
 
-          <!-- Action buttons: perfectly positioned right above bottom navigation bar -->
-          <div v-if="!isLoading && profiles.length > 0" class="k-act shrink-0 py-2.5 sm:py-3.5 lg:mt-4 lg:py-0">
+          <!-- Action buttons: normal-flow row BELOW the card -->
+          <div v-if="!isLoading && profiles.length > 0" class="k-act mt-4">
             <button class="b" @click="handleRewind" title="Undo"><RotateCcw :size="18" /></button>
             <button class="b pass" @click="triggerSwipe('left')" title="Pass"><X :size="22" /></button>
             <button class="b sup" @click="triggerSwipe('up')" title="Super Like"><Star :size="19" class="fill-current" /></button>
@@ -72,7 +73,7 @@
             <button class="b" @click="handleBoost" title="Boost"><Zap :size="18" /></button>
           </div>
 
-          <p v-if="likesLeft !== null && likesLeft <= 5" class="shrink-0 text-center text-xs text-white/55 pb-1">
+          <p v-if="likesLeft !== null && likesLeft <= 5" class="text-center text-xs text-white/55 mt-3">
             {{ likesLeft === 0 ? 'No more likes today' : `Only ${likesLeft} ${likesLeft === 1 ? 'like' : 'likes'} left today` }} ·
             <span class="cursor-pointer" style="color:var(--k-gold-l)" @click="router.push('/premium')">Get unlimited</span>
           </p>
