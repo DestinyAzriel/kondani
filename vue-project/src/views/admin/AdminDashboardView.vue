@@ -311,6 +311,129 @@
             </div>
           </div>
         </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             MATCHING FUNNEL — Read-only aggregate panel
+        ══════════════════════════════════════════════════════════════════ -->
+        <div class="rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-500/5 via-white/[0.02] to-transparent overflow-hidden">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div class="flex items-center gap-2.5">
+              <span class="p-2 rounded-xl bg-rose-500/15 border border-rose-500/25 text-rose-400">
+                <Heart :size="16" />
+              </span>
+              <div>
+                <h3 class="text-sm font-bold text-white">Matching Funnel</h3>
+                <p class="text-[10px] text-white/40 mt-0.5">Counts only · No names</p>
+              </div>
+            </div>
+            <div v-if="funnelLoading" class="w-4 h-4 rounded-full border-2 border-rose-400/30 border-t-rose-400 animate-spin"></div>
+            <span v-else class="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 font-mono">read-only</span>
+          </div>
+
+          <!-- Loading skeleton -->
+          <div v-if="funnelLoading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
+            <div v-for="i in 5" :key="i" class="bg-night-950 p-5 animate-pulse">
+              <div class="h-3 bg-white/10 rounded w-3/4 mb-3"></div>
+              <div class="h-7 bg-white/10 rounded w-1/2 mb-1"></div>
+              <div class="h-2.5 bg-white/5 rounded w-full"></div>
+            </div>
+          </div>
+
+          <!-- Data grid -->
+          <div v-else-if="funnelData" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
+
+            <!-- 1. Likes Sent Breakdown (spans 2 cols on large screens) -->
+            <div class="bg-night-950 p-5 lg:col-span-2">
+              <div class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3">Likes Sent</div>
+              <div class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-blue-300 flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-blue-400/80"></span>
+                    Men → Women
+                  </span>
+                  <span class="text-sm font-bold text-white">{{ (funnelData.likesSentMenToWomen || 0).toLocaleString() }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-pink-300 flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-pink-400/80"></span>
+                    Women → Men
+                  </span>
+                  <span class="text-sm font-bold text-white">{{ (funnelData.likesSentWomenToMen || 0).toLocaleString() }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-white/50 flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-white/20"></span>
+                    Other combinations
+                  </span>
+                  <span class="text-sm font-bold text-white/70">{{ (funnelData.likesSentOther || 0).toLocaleString() }}</span>
+                </div>
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between">
+                  <span class="text-[10px] text-white/30">Total sent</span>
+                  <span class="text-base font-black text-rose-400">{{ (funnelData.likesSentTotal || 0).toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Women Engagement -->
+            <div class="bg-night-950 p-5">
+              <div class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3">Women Engagement</div>
+              <div class="space-y-3">
+                <div>
+                  <div class="text-[10px] text-white/40 mb-0.5">Received ≥ 1 like</div>
+                  <div class="text-xl font-black text-pink-400">{{ (funnelData.womenReceivedAtLeast1 || 0).toLocaleString() }}</div>
+                  <div class="text-[10px] text-white/30 mt-0.5">
+                    of {{ (funnelData.totalWomen || 0).toLocaleString() }} women
+                    <span v-if="funnelData.totalWomen > 0" class="text-pink-400/70 ml-1">
+                      ({{ Math.round((funnelData.womenReceivedAtLeast1 / funnelData.totalWomen) * 100) }}%)
+                    </span>
+                  </div>
+                </div>
+                <div class="pt-2 border-t border-white/5">
+                  <div class="text-[10px] text-white/40 mb-0.5">Sent ≥ 1 like</div>
+                  <div class="text-xl font-black text-amber-400">{{ (funnelData.womenSentAtLeast1 || 0).toLocaleString() }}</div>
+                  <div class="text-[10px] text-white/30 mt-0.5">women who liked someone</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Avg likes per woman + zero-senders -->
+            <div class="bg-night-950 p-5 space-y-4">
+              <div>
+                <div class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-2">Avg Likes / Woman</div>
+                <div class="text-3xl font-black text-emerald-400">{{ funnelData.avgLikesPerWoman ?? '—' }}</div>
+                <div class="text-[10px] text-white/30 mt-1">mean received per female member</div>
+              </div>
+              <div class="pt-3 border-t border-white/5">
+                <div class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-2">Sent 0 Likes</div>
+                <div class="text-2xl font-black text-amber-300">{{ (funnelData.usersWithZeroLikes || 0).toLocaleString() }}</div>
+                <div class="text-[10px] text-white/30 mt-1">users who never swiped right</div>
+              </div>
+            </div>
+
+            <!-- 4. Mutual Matches -->
+            <div class="bg-night-950 p-5 flex flex-col justify-center">
+              <div class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3">Mutual Matches</div>
+              <div class="text-4xl font-black text-rose-400 mb-1">{{ (funnelData.mutualMatches || 0).toLocaleString() }}</div>
+              <div class="text-[10px] text-white/30">pairs who liked each other</div>
+              <div class="mt-3 pt-3 border-t border-white/5 text-[10px] text-white/25">
+                Match rate:
+                <span class="text-white/50 font-semibold">
+                  {{ funnelData.likesSentTotal > 0
+                    ? ((funnelData.mutualMatches / funnelData.likesSentTotal) * 100).toFixed(1)
+                    : '0.0' }}%
+                </span>
+                of total likes
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else class="py-12 text-center text-white/30 text-xs">
+            No likes data found yet — funnel will populate as users engage.
+          </div>
+        </div>
+
       </section>
 
       <!-- 2. FINANCIALS & EXCEL LEDGER TAB -->
@@ -1136,7 +1259,8 @@ import {
   Download,
   TrendingUp,
   CreditCard,
-  Calendar
+  Calendar,
+  Heart
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -1163,6 +1287,21 @@ const selectedUser = ref(null)
 const verificationList = ref([])
 const verificationFilter = ref('pending')
 const reportList = ref([])
+
+// Matching Funnel
+const funnelData = ref(null)
+const funnelLoading = ref(false)
+
+const fetchMatchingFunnel = async () => {
+  funnelLoading.value = true
+  try {
+    funnelData.value = await adminService.getMatchingFunnel()
+  } catch (err) {
+    console.error('Failed to load matching funnel:', err)
+  } finally {
+    funnelLoading.value = false
+  }
+}
 
 // Financial State & Analytics for Investors
 const financialData = ref({ summary: {}, transactions: [] })
@@ -1350,7 +1489,10 @@ const exportToExcel = () => {
 const refreshCurrentTab = async () => {
   isLoading.value = true
   try {
-    if (activeTab.value === 'overview') await fetchDashboardStats()
+    if (activeTab.value === 'overview') {
+      await fetchDashboardStats()
+      await fetchMatchingFunnel()
+    }
     else if (activeTab.value === 'financials') await fetchFinancials()
     else if (activeTab.value === 'users') await fetchUsers()
     else if (activeTab.value === 'verifications') await fetchVerifications(verificationFilter.value)
@@ -1542,6 +1684,7 @@ const handleLogout = async () => {
 onMounted(async () => {
   isLoading.value = true
   await fetchDashboardStats()
+  await fetchMatchingFunnel()
   await fetchFinancials()
   await fetchUsers()
   await fetchVerifications('all')

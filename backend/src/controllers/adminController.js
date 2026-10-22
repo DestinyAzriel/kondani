@@ -664,6 +664,244 @@ exports.getReports = async (req, res) => {
 };
 
 /**
+ * Matching Funnel — read-only aggregate stats for the admin Overview panel.
+ * Counts only; no user names are returned.
+ *
+ * Returns:
+ *   likesSentMenToWomen   – likes where sender is male and receiver is female
+ *   likesSentWomenToMen   – likes where sender is female and receiver is male
+ *   likesSentOther        – all other gender combinations
+ *   likesSentTotal        – total likes across all intents
+ *   womenReceivedAtLeast1 – women who appear in at least one Intent.likes array
+ *   womenSentAtLeast1     – women who have sent at least one like (have an Intent with likes.length >= 1)
+ *   avgLikesPerWoman      – mean likes received across all women (denominator = total women)
+ *   usersWithZeroLikes    – users who have never sent a like (no Intent doc, or Intent.likes is empty)
+ *   mutualMatches         – total mutual matches (each match pair counted once)
+ */
+exports.getMatchingFunnel = async (req, res) => {
+    try {
+        const nonAdminFilter = { role: { $nin: ['admin', 'moderator'] } };
+
+        // ── 1. Total likes sent (all intents combined) ─────────────────────────
+        const totalLikesAgg = await Intent.aggregate([
+            { $project: { count: { $size: { $ifNull: ['$likes', []] } } } },
+            { $group: { _id: null, total: { $sum: '$count' } } }
+        ]);
+        const likesSentTotal = totalLikesAgg[0]?.total || 0;
+
+        // ── 2. Gender-segmented likes: expand every (sender → liked-user) pair ─
+        // We join Intent → User (sender) and Intent → User (each liked user)
+        const genderLikesAgg = await Intent.aggregate([
+            // Only keep intents that actually have likes
+            { $match: { likes: { $exists: true, $ne: [] } } },
+            // One doc per liked user id
+            { $unwind: '$likes' },
+            // Look up sender gender
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'senderUser'
+                }
+            },
+            { $unwind: { path: '$senderUser', preserveNullAndEmptyArrays: true } },
+            // Look up receiver gender
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'likes',
+                    foreignField: '_id',
+                    as: 'receiverUser'
+                }
+            },
+            { $unwind: { path: '$receiverUser', preserveNullAndEmptyArrays: true } },
+            // Classify the pair
+            {
+                $project: {
+                    senderGender: { $toLower: { $ifNull: ['$senderUser.gender', ''] } },
+                    receiverGender: { $toLower: { $ifNull: ['$receiverUser.gender', ''] } }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    menToWomen: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $in: ['$senderGender', ['male', 'men', 'm']] },
+                                        { $in: ['$receiverGender', ['female', 'women', 'f']] }
+                                    ]
+                                },
+                                1, 0
+                            ]
+                        }
+                    },
+                    womenToMen: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $in: ['$senderGender', ['female', 'women', 'f']] },
+                                        { $in: ['$receiverGender', ['male', 'men', 'm']] }
+                                    ]
+                                },
+                                1, 0
+                            ]
+                        }
+                    },
+                    other: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $or: [
+                                        {
+                                            $and: [
+                                                { $in: ['$senderGender', ['male', 'men', 'm']] },
+                                                { $in: ['$receiverGender', ['female', 'women', 'f']] }
+                                            ]
+                                        },
+                                        {
+                                            $and: [
+                                                { $in: ['$senderGender', ['female', 'women', 'f']] },
+                                                { $in: ['$receiverGender', ['male', 'men', 'm']] }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                0, 1
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        const likesSentMenToWomen = genderLikesAgg[0]?.menToWomen || 0;
+        const likesSentWomenToMen = genderLikesAgg[0]?.womenToMen || 0;
+        const likesSentOther = genderLikesAgg[0]?.other || 0;
+
+        // ── 3. Women who RECEIVED at least 1 like ─────────────────────────────
+        // A woman is in Intent.likes if any intent document lists her userId
+        const womenReceivedAgg = await Intent.aggregate([
+            { $match: { likes: { $exists: true, $ne: [] } } },
+            { $unwind: '$likes' },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'likes',
+                    foreignField: '_id',
+                    as: 'likedUser'
+                }
+            },
+            { $unwind: { path: '$likedUser', preserveNullAndEmptyArrays: false } },
+            {
+                $match: {
+                    'likedUser.gender': { $in: ['Female', 'female', 'Women', 'women', 'f', 'F'] },
+                    'likedUser.role': { $nin: ['admin', 'moderator'] }
+                }
+            },
+            { $group: { _id: '$likes' } },
+            { $count: 'total' }
+        ]);
+        const womenReceivedAtLeast1 = womenReceivedAgg[0]?.total || 0;
+
+        // ── 4. Women who SENT at least 1 like ─────────────────────────────────
+        const womenSentAgg = await Intent.aggregate([
+            { $match: { likes: { $exists: true, $ne: [] } } },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'senderUser'
+                }
+            },
+            { $unwind: { path: '$senderUser', preserveNullAndEmptyArrays: false } },
+            {
+                $match: {
+                    'senderUser.gender': { $in: ['Female', 'female', 'Women', 'women', 'f', 'F'] },
+                    'senderUser.role': { $nin: ['admin', 'moderator'] }
+                }
+            },
+            { $count: 'total' }
+        ]);
+        const womenSentAtLeast1 = womenSentAgg[0]?.total || 0;
+
+        // ── 5. Average likes received per woman ────────────────────────────────
+        // Denominator = total women (including those who got 0 likes)
+        const totalWomen = await User.countDocuments({
+            ...nonAdminFilter,
+            gender: { $in: ['Female', 'female', 'Women', 'women', 'f', 'F'] }
+        });
+
+        // Total likes received by women (numerator)
+        const likesReceivedByWomenAgg = await Intent.aggregate([
+            { $match: { likes: { $exists: true, $ne: [] } } },
+            { $unwind: '$likes' },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'likes',
+                    foreignField: '_id',
+                    as: 'likedUser'
+                }
+            },
+            { $unwind: { path: '$likedUser', preserveNullAndEmptyArrays: false } },
+            {
+                $match: {
+                    'likedUser.gender': { $in: ['Female', 'female', 'Women', 'women', 'f', 'F'] },
+                    'likedUser.role': { $nin: ['admin', 'moderator'] }
+                }
+            },
+            { $count: 'total' }
+        ]);
+        const totalLikesReceivedByWomen = likesReceivedByWomenAgg[0]?.total || 0;
+        const avgLikesPerWoman =
+            totalWomen > 0
+                ? Math.round((totalLikesReceivedByWomen / totalWomen) * 10) / 10
+                : 0;
+
+        // ── 6. Users who sent 0 likes ──────────────────────────────────────────
+        // = users with no Intent doc OR whose Intent.likes array is empty
+        const usersWithIntentAndLikesAgg = await Intent.aggregate([
+            { $match: { likes: { $exists: true, $ne: [] } } },
+            { $group: { _id: '$user' } },
+            { $count: 'total' }
+        ]);
+        const usersWithAtLeastOneLike = usersWithIntentAndLikesAgg[0]?.total || 0;
+        const totalRealUsers = await User.countDocuments(nonAdminFilter);
+        const usersWithZeroLikes = Math.max(0, totalRealUsers - usersWithAtLeastOneLike);
+
+        // ── 7. Mutual matches ──────────────────────────────────────────────────
+        const matchAgg = await Intent.aggregate([
+            { $project: { matchCount: { $size: { $ifNull: ['$matches', []] } } } },
+            { $group: { _id: null, total: { $sum: '$matchCount' } } }
+        ]);
+        const mutualMatches = Math.floor((matchAgg[0]?.total || 0) / 2);
+
+        res.json({
+            likesSentMenToWomen,
+            likesSentWomenToMen,
+            likesSentOther,
+            likesSentTotal,
+            womenReceivedAtLeast1,
+            womenSentAtLeast1,
+            totalWomen,
+            avgLikesPerWoman,
+            usersWithZeroLikes,
+            mutualMatches
+        });
+
+    } catch (error) {
+        console.error('Matching funnel error:', error);
+        res.status(500).json({ error: 'Failed to compute matching funnel' });
+    }
+};
+
+/**
  * Review a report
  */
 exports.reviewReport = async (req, res) => {

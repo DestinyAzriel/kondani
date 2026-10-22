@@ -63,7 +63,9 @@ router.use(authMiddleware, checkAdmin);
 // Dashboard
 router.get('/dashboard/stats', adminController.getDashboardStats);
 router.get('/dashboard/revenue', adminController.getRevenueAnalytics);
+router.get('/dashboard/matching-funnel', adminController.getMatchingFunnel);
 router.get('/financials', adminController.getRevenueAnalytics);
+
 
 // Analytics
 router.get('/analytics', analyticsController.getAnalytics);

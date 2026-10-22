@@ -54,5 +54,11 @@ export const adminService = {
   async reviewReport(reportId, data) {
     const response = await api.post(`/admin/reports/${reportId}/review`, data)
     return response.data
+  },
+
+  // Matching funnel aggregate stats (read-only, counts only)
+  async getMatchingFunnel() {
+    const response = await api.get('/admin/dashboard/matching-funnel')
+    return response.data
   }
 }
