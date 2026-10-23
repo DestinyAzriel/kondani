@@ -187,6 +187,31 @@ class PaymentService {
             return [];
         }
     }
+
+    /**
+     * Get live wallet balance from PayChangu
+     * @param {string} currency - default 'MWK'
+     * @returns {Promise<Object|null>}
+     */
+    async getWalletBalance(currency = 'MWK') {
+        try {
+            const response = await axios.get(
+                `${this.baseUrl}/wallet-balance`,
+                {
+                    params: { currency },
+                    headers: this.getHeaders(),
+                    timeout: 10000
+                }
+            );
+            if (response.data && response.data.status === 'success') {
+                return response.data.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('PayChangu wallet balance error:', error.response?.data || error.message);
+            return null;
+        }
+    }
 }
 
 module.exports = new PaymentService();

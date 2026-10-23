@@ -102,13 +102,27 @@
             <div class="text-[11px] text-amber-300/80 mt-1">Paid subscribers</div>
           </div>
 
-          <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+          <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-colors">
             <div class="flex items-center justify-between text-white/50 text-xs mb-2">
-              <span>Total Revenue</span>
-              <Coins :size="16" class="text-emerald-400" />
+              <span class="flex items-center gap-1.5 font-medium">
+                <span v-if="stats.subscriptions?.actualBalance !== null && stats.subscriptions?.actualBalance !== undefined" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>{{ (stats.subscriptions?.actualBalance !== null && stats.subscriptions?.actualBalance !== undefined) ? 'Actual Balance' : 'Total Revenue' }}</span>
+              </span>
+              <Wallet v-if="stats.subscriptions?.actualBalance !== null && stats.subscriptions?.actualBalance !== undefined" :size="16" class="text-emerald-400" />
+              <Coins v-else :size="16" class="text-emerald-400" />
             </div>
-            <div class="text-2xl font-bold text-white">MWK {{ (stats.subscriptions?.revenue || 0).toLocaleString() }}</div>
-            <div class="text-[11px] text-white/40 mt-1">PayChangu total</div>
+            <div class="text-2xl font-bold text-white">
+              MWK {{ ((stats.subscriptions?.actualBalance !== null && stats.subscriptions?.actualBalance !== undefined)
+                ? stats.subscriptions.actualBalance
+                : (stats.subscriptions?.revenue || 0)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }}
+            </div>
+            <div class="text-[11px] text-white/40 mt-1 flex items-center justify-between">
+              <span>Gross: MWK {{ (stats.subscriptions?.revenue || 0).toLocaleString() }}</span>
+              <span v-if="stats.subscriptions?.withdrawnAmount" class="text-amber-300/80 font-mono text-[10px]" title="Estimated payouts / withdrawals">
+                -{{ (stats.subscriptions.withdrawnAmount || 0).toLocaleString() }} out
+              </span>
+              <span v-else class="text-[10px] text-emerald-400/70">PayChangu Live</span>
+            </div>
           </div>
 
           <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
@@ -468,6 +482,52 @@
             >
               <RefreshCw :size="16" />
             </button>
+          </div>
+        </div>
+
+        <!-- Live PayChangu Merchant Balance Banner -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-white/[0.02] to-amber-500/10 border border-emerald-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="p-3 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+              <Wallet :size="22" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-white tracking-wide">PayChangu Wallet &amp; Payout Balance</h3>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live Sync
+                </span>
+              </div>
+              <p class="text-xs text-white/50 mt-0.5">Real-time merchant balance from PayChangu after payouts and withdrawals</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-5 sm:gap-8 self-stretch md:self-auto justify-between md:justify-end pt-3 md:pt-0 border-t md:border-t-0 border-white/5">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-0.5">Actual Balance</div>
+              <div class="text-2xl sm:text-3xl font-black text-emerald-400">
+                MWK {{ ((financialData.summary?.actualBalance !== null && financialData.summary?.actualBalance !== undefined)
+                  ? financialData.summary.actualBalance
+                  : 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }}
+              </div>
+            </div>
+            <div v-if="financialData.summary?.collectionBalance" class="border-l border-white/10 pl-5 sm:pl-8">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-0.5">Settling / Collection</div>
+              <div class="text-lg sm:text-xl font-bold text-amber-300">
+                MWK {{ (financialData.summary?.collectionBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }}
+              </div>
+            </div>
+            <div v-if="financialData.summary?.withdrawnAmount" class="border-l border-white/10 pl-5 sm:pl-8">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-0.5">Withdrawn</div>
+              <div class="text-lg sm:text-xl font-bold text-rose-300/90">
+                MWK {{ (financialData.summary?.withdrawnAmount || 0).toLocaleString() }}
+              </div>
+            </div>
+            <div class="border-l border-white/10 pl-5 sm:pl-8">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-0.5">Gross Processed</div>
+              <div class="text-lg sm:text-xl font-bold text-white/80">
+                MWK {{ (financialData.summary?.totalGrossRevenue || 0).toLocaleString() }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1260,7 +1320,8 @@ import {
   TrendingUp,
   CreditCard,
   Calendar,
-  Heart
+  Heart,
+  Wallet
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -1361,6 +1422,9 @@ const exportToExcel = () => {
   // 2. EXECUTIVE SCORECARD & UNIT ECONOMICS
   lines.push(['--- 1. EXECUTIVE KPI SCORECARD & UNIT ECONOMICS ---'])
   lines.push(['Metric', 'Value', 'Unit / Benchmark', 'Category'])
+  lines.push(['PayChangu Live Available Balance', summary.actualBalance !== null && summary.actualBalance !== undefined ? summary.actualBalance : 'N/A', 'MWK', 'Liquid Balance'])
+  lines.push(['PayChangu Settling / Collection', summary.collectionBalance || 0, 'MWK', 'Settlement'])
+  lines.push(['Estimated Payouts / Withdrawals', summary.withdrawnAmount || 0, 'MWK', 'Withdrawals'])
   lines.push(['Gross Merchandise Value (GMV - All-time)', summary.totalGrossRevenue || 0, 'MWK', 'Revenue'])
   lines.push(['Month-to-Date (MTD) Revenue', summary.mtdRevenue || 0, 'MWK', 'Revenue'])
   lines.push(['Month-over-Month (MoM) Growth', summary.momGrowthPercent || '0%', 'Growth Rate', 'Growth'])

@@ -6,6 +6,7 @@ const IDVerification = require('../models/IDVerification');
 const Intent = require('../models/Intent');
 const Message = require('../models/Message');
 const Plan = require('../models/Plan');
+const paymentService = require('../services/paymentService');
 
 /**
  * Get comprehensive dashboard statistics (Tinder/Bumble grade)
@@ -59,12 +60,31 @@ exports.getDashboardStats = async (req, res) => {
         const pendingReports = await Report.countDocuments({ status: 'pending' });
         const totalReports = await Report.countDocuments();
 
-        // Subscription stats
+        // Subscription stats & PayChangu live wallet balance
         const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
         const totalRevenue = await Payment.aggregate([
             { $match: { status: 'completed' } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
+        const grossRevenue = totalRevenue[0]?.total || 0;
+
+        let walletBalance = null;
+        try {
+            walletBalance = await paymentService.getWalletBalance('MWK');
+        } catch (wbErr) {
+            console.error('Wallet balance fetch error:', wbErr.message);
+        }
+
+        const mainBalance = walletBalance && typeof walletBalance.main_balance === 'number'
+            ? walletBalance.main_balance
+            : (walletBalance && !isNaN(Number(walletBalance.main_balance)) ? Number(walletBalance.main_balance) : null);
+        const collectionBal = walletBalance && typeof walletBalance.collection_balance === 'number'
+            ? walletBalance.collection_balance
+            : (walletBalance && !isNaN(Number(walletBalance.collection_balance)) ? Number(walletBalance.collection_balance) : 0);
+        const totalInPayChangu = mainBalance !== null ? (mainBalance + collectionBal) : null;
+        const withdrawnAmount = totalInPayChangu !== null
+            ? Math.max(0, Math.round(grossRevenue - totalInPayChangu))
+            : null;
 
         // Recent Payments
         const recentPayments = await Payment.find({ status: 'completed' })
@@ -107,7 +127,12 @@ exports.getDashboardStats = async (req, res) => {
             },
             subscriptions: {
                 active: activeSubscriptions,
-                revenue: totalRevenue[0]?.total || 0,
+                revenue: grossRevenue,
+                grossRevenue,
+                walletBalance,
+                actualBalance: mainBalance,
+                collectionBalance: collectionBal,
+                withdrawnAmount,
                 recentPayments
             },
             verifications: {
@@ -359,9 +384,31 @@ exports.getRevenueAnalytics = async (req, res) => {
             };
         });
 
+        let walletBalance = null;
+        try {
+            walletBalance = await paymentService.getWalletBalance('MWK');
+        } catch (wbErr) {
+            console.error('Wallet balance fetch error in analytics:', wbErr.message);
+        }
+
+        const mainBal = walletBalance && typeof walletBalance.main_balance === 'number'
+            ? walletBalance.main_balance
+            : (walletBalance && !isNaN(Number(walletBalance.main_balance)) ? Number(walletBalance.main_balance) : null);
+        const colBal = walletBalance && typeof walletBalance.collection_balance === 'number'
+            ? walletBalance.collection_balance
+            : (walletBalance && !isNaN(Number(walletBalance.collection_balance)) ? Number(walletBalance.collection_balance) : 0);
+        const totalInAccount = mainBal !== null ? (mainBal + colBal) : null;
+        const totalWithdrawn = totalInAccount !== null
+            ? Math.max(0, Math.round(totalRevenue - totalInAccount))
+            : null;
+
         res.json({
             summary: {
                 totalGrossRevenue: totalRevenue,
+                walletBalance,
+                actualBalance: mainBal,
+                collectionBalance: colBal,
+                withdrawnAmount: totalWithdrawn,
                 mtdRevenue,
                 lastMonthRevenue,
                 momGrowthPercent,
