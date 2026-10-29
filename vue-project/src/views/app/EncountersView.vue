@@ -224,10 +224,22 @@ const activeFilterCount = computed(() => {
 const sessionPassedIds = ref(new Set())
 const isSwiping = ref(false)
 
+const getDeviceCoordinates = () => {
+  return new Promise((resolve) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 }
+    )
+  })
+}
+
 const loadProfiles = async () => {
   isLoading.value = true
   try {
-    const data = await intentService.getIntents()
+    const coords = await getDeviceCoordinates().catch(() => null)
+    const data = await intentService.getIntents(1, 10, coords)
     let list = (data?.intents || []).map(p => ({
       ...p,
       photos: p.photos && p.photos.length ? p.photos : [],

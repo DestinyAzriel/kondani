@@ -2,11 +2,14 @@
 import api from '@/services/api'
 
 export const intentService = {
-  // Get nearby intents
-  async getIntents(page = 1, limit = 10) {
-    const response = await api.get('/intents', {
-      params: { page, limit }
-    })
+  // Get nearby intents (optionally with live device GPS coords)
+  async getIntents(page = 1, limit = 10, coords = null) {
+    const params = { page, limit }
+    if (coords && coords.lat != null && coords.lon != null) {
+      params.lat = coords.lat
+      params.lon = coords.lon
+    }
+    const response = await api.get('/intents', { params })
     return response.data // { intents, hasMore }
   },
 

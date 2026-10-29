@@ -191,7 +191,20 @@ exports.getIntents = async (req, res) => {
         const likerIntents = await Intent.find({ user: { $in: candidateIds }, likes: currentUserId }).select('user');
         const likerSet = new Set(likerIntents.map(i => String(i.user)));
 
-        const myCoords = resolveUserCoordinates(currentUser);
+        let myCoords = null;
+        const qLat = parseFloat(req.query.lat);
+        const qLon = parseFloat(req.query.lon);
+        if (!isNaN(qLat) && !isNaN(qLon) && (qLat !== 0 || qLon !== 0)) {
+            myCoords = [qLon, qLat];
+            // Silently persist live device location to MongoDB in background
+            User.findByIdAndUpdate(currentUserId, {
+                'location.type': 'Point',
+                'location.coordinates': [qLon, qLat]
+            }).exec().catch(() => {});
+        } else {
+            myCoords = resolveUserCoordinates(currentUser);
+        }
+
         const [myLon, myLat] = myCoords || [0, 0];
         const hasMyLocation = Boolean(myCoords);
         const maxKm = Number(prefs.distance) || 100;

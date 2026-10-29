@@ -76,6 +76,22 @@ onMounted(() => {
     incomingCall.value = null
     clearCall()
   })
+
+  // Tinder-style: silently sync device GPS coordinates so distance calculations always reflect current location
+  if (typeof navigator !== 'undefined' && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        authStore.updateUserProfile({
+          location: {
+            type: 'Point',
+            coordinates: [pos.coords.longitude, pos.coords.latitude]
+          }
+        }).catch(() => {})
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
+    )
+  }
 })
 
 onUnmounted(() => {
