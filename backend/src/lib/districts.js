@@ -2,7 +2,8 @@
 // Used as a free fallback when the browser Geolocation API is unavailable
 // or the user declines location access. Distance is then computed with the
 // Haversine formula (see lib/geo.js) — no paid maps API required.
-export const MALAWI_DISTRICTS = {
+
+const MALAWI_DISTRICTS = {
   // Northern Region
   chitipa:     { name: 'Chitipa',     region: 'Northern', lat: -9.7019,  lon: 33.2700 },
   karonga:     { name: 'Karonga',     region: 'Northern', lat: -9.9333,  lon: 33.9333 },
@@ -24,6 +25,7 @@ export const MALAWI_DISTRICTS = {
   ntcheu:      { name: 'Ntcheu',      region: 'Central',  lat: -14.8167, lon: 34.6333 },
 
   // Southern Region
+  balaka:      { name: 'Balaka',      region: 'Southern', lat: -14.9800, lon: 34.9600 },
   mangochi:    { name: 'Mangochi',    region: 'Southern', lat: -14.4667, lon: 35.2667 },
   machinga:    { name: 'Machinga',    region: 'Southern', lat: -14.9667, lon: 35.5167 },
   zomba:       { name: 'Zomba',       region: 'Southern', lat: -15.3869, lon: 35.3192 },
@@ -36,8 +38,33 @@ export const MALAWI_DISTRICTS = {
   phalombe:    { name: 'Phalombe',    region: 'Southern', lat: -15.8060, lon: 35.6530 },
   chikwawa:    { name: 'Chikwawa',    region: 'Southern', lat: -16.0353, lon: 34.8000 },
   nsanje:      { name: 'Nsanje',      region: 'Southern', lat: -16.9200, lon: 35.2620 }
+};
+
+function districtList() {
+  return Object.entries(MALAWI_DISTRICTS).map(([key, d]) => ({ key, ...d }));
 }
 
-export function districtList() {
-  return Object.entries(MALAWI_DISTRICTS).map(([key, d]) => ({ key, ...d }))
+/**
+ * Returns [longitude, latitude] GeoJSON coordinates for a district name.
+ * Handles variations like 'Nkhata Bay' vs 'nkhatabay'.
+ */
+function getDistrictCoordinates(districtName) {
+  if (!districtName || typeof districtName !== 'string') return null;
+  const clean = districtName.trim().toLowerCase().replace(/[\s\-_]/g, '');
+  if (MALAWI_DISTRICTS[clean]) {
+    return [MALAWI_DISTRICTS[clean].lon, MALAWI_DISTRICTS[clean].lat];
+  }
+  const match = Object.values(MALAWI_DISTRICTS).find(
+    d => d.name.toLowerCase().replace(/[\s\-_]/g, '') === clean
+  );
+  if (match) {
+    return [match.lon, match.lat];
+  }
+  return null;
 }
+
+module.exports = {
+  MALAWI_DISTRICTS,
+  districtList,
+  getDistrictCoordinates
+};

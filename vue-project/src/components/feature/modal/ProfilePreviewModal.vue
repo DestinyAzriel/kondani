@@ -415,10 +415,15 @@ const userAge = computed(() => {
   return (num >= 18 && num <= 100) ? num : null
 })
 
-// Safely compute location: avoid raw GeoJSON objects like { "type": "Point", ... }
+// Safely compute location: show district and distance (e.g. 'Lilongwe · 242 km away')
 const userLocation = computed(() => {
   const u = props.user
-  if (typeof u.city === 'string' && u.city.trim()) return u.city.trim()
+  const districtOrCity = u.district || (typeof u.city === 'string' && u.city.trim() ? u.city.trim() : '')
+  if (districtOrCity && u.distance) {
+    return `${districtOrCity} · ${u.distance}`
+  }
+  if (districtOrCity) return districtOrCity
+  if (u.distance) return u.distance
   if (typeof u.location === 'string' && u.location.trim()) {
     const trimmed = u.location.trim()
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {

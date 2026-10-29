@@ -7,6 +7,7 @@ const fs = require('fs').promises;
 const { storeUpload } = require('../services/cloudinaryService');
 const { sendSMS } = require('../services/smsService');
 const { sendWhatsApp } = require('../services/whatsappService');
+const { getDistrictCoordinates } = require('../lib/districts');
 
 // Configure axios with timeout and retry settings
 const telegramAxios = axios.create({
@@ -501,6 +502,20 @@ exports.updateProfile = async (req, res) => {
         const finalAge = updateData.age !== undefined ? updateData.age : existingUser.age;
         const finalBio = updateData.bio !== undefined ? updateData.bio : existingUser.bio;
         const finalPhotos = updateData.photos !== undefined ? updateData.photos : existingUser.photos;
+        // Ensure coordinates are populated from district if not provided or [0, 0]
+        const targetDistrict = updateData.district || existingUser.district;
+        const currentCoords = updateData.location?.coordinates || existingUser.location?.coordinates;
+        const hasValidCoords = Array.isArray(currentCoords) && (currentCoords[0] !== 0 || currentCoords[1] !== 0);
+
+        if (!hasValidCoords && targetDistrict) {
+            const districtCoords = getDistrictCoordinates(targetDistrict);
+            if (districtCoords) {
+                updateData.location = {
+                    type: "Point",
+                    coordinates: districtCoords
+                };
+            }
+        }
 
         const isComplete = existingUser.isProfileComplete || !!(finalName && finalAge && finalBio && Array.isArray(finalPhotos) && finalPhotos.length > 0);
 

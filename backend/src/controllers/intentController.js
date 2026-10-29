@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Intent = require('../models/Intent');
 const Block = require('../models/Block');
+const { getDistrictCoordinates } = require('../lib/districts');
 
 // Free members get this many likes per day. Plus/Gold/Platinum = unlimited.
 const FREE_DAILY_LIKES = 20;
@@ -39,8 +40,21 @@ function haversineKm(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Resolves coordinates for any user (accurate device GPS first, district centre fallback)
+function resolveUserCoordinates(user) {
+    if (!user) return null;
+    const coords = user.location?.coordinates;
+    if (Array.isArray(coords) && (coords[0] !== 0 || coords[1] !== 0)) {
+        return coords; // [lon, lat]
+    }
+    if (user.district) {
+        return getDistrictCoordinates(user.district);
+    }
+    return null;
+}
+
 function formatDistance(km) {
-    if (km == null) return 'Nearby';
+    if (km == null || isNaN(km)) return null;
     if (km < 1) return 'Less than 1 km away';
     return `${Math.round(km)} km away`;
 }
@@ -177,18 +191,18 @@ exports.getIntents = async (req, res) => {
         const likerIntents = await Intent.find({ user: { $in: candidateIds }, likes: currentUserId }).select('user');
         const likerSet = new Set(likerIntents.map(i => String(i.user)));
 
-        const myCoords = currentUser.location?.coordinates || [0, 0];
-        const [myLon, myLat] = myCoords;
-        const hasMyLocation = myLat !== 0 || myLon !== 0;
-        const maxKm = prefs.distance || 100;
+        const myCoords = resolveUserCoordinates(currentUser);
+        const [myLon, myLat] = myCoords || [0, 0];
+        const hasMyLocation = Boolean(myCoords);
+        const maxKm = Number(prefs.distance) || 100;
 
         const nowMs = Date.now();
         const scored = [];
         for (const user of candidates) {
-            const [lon, lat] = user.location?.coordinates || [0, 0];
-            const hasLocation = lat !== 0 || lon !== 0;
+            const coords = resolveUserCoordinates(user);
             let distanceKm = null;
-            if (hasMyLocation && hasLocation) {
+            if (hasMyLocation && coords) {
+                const [lon, lat] = coords;
                 distanceKm = haversineKm(myLat, myLon, lat, lon);
             }
 
@@ -212,6 +226,8 @@ exports.getIntents = async (req, res) => {
             if (a.distanceKm != null && b.distanceKm != null) {
                 return a.distanceKm - b.distanceKm || b.matchScore - a.matchScore;
             }
+            if (a.distanceKm != null) return -1;
+            if (b.distanceKm != null) return 1;
             return b.matchScore - a.matchScore;
         });
 

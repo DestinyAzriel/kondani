@@ -98,9 +98,9 @@
 
       <!-- Info text container: positioned at bottom of the card, above the bottom border -->
       <div v-if="index === 0" class="absolute left-4 right-4 bottom-4 sm:bottom-5 z-20 pointer-events-none text-white">
-        <!-- 1. Small pill for "Nearby" or distance -->
-        <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/95 mb-1.5 shadow-sm">
-          <span>Nearby</span>
+        <!-- 1. Small pill for distance badge -->
+        <div v-if="profile.distance || profile.district" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/95 mb-1.5 shadow-sm">
+          <span>{{ profile.distance || profile.district }}</span>
         </div>
 
         <!-- 2. Name & Age (28-32px) + Verified tick + Details up-arrow button -->
