@@ -7,14 +7,17 @@ const { storeUpload } = require('../services/cloudinaryService');
 const { getDistrictCoordinates } = require('../lib/districts');
 const { calculateDistance, formatDistance } = require('../lib/geo');
 
+// Returns { coords: [lon, lat], isRealGPS: bool } or null.
+// isRealGPS=true  -> actual device GPS; isRealGPS=false -> district-centre fallback
 function resolveUserCoordinates(user) {
     if (!user) return null;
     const coords = user.location?.coordinates;
     if (Array.isArray(coords) && (coords[0] !== 0 || coords[1] !== 0)) {
-        return coords; // [lon, lat]
+        return { coords, isRealGPS: true };
     }
     if (user.district) {
-        return getDistrictCoordinates(user.district);
+        const distCoords = getDistrictCoordinates(user.district);
+        if (distCoords) return { coords: distCoords, isRealGPS: false };
     }
     return null;
 }
@@ -232,12 +235,16 @@ function scoreCandidate(currentUser, candidate, cycleDate) {
         if (calcAge >= 18 && calcAge <= 100) age = calcAge;
     }
 
-    const myCoords = resolveUserCoordinates(currentUser);
-    const theirCoords = resolveUserCoordinates(candidate);
+    const myResolved = resolveUserCoordinates(currentUser);
+    const theirResolved = resolveUserCoordinates(candidate);
     let distStr = null;
-    if (myCoords && theirCoords) {
-        const km = calculateDistance(myCoords[1], myCoords[0], theirCoords[1], theirCoords[0]);
-        distStr = formatDistance(km);
+    if (myResolved && theirResolved) {
+        // Avoid fake 0-2 km when both sides are using district-centre fallback
+        const bothFallback = !myResolved.isRealGPS && !theirResolved.isRealGPS;
+        if (!bothFallback) {
+            const km = calculateDistance(myResolved.coords[1], myResolved.coords[0], theirResolved.coords[1], theirResolved.coords[0]);
+            distStr = formatDistance(km);
+        }
     }
 
     return {

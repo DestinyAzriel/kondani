@@ -40,15 +40,19 @@ function haversineKm(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Resolves coordinates for any user (accurate device GPS first, district centre fallback)
+// Resolves coordinates for any user.
+// Returns { coords: [lon, lat], isRealGPS: bool } or null.
+// isRealGPS=true  → actual device GPS saved in DB
+// isRealGPS=false → district-centre fallback (approximate)
 function resolveUserCoordinates(user) {
     if (!user) return null;
     const coords = user.location?.coordinates;
     if (Array.isArray(coords) && (coords[0] !== 0 || coords[1] !== 0)) {
-        return coords; // [lon, lat]
+        return { coords, isRealGPS: true };
     }
     if (user.district) {
-        return getDistrictCoordinates(user.district);
+        const distCoords = getDistrictCoordinates(user.district);
+        if (distCoords) return { coords: distCoords, isRealGPS: false };
     }
     return null;
 }
@@ -192,17 +196,23 @@ exports.getIntents = async (req, res) => {
         const likerSet = new Set(likerIntents.map(i => String(i.user)));
 
         let myCoords = null;
+        let myIsRealGPS = false;
         const qLat = parseFloat(req.query.lat);
         const qLon = parseFloat(req.query.lon);
         if (!isNaN(qLat) && !isNaN(qLon) && (qLat !== 0 || qLon !== 0)) {
             myCoords = [qLon, qLat];
+            myIsRealGPS = true;
             // Silently persist live device location to MongoDB in background
             User.findByIdAndUpdate(currentUserId, {
                 'location.type': 'Point',
                 'location.coordinates': [qLon, qLat]
             }).exec().catch(() => {});
         } else {
-            myCoords = resolveUserCoordinates(currentUser);
+            const resolved = resolveUserCoordinates(currentUser);
+            if (resolved) {
+                myCoords = resolved.coords;
+                myIsRealGPS = resolved.isRealGPS;
+            }
         }
 
         const [myLon, myLat] = myCoords || [0, 0];
@@ -212,11 +222,17 @@ exports.getIntents = async (req, res) => {
         const nowMs = Date.now();
         const scored = [];
         for (const user of candidates) {
-            const coords = resolveUserCoordinates(user);
+            const resolved = resolveUserCoordinates(user);
             let distanceKm = null;
-            if (hasMyLocation && coords) {
-                const [lon, lat] = coords;
-                distanceKm = haversineKm(myLat, myLon, lat, lon);
+            if (hasMyLocation && resolved) {
+                // Only compute distance if at least one side has real GPS.
+                // If both are using district-centre fallback and share the same
+                // district, haversine returns ~0 km which is misleading.
+                const bothFallback = !myIsRealGPS && !resolved.isRealGPS;
+                if (!bothFallback) {
+                    const [lon, lat] = resolved.coords;
+                    distanceKm = haversineKm(myLat, myLon, lat, lon);
+                }
             }
 
             const candidateTier = getUserTier(user);
