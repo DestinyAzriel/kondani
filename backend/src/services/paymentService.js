@@ -152,13 +152,17 @@ class PaymentService {
      * Verify webhook signature from PayChangu
      * @param {string|Buffer} rawBody
      * @param {string} signatureHeader
+     * @param {string} [customSecret]
      */
-    verifyWebhookSignature(rawBody, signatureHeader) {
+    verifyWebhookSignature(rawBody, signatureHeader, customSecret) {
         if (!signatureHeader || !rawBody) return false;
         try {
+            const secret = customSecret || process.env.PAYCHANGU_WEBHOOK_SECRET || this.secretKey;
+            if (!secret) return false;
+
             const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : (typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody));
             const computedSignature = crypto
-                .createHmac('sha256', this.secretKey)
+                .createHmac('sha256', secret)
                 .update(bodyStr)
                 .digest('hex');
 

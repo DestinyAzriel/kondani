@@ -58,6 +58,59 @@ const PLANS = {
 };
 
 /**
+ * Shared helper to reliably activate a paid subscription and user premium tier
+ */
+async function activateSuccessfulPayment(payment, statusResult, io) {
+    if (!payment) return null;
+    if (payment.status !== 'completed') {
+        payment.status = 'completed';
+        if (statusResult.rawResponse) {
+            payment.gatewayResponse = statusResult.rawResponse;
+        }
+        if (statusResult.reference) {
+            payment.transactionId = statusResult.reference;
+        }
+        if (!payment.metadata) payment.metadata = {};
+        payment.metadata.completedAt = new Date();
+        await payment.save();
+    }
+
+    const subscription = await Subscription.findById(payment.subscriptionId);
+    const planConfig = PLANS[payment.plan || subscription?.plan] || PLANS['1_month'];
+    if (subscription) {
+        subscription.status = 'active';
+        subscription.tier = planConfig.tier;
+        subscription.startDate = new Date();
+        subscription.endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
+        if (statusResult.reference) {
+            subscription.transactionId = statusResult.reference;
+        }
+        await subscription.save();
+    }
+
+    const user = await User.findById(payment.userId);
+    if (user) {
+        user.isPremium = true;
+        user.subscriptionTier = planConfig.tier;
+        user.premiumUntil = subscription ? subscription.endDate : new Date(Date.now() + planConfig.duration * 86400000);
+        await user.save();
+    }
+
+    if (io && payment.userId) {
+        try {
+            io.to(payment.userId.toString()).emit('subscription_activated', {
+                isPremium: true,
+                subscriptionTier: planConfig.tier,
+                premiumUntil: user ? user.premiumUntil : null
+            });
+        } catch (_) {}
+    }
+
+    console.log(`[SubscriptionActivation] Successfully activated ${planConfig.badge} for user ${payment.userId} (${payment.referenceId})`);
+    return { subscription, user, planConfig };
+}
+
+/**
  * Get available subscription plans
  */
 exports.getPlans = async (req, res) => {
@@ -107,14 +160,16 @@ exports.initiatePayment = async (req, res) => {
         }
 
         // Determine backend origin for webhook (IPN) URL
-        const backendOrigin = (process.env.SERVER_URL || process.env.BACKEND_URL || '').trim() ||
-            `${req.protocol}://${req.get('host')}`;
+        // If on kondani.com domain, ensure it points to official api.kondani.com unless explicitly overridden
+        const isProdKondani = (req.get('host') || '').includes('kondani.com') || (process.env.CLIENT_ORIGIN || '').includes('kondani.com');
+        const defaultBackend = isProdKondani ? 'https://api.kondani.com' : `${req.protocol}://${req.get('host')}`;
+        const backendOrigin = (process.env.SERVER_URL || process.env.BACKEND_URL || '').trim() || defaultBackend;
 
         // PayChangu browser redirect destinations:
         // - callback_url: backend endpoint where PayChangu POSTs payment result (IPN/webhook)
-        // - return_url: frontend page the customer browser is sent to after payment
+        // - return_url: frontend page the customer browser is sent to after payment, with explicit tx_ref
         const callbackUrl = `${backendOrigin}/api/subscription/webhook`;
-        const returnUrl = `${clientOrigin}/premium?status=success`;
+        const returnUrl = `${clientOrigin}/premium?status=success&tx_ref=${encodeURIComponent(referenceId)}`;
 
         // Split name into first and last if available
         const nameParts = (user.name || 'Kondani Member').trim().split(/\s+/);
@@ -156,6 +211,7 @@ exports.initiatePayment = async (req, res) => {
         await Payment.create({
             userId,
             subscriptionId: subscription._id,
+            plan,
             amount,
             currency: 'MWK',
             paymentMethod: 'paychangu',
@@ -194,7 +250,9 @@ exports.checkPaymentStatus = async (req, res) => {
     try {
         const { referenceId } = req.params;
 
-        const payment = await Payment.findOne({ referenceId });
+        const payment = await Payment.findOne({
+            $or: [{ referenceId }, { transactionId: referenceId }]
+        });
         if (!payment) {
             return res.status(404).json({ error: 'Payment transaction not found' });
         }
@@ -202,64 +260,28 @@ exports.checkPaymentStatus = async (req, res) => {
         // If already completed, return activated status immediately
         if (payment.status === 'completed') {
             const subscription = await Subscription.findById(payment.subscriptionId);
+            const user = await User.findById(payment.userId);
+            const planConfig = PLANS[payment.plan || subscription?.plan] || PLANS['1_month'];
             return res.json({
                 status: 'completed',
                 message: 'Payment verified and active',
+                subscriptionTier: user?.subscriptionTier || planConfig.tier,
                 subscription
             });
         }
 
         // Check live status with PayChangu
-        const statusResult = await paymentService.verifyPayment(referenceId);
+        const statusResult = await paymentService.verifyPayment(payment.referenceId || referenceId);
 
         if (statusResult.status === 'completed') {
-            payment.status = 'completed';
-            payment.gatewayResponse = statusResult.rawResponse;
-            if (statusResult.reference) {
-                payment.transactionId = statusResult.reference;
-            }
-            if (!payment.metadata) payment.metadata = {};
-            payment.metadata.completedAt = new Date();
-            await payment.save();
-
-            // Activate subscription
-            const subscription = await Subscription.findById(payment.subscriptionId);
-            const planConfig = PLANS[payment.plan || subscription?.plan] || PLANS['1_month'];
-            if (subscription) {
-                subscription.status = 'active';
-                subscription.tier = planConfig.tier;
-                subscription.startDate = new Date();
-                subscription.endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
-                if (statusResult.reference) {
-                    subscription.transactionId = statusResult.reference;
-                }
-                await subscription.save();
-            }
-
-            // Update user premium status
-            const user = await User.findById(payment.userId);
-            if (user) {
-                user.isPremium = true;
-                user.subscriptionTier = planConfig.tier;
-                user.premiumUntil = subscription ? subscription.endDate : new Date(Date.now() + planConfig.duration * 86400000);
-                await user.save();
-            }
-
-            // Notify real-time client if Socket.io is connected
             const io = req.app.get('io');
-            if (io && payment.userId) {
-                io.to(payment.userId.toString()).emit('subscription_activated', {
-                    isPremium: true,
-                    subscriptionTier: planConfig.tier,
-                    premiumUntil: user ? user.premiumUntil : null
-                });
-            }
+            const activation = await activateSuccessfulPayment(payment, statusResult, io);
 
             return res.json({
                 status: 'completed',
-                message: `Payment confirmed! Welcome to Kondani ${planConfig.badge}.`,
-                subscriptionTier: planConfig.tier,
-                subscription
+                message: `Payment confirmed! Welcome to Kondani ${activation?.planConfig?.badge || 'Plus'}.`,
+                subscriptionTier: activation?.planConfig?.tier || 'plus',
+                subscription: activation?.subscription
             });
         }
 
@@ -297,76 +319,50 @@ exports.checkPaymentStatus = async (req, res) => {
  */
 exports.handleWebhook = async (req, res) => {
     try {
-        const signature = req.headers['signature'];
+        const signature = req.headers['signature'] || req.headers['x-paychangu-signature'];
         const rawBody = req.rawBody;
 
-        // Verify signature if provided
-        if (signature && rawBody) {
-            const isValid = paymentService.verifyWebhookSignature(rawBody, signature);
+        // Verify signature if webhook secret is configured
+        const webhookSecret = process.env.PAYCHANGU_WEBHOOK_SECRET || process.env.PAYCHANGU_SECRET_KEY;
+        if (signature && rawBody && webhookSecret) {
+            const isValid = paymentService.verifyWebhookSignature(rawBody, signature, webhookSecret);
             if (!isValid) {
-                console.warn('PayChangu webhook signature mismatch');
-                return res.status(403).json({ error: 'Invalid signature' });
+                console.warn('[PayChangu Webhook] Signature verification failed, will cross-verify with API');
             }
         }
 
         const payload = req.body || {};
-        console.log('PayChangu Webhook received:', JSON.stringify(payload));
+        console.log('[PayChangu Webhook] Payload received:', JSON.stringify(payload));
 
-        const txRef = payload.tx_ref || payload.data?.tx_ref || payload.reference;
+        const txRef = payload.tx_ref ||
+                      payload.data?.tx_ref ||
+                      payload.reference ||
+                      payload.data?.reference ||
+                      payload.trans_id ||
+                      payload.ref_id;
+
         if (!txRef) {
-            return res.status(400).json({ error: 'Missing tx_ref in webhook payload' });
+            return res.status(400).json({ error: 'Missing reference in webhook payload' });
         }
 
-        const payment = await Payment.findOne({ referenceId: txRef });
-        if (!payment) {
-            console.warn(`Webhook received for unknown reference: ${txRef}`);
-            return res.status(200).json({ received: true, note: 'Payment record not found' });
-        }
+        let payment = await Payment.findOne({
+            $or: [{ referenceId: txRef }, { transactionId: txRef }]
+        });
 
-        // Verify directly with PayChangu to confirm legitimate status
-        const statusResult = await paymentService.verifyPayment(txRef);
+        // Always cross-verify directly with PayChangu's secure API
+        const statusResult = await paymentService.verifyPayment(payment ? payment.referenceId : txRef);
 
-        if (statusResult.status === 'completed' && payment.status !== 'completed') {
-            payment.status = 'completed';
-            payment.gatewayResponse = statusResult.rawResponse;
-            if (statusResult.reference) {
-                payment.transactionId = statusResult.reference;
-            }
-            if (!payment.metadata) payment.metadata = {};
-            payment.metadata.completedAt = new Date();
-            await payment.save();
-
-            const subscription = await Subscription.findById(payment.subscriptionId);
-            const planConfig = PLANS[payment.plan || subscription?.plan] || PLANS['1_month'];
-            if (subscription) {
-                subscription.status = 'active';
-                subscription.tier = planConfig.tier;
-                subscription.startDate = new Date();
-                subscription.endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
-                if (statusResult.reference) {
-                    subscription.transactionId = statusResult.reference;
-                }
-                await subscription.save();
+        if (statusResult.status === 'completed') {
+            if (!payment && statusResult.tx_ref) {
+                payment = await Payment.findOne({ referenceId: statusResult.tx_ref });
             }
 
-            const user = await User.findById(payment.userId);
-            if (user) {
-                user.isPremium = true;
-                user.subscriptionTier = planConfig.tier;
-                user.premiumUntil = subscription ? subscription.endDate : new Date(Date.now() + planConfig.duration * 86400000);
-                await user.save();
+            if (payment) {
+                const io = req.app.get('io');
+                await activateSuccessfulPayment(payment, statusResult, io);
+            } else {
+                console.warn(`[PayChangu Webhook] Verified payment but matching local record not found for: ${txRef}`);
             }
-
-            const io = req.app.get('io');
-            if (io && payment.userId) {
-                io.to(payment.userId.toString()).emit('subscription_activated', {
-                    isPremium: true,
-                    subscriptionTier: planConfig.tier,
-                    premiumUntil: user ? user.premiumUntil : null
-                });
-            }
-
-            console.log(`Successfully activated ${planConfig.badge} subscription for user ${payment.userId} via webhook`);
         }
 
         res.status(200).json({ success: true });
@@ -378,18 +374,54 @@ exports.handleWebhook = async (req, res) => {
 };
 
 /**
- * Get user's current subscription status
+ * Get user's current subscription status with automatic pending payment reconciliation
  */
 exports.getSubscriptionStatus = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        const subscription = await Subscription.findOne({
+        let user = await User.findById(userId).select('isPremium subscriptionTier premiumUntil');
+        let subscription = await Subscription.findOne({
             userId,
             status: 'active'
         }).sort({ createdAt: -1 });
 
-        const user = await User.findById(userId).select('isPremium subscriptionTier premiumUntil');
+        const isCurrentlyPremium = Boolean(user?.isPremium && (!user.premiumUntil || new Date(user.premiumUntil) > new Date()));
+
+        // Auto-reconciliation fallback:
+        // If user is currently not premium, check if there is an uncompleted pending payment initiated within the last 48 hours
+        if (!isCurrentlyPremium) {
+            const recentPendingPayment = await Payment.findOne({
+                userId,
+                status: 'pending',
+                createdAt: { $gte: new Date(Date.now() - 48 * 60 * 60 * 1000) }
+            }).sort({ createdAt: -1 });
+
+            if (recentPendingPayment && recentPendingPayment.referenceId) {
+                try {
+                    const statusResult = await paymentService.verifyPayment(recentPendingPayment.referenceId);
+                    if (statusResult.status === 'completed') {
+                        const io = req.app.get('io');
+                        await activateSuccessfulPayment(recentPendingPayment, statusResult, io);
+
+                        // Reload user & subscription after activation
+                        user = await User.findById(userId).select('isPremium subscriptionTier premiumUntil');
+                        subscription = await Subscription.findOne({
+                            userId,
+                            status: 'active'
+                        }).sort({ createdAt: -1 });
+                    } else if (statusResult.status === 'failed') {
+                        // Customer cancelled or declined the transaction on their phone
+                        recentPendingPayment.status = 'failed';
+                        recentPendingPayment.failureReason = statusResult.message || 'Payment cancelled or declined';
+                        await recentPendingPayment.save();
+                        await Subscription.findByIdAndUpdate(recentPendingPayment.subscriptionId, { status: 'cancelled' });
+                    }
+                } catch (reconcileErr) {
+                    console.warn('[AutoReconcile] Error checking pending payment:', reconcileErr.message);
+                }
+            }
+        }
 
         res.json({
             isPremium: Boolean(user?.isPremium && (!user.premiumUntil || new Date(user.premiumUntil) > new Date())),
@@ -439,35 +471,14 @@ exports.handleWebhookRedirect = async (req, res) => {
     const txRef = req.query.tx_ref || req.query.ref || '';
     if (txRef) {
         try {
-            const payment = await Payment.findOne({ referenceId: txRef });
+            const payment = await Payment.findOne({
+                $or: [{ referenceId: txRef }, { transactionId: txRef }]
+            });
             if (payment && payment.status !== 'completed') {
-                const statusResult = await paymentService.verifyPayment(txRef);
+                const statusResult = await paymentService.verifyPayment(payment.referenceId || txRef);
                 if (statusResult.status === 'completed') {
-                    payment.status = 'completed';
-                    payment.gatewayResponse = statusResult.rawResponse;
-                    if (statusResult.reference) payment.transactionId = statusResult.reference;
-                    if (!payment.metadata) payment.metadata = {};
-                    payment.metadata.completedAt = new Date();
-                    await payment.save();
-
-                    const subscription = await Subscription.findById(payment.subscriptionId);
-                    const planConfig = PLANS[payment.plan || subscription?.plan] || PLANS['1_month'];
-                    if (subscription) {
-                        subscription.status = 'active';
-                        subscription.tier = planConfig.tier;
-                        subscription.startDate = new Date();
-                        subscription.endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
-                        if (statusResult.reference) subscription.transactionId = statusResult.reference;
-                        await subscription.save();
-                    }
-
-                    const user = await User.findById(payment.userId);
-                    if (user) {
-                        user.isPremium = true;
-                        user.subscriptionTier = planConfig.tier;
-                        user.premiumUntil = subscription ? subscription.endDate : new Date(Date.now() + planConfig.duration * 86400000);
-                        await user.save();
-                    }
+                    const io = req.app.get('io');
+                    await activateSuccessfulPayment(payment, statusResult, io);
                     console.log(`[PayChangu Redirect] Payment and subscription activated for txRef: ${txRef}`);
                 }
             }

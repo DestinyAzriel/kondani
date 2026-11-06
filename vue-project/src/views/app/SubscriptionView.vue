@@ -575,6 +575,12 @@ const handleSubscribe = async () => {
       pendingCheckoutUrl.value = result.checkoutUrl
       if (result.referenceId) {
         sessionStorage.setItem('pending_payment_ref', result.referenceId)
+        try {
+          localStorage.setItem('kondani_pending_payment', JSON.stringify({
+            ref: result.referenceId,
+            time: Date.now()
+          }))
+        } catch (_) {}
       }
       // Smooth brief pause so user sees the connecting modal before navigating
       setTimeout(() => {
@@ -599,6 +605,7 @@ const handleSubscribe = async () => {
 const cancelVerification = () => {
   verifying.value = false
   sessionStorage.removeItem('pending_payment_ref')
+  localStorage.removeItem('kondani_pending_payment')
   router.replace({ path: route.path, query: {} })
 }
 
@@ -611,28 +618,35 @@ const closeSuccessModal = () => {
 }
 
 /**
- * On mount: ONLY check if returning from PayChangu with ?tx_ref=... or ?status=...
+ * On mount: Check returning payment parameters and auto-reconcile with backend
  */
 onMounted(async () => {
-  // Check if we arrived from PayChangu redirect via query params
-  const hasGatewayQuery = Boolean(route.query.tx_ref || route.query.ref || route.query.status)
-
-  // If the user is just visiting the page normally, NEVER show "Verifying Payment"
-  if (!hasGatewayQuery) {
-    sessionStorage.removeItem('pending_payment_ref')
-    verifying.value = false
-    return
-  }
+  // Check for stored pending payment within 2 hours
+  let storedRef = null
+  try {
+    const rawStored = localStorage.getItem('kondani_pending_payment')
+    if (rawStored) {
+      const parsed = JSON.parse(rawStored)
+      if (parsed && parsed.ref && (Date.now() - parsed.time < 2 * 60 * 60 * 1000)) {
+        storedRef = parsed.ref
+      } else {
+        localStorage.removeItem('kondani_pending_payment')
+      }
+    }
+  } catch (_) {}
 
   const statusParam = route.query.status
   if (statusParam === 'cancelled') {
     sessionStorage.removeItem('pending_payment_ref')
+    localStorage.removeItem('kondani_pending_payment')
     error('Payment was cancelled.')
     router.replace({ path: route.path, query: {} })
     return
   }
 
-  const ref = route.query.tx_ref || route.query.ref || sessionStorage.getItem('pending_payment_ref')
+  const ref = route.query.tx_ref || route.query.ref || sessionStorage.getItem('pending_payment_ref') || (route.query.status === 'success' ? storedRef : null)
+
+  // If we have an active reference to check (either returning from gateway or recent session)
   if (ref) {
     verifying.value = true
     try {
@@ -640,15 +654,19 @@ onMounted(async () => {
 
       if (checkResult.status === 'completed') {
         sessionStorage.removeItem('pending_payment_ref')
+        localStorage.removeItem('kondani_pending_payment')
         await authStore.fetchUser()
         activatedTierTitle.value = checkResult.subscriptionTier === 'platinum' ? 'VIP Platinum' : (checkResult.subscriptionTier === 'plus' ? 'Plus' : 'Gold')
         showSuccessModal.value = true
         router.replace({ path: route.path, query: {} })
+        return
       } else if (checkResult.status === 'failed') {
         sessionStorage.removeItem('pending_payment_ref')
+        localStorage.removeItem('kondani_pending_payment')
         error('Payment was not completed. You were not charged.')
         router.replace({ path: route.path, query: {} })
-      } else {
+        return
+      } else if (route.query.status === 'success' || route.query.tx_ref) {
         info('Payment is pending mobile confirmation. Your tier will activate once approved.')
       }
     } catch (err) {
@@ -657,6 +675,16 @@ onMounted(async () => {
       verifying.value = false
     }
   }
+
+  // Always check subscription status to trigger background auto-reconciliation if pending
+  try {
+    const statusData = await subscriptionService.getSubscriptionStatus()
+    if (statusData && statusData.isPremium) {
+      if (!authStore.user?.isPremium || authStore.user?.subscriptionTier !== statusData.subscriptionTier) {
+        await authStore.fetchUser()
+      }
+    }
+  } catch (_) {}
 })
 </script>
 
